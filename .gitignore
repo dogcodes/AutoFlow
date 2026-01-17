@@ -1,0 +1,68 @@
+# ===============================================
+# Android / Gradle
+# ===============================================
+
+# Built application files
+*.apk
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Built intermediate files
+/build/
+
+# Gradle files
+.gradle/
+/captures/
+.externalNativeBuild/
+.cxx/
+
+# Local configuration files
+# -> Add this file to your project and replace with your specific configurations.
+#    This file should not be checked into version control.
+local.properties
+
+# Log files
+*.log
+
+# ===============================================
+# IDE
+# ===============================================
+
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Android Studio
+/captures
+.externalNativeBuild
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+
+# ===============================================
+# Mac
+# ===============================================
+.DS_Store
+
+# ===============================================
+# Other
+# ===============================================
+
+# Keystore files
+*.jks
+*.keystore
+
+# Google Services
+google-services.json
+
+# Firebase
+firebase.json
+.firebaserc
+firebase.crashlytics.unity_editor.json
