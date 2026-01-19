@@ -19,6 +19,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -27,6 +28,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.carlos.autoflow.workflow.models.NodeType
 import com.carlos.autoflow.workflow.viewmodel.CanvasViewModel
 import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
+import kotlinx.coroutines.delay
+import kotlin.math.floor
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,241 +46,215 @@ fun WorkflowEditor(
     val density = LocalDensity.current
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 背景网格和手势检测
-        Canvas(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .pointerInput(Unit) {
-                    detectTransformGestures { _, pan, zoom, _ ->
-                        canvasViewModel.updateScale(canvasState.scale * zoom)
-                        canvasViewModel.updateOffset(
-                            canvasState.offsetX + pan.x,
-                            canvasState.offsetY + pan.y
-                        )
+                    detectTransformGestures { centroid, pan, zoom, _ ->
+                        val oldScale = canvasState.scale
+                        val newScale = (oldScale * zoom).coerceIn(canvasState.minScale, canvasState.maxScale)
+                        val effectiveZoom = newScale / oldScale
+
+                        val newOffsetX = canvasState.offsetX + pan.x + (centroid.x - canvasState.offsetX) * (1 - effectiveZoom)
+                        val newOffsetY = canvasState.offsetY + pan.y + (centroid.y - canvasState.offsetY) * (1 - effectiveZoom)
+
+                        canvasViewModel.updateScale(newScale)
+                        canvasViewModel.updateOffset(newOffsetX, newOffsetY)
                     }
                 }
-                .pointerInput(Unit) {
-                    detectTapGestures { offset ->
-                        // 检测连接线删除按钮点击
-                        workflow.connections.forEach { connection ->
-                            val sourceNode = workflow.nodes.find { it.id == connection.sourceNodeId }
-                            val targetNode = workflow.nodes.find { it.id == connection.targetNodeId }
-                            
-                            if (sourceNode != null && targetNode != null) {
-                                val nodeWidth = 160.dp.toPx()
-                                val nodeHeight = 100.dp.toPx()
-                                
-                                val startX = sourceNode.x.dp.toPx() + nodeWidth + 5.dp.toPx()
-                                val startY = sourceNode.y.dp.toPx() + nodeHeight / 2
-                                val endX = targetNode.x.dp.toPx() - 5.dp.toPx()
-                                val endY = targetNode.y.dp.toPx() + nodeHeight / 2
-                                
-                                val midX = (startX + endX) / 2
-                                val midY = (startY + endY) / 2
-                                val distance = kotlin.math.sqrt(
-                                    (offset.x - midX) * (offset.x - midX) + 
-                                    (offset.y - midY) * (offset.y - midY)
-                                ).toFloat()
-                                
-                                if (distance < 30.dp.toPx()) {
-                                    workflowViewModel.removeConnection(connection.id)
-                                    return@detectTapGestures
-                                }
-                            }
-                        }
-                    }
-                }
+                .graphicsLayer(
+                    scaleX = canvasState.scale,
+                    scaleY = canvasState.scale,
+                    translationX = canvasState.offsetX,
+                    translationY = canvasState.offsetY
+                )
         ) {
-            // 绘制网格
-            val gridSize = 20.dp.toPx()
-            val startX = (-canvasState.offsetX / canvasState.scale) % gridSize
-            val startY = (-canvasState.offsetY / canvasState.scale) % gridSize
-            
-            for (x in (startX.toInt() until size.width.toInt() step gridSize.toInt())) {
-                drawLine(
-                    color = Color.Gray.copy(alpha = 0.2f),
-                    start = Offset(x.toFloat(), 0f),
-                    end = Offset(x.toFloat(), size.height),
-                    strokeWidth = 1.dp.toPx()
-                )
-            }
-            
-            for (y in (startY.toInt() until size.height.toInt() step gridSize.toInt())) {
-                drawLine(
-                    color = Color.Gray.copy(alpha = 0.2f),
-                    start = Offset(0f, y.toFloat()),
-                    end = Offset(size.width, y.toFloat()),
-                    strokeWidth = 1.dp.toPx()
-                )
-            }
-            
-            // 绘制连接线（不缩放）
-            workflow.connections.forEach { connection ->
-                val sourceNode = workflow.nodes.find { it.id == connection.sourceNodeId }
-                val targetNode = workflow.nodes.find { it.id == connection.targetNodeId }
-                
-                if (sourceNode != null && targetNode != null) {
-                    // 节点尺寸
-                    val nodeWidth = 160.dp.toPx()
-                    val nodeHeight = 100.dp.toPx()
-                    
-                    // 连接点位置（应用缩放和偏移）
-                    val startX = (sourceNode.x.dp.toPx() + nodeWidth + 5.dp.toPx()) * canvasState.scale + canvasState.offsetX
-                    val startY = (sourceNode.y.dp.toPx() + nodeHeight / 2) * canvasState.scale + canvasState.offsetY
-                    val endX = (targetNode.x.dp.toPx() - 5.dp.toPx()) * canvasState.scale + canvasState.offsetX
-                    val endY = (targetNode.y.dp.toPx() + nodeHeight / 2) * canvasState.scale + canvasState.offsetY
-                    
-                    // 贝塞尔曲线
-                    val controlOffset = 60.dp.toPx() * canvasState.scale
-                    val path = Path().apply {
-                        moveTo(startX, startY)
-                        cubicTo(
-                            startX + controlOffset, startY,
-                            endX - controlOffset, endY,
-                            endX, endY
-                        )
-                    }
-                    
-                    // 绘制连接线
-                    drawPath(
-                        path = path,
-                        color = Color(0xFF1976D2),
-                        style = androidx.compose.ui.graphics.drawscope.Stroke(
-                            width = 3.dp.toPx(),
-                            cap = androidx.compose.ui.graphics.StrokeCap.Round
-                        )
-                    )
-                    
-                    // 连接点
-                    drawCircle(
-                        color = Color(0xFF2196F3),
-                        radius = 5.dp.toPx(),
-                        center = Offset(startX, startY)
-                    )
-                    drawCircle(
-                        color = Color.White,
-                        radius = 2.dp.toPx(),
-                        center = Offset(startX, startY)
-                    )
-                    
-                    drawCircle(
-                        color = Color(0xFF42A5F5),
-                        radius = 5.dp.toPx(),
-                        center = Offset(endX, endY)
-                    )
-                    drawCircle(
-                        color = Color.White,
-                        radius = 2.dp.toPx(),
-                        center = Offset(endX, endY)
-                    )
-                    
-                    // 在连接线中点绘制删除按钮
-                    val midX = (startX + endX) / 2
-                    val midY = (startY + endY) / 2
-                    drawCircle(
-                        color = Color(0xFFE53E3E),
-                        radius = 8.dp.toPx(),
-                        center = Offset(midX, midY)
-                    )
-                    drawCircle(
-                        color = Color.White,
-                        radius = 3.dp.toPx(),
-                        center = Offset(midX, midY)
-                    )
-                }
-            }
-        }
-        
-        // 渲染所有节点 - 支持缩放
-        workflow.nodes.forEach { node ->
-            key(node.id) {
-                Box(
-                    modifier = Modifier
-                        .offset(
-                            x = node.x.dp,
-                            y = node.y.dp
-                        )
-                        .graphicsLayer(
-                            scaleX = canvasState.scale,
-                            scaleY = canvasState.scale,
-                            translationX = canvasState.offsetX,
-                            translationY = canvasState.offsetY
-                        )
-                ) {
-                    WorkflowNodeView(
-                        node = node,
-                        isSelected = selectedNodeId == node.id,
-                        isConnecting = connectingNodeId == node.id,
-                        onMove = { deltaX, deltaY ->
-                            workflowViewModel.moveNode(
-                                node.id, 
-                                deltaX / canvasState.scale, 
-                                deltaY / canvasState.scale
-                            )
-                        },
-                        onSelect = { 
-                            if (connectingNodeId != null) {
-                                workflowViewModel.finishConnection(node.id)
-                            } else {
-                                workflowViewModel.selectNode(node.id)
-                            }
-                        },
-                        onDelete = { workflowViewModel.deleteNode(node.id) },
-                        onDoubleClick = {
-                            if (connectingNodeId == null) {
-                                if (node.type == NodeType.END) {
-                                    workflowViewModel.selectNode("end_tip_${node.id}")
-                                } else {
-                                    workflowViewModel.startConnection(node.id)
+            // 背景网格、连接线和节点都在这个被统一变换的Box中
+            Canvas(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTapGestures { offset ->
+                            // 检测连接线删除按钮点击
+                            workflow.connections.forEach { connection ->
+                                val sourceNode = workflow.nodes.find { it.id == connection.sourceNodeId }
+                                val targetNode = workflow.nodes.find { it.id == connection.targetNodeId }
+
+                                if (sourceNode != null && targetNode != null) {
+                                    val nodeWidth = 160.dp.toPx()
+                                    val nodeHeight = 100.dp.toPx()
+
+                                    val startX = sourceNode.x.dp.toPx() + nodeWidth + 5.dp.toPx()
+                                    val startY = sourceNode.y.dp.toPx() + nodeHeight / 2
+                                    val endX = targetNode.x.dp.toPx() - 5.dp.toPx()
+                                    val endY = targetNode.y.dp.toPx() + nodeHeight / 2
+
+                                    val midX = (startX + endX) / 2
+                                    val midY = (startY + endY) / 2
+
+                                    // offset 坐标已由父级 graphicsLayer 自动转换为世界坐标，无需再次转换
+                                    val distance = sqrt(
+                                        (offset.x - midX).pow(2) + (offset.y - midY).pow(2)
+                                    )
+
+                                    if (distance < 12.dp.toPx()) {
+                                        workflowViewModel.removeConnection(connection.id)
+                                        return@detectTapGestures
+                                    }
                                 }
-                            } else {
-                                workflowViewModel.cancelConnection()
                             }
                         }
+                    }
+            ) {
+                // 绘制网格
+                val gridSize = 20.dp.toPx()
+                val worldLeft = -canvasState.offsetX / canvasState.scale
+                val worldTop = -canvasState.offsetY / canvasState.scale
+                val worldRight = worldLeft + size.width / canvasState.scale
+                val worldBottom = worldTop + size.height / canvasState.scale
+
+                // 绘制垂直线
+                val firstVerticalLineX = (floor(worldLeft / gridSize) * gridSize)
+                var currentX = firstVerticalLineX
+                while (currentX <= worldRight) {
+                    drawLine(
+                        color = Color.Gray.copy(alpha = 0.2f),
+                        start = Offset(currentX, worldTop),
+                        end = Offset(currentX, worldBottom),
+                        strokeWidth = (1.dp.toPx()) / canvasState.scale
                     )
+                    currentX += gridSize
+                }
+
+                // 绘制水平线
+                val firstHorizontalLineY = (floor(worldTop / gridSize) * gridSize)
+                var currentY = firstHorizontalLineY
+                while (currentY <= worldBottom) {
+                    drawLine(
+                        color = Color.Gray.copy(alpha = 0.2f),
+                        start = Offset(worldLeft, currentY),
+                        end = Offset(worldRight, currentY),
+                        strokeWidth = (1.dp.toPx()) / canvasState.scale
+                    )
+                    currentY += gridSize
+                }
+
+                // 绘制连接线 (使用世界坐标，无需手动应用变换)
+                workflow.connections.forEach { connection ->
+                    val sourceNode = workflow.nodes.find { it.id == connection.sourceNodeId }
+                    val targetNode = workflow.nodes.find { it.id == connection.targetNodeId }
+
+                    if (sourceNode != null && targetNode != null) {
+                        val nodeWidth = 160.dp.toPx()
+                        val nodeHeight = 100.dp.toPx()
+
+                        val startX = sourceNode.x.dp.toPx() + nodeWidth + 5.dp.toPx()
+                        val startY = sourceNode.y.dp.toPx() + nodeHeight / 2
+                        val endX = targetNode.x.dp.toPx() - 5.dp.toPx()
+                        val endY = targetNode.y.dp.toPx() + nodeHeight / 2
+
+                        val controlOffset = 60.dp.toPx()
+                        val path = Path().apply {
+                            moveTo(startX, startY)
+                            cubicTo(startX + controlOffset, startY, endX - controlOffset, endY, endX, endY)
+                        }
+
+                        drawPath(
+                            path = path,
+                            color = Color(0xFF1976D2),
+                            style = Stroke(width = 3.dp.toPx())
+                        )
+
+                        drawCircle(color = Color(0xFF2196F3), radius = 5.dp.toPx(), center = Offset(startX, startY))
+                        drawCircle(color = Color.White, radius = 2.dp.toPx(), center = Offset(startX, startY))
+                        drawCircle(color = Color(0xFF42A5F5), radius = 5.dp.toPx(), center = Offset(endX, endY))
+                        drawCircle(color = Color.White, radius = 2.dp.toPx(), center = Offset(endX, endY))
+
+                        val midX = (startX + endX) / 2
+                        val midY = (startY + endY) / 2
+                        drawCircle(color = Color(0xFFE53E3E), radius = 8.dp.toPx(), center = Offset(midX, midY))
+                        drawCircle(color = Color.White, radius = 3.dp.toPx(), center = Offset(midX, midY))
+                    }
+                }
+            }
+
+            // 渲染所有节点 (不再需要单独的graphicsLayer)
+            workflow.nodes.forEach { node ->
+                key(node.id) {
+                    Box(
+                        modifier = Modifier.offset(x = node.x.dp, y = node.y.dp)
+                    ) {
+                        WorkflowNodeView(
+                            node = node,
+                            isSelected = selectedNodeId == node.id,
+                            isConnecting = connectingNodeId == node.id,
+                                                        onMove = { deltaX, deltaY ->
+                                                            workflowViewModel.moveNode(
+                                                                node.id,
+                                                                deltaX,
+                                                                deltaY
+                                                            )
+                                                        },
+                            onSelect = {
+                                if (connectingNodeId != null) {
+                                    workflowViewModel.finishConnection(node.id)
+                                } else {
+                                    workflowViewModel.selectNode(node.id)
+                                }
+                            },
+                            onDelete = { workflowViewModel.deleteNode(node.id) },
+                            onDoubleClick = {
+                                if (connectingNodeId == null) {
+                                    if (node.type == NodeType.END) {
+                                        workflowViewModel.selectNode("end_tip_${node.id}")
+                                    } else {
+                                        workflowViewModel.startConnection(node.id)
+                                    }
+                                } else {
+                                    workflowViewModel.cancelConnection()
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
-        
-        // 节点选择面板
+
+        // UI元素（面板、按钮等）保持在最上层，不受缩放影响
         NodeSelectionPanel(
             modifier = Modifier.align(Alignment.CenterStart),
             onNodeSelected = { nodeType ->
                 workflowViewModel.addNode(nodeType, 100f, 100f)
             }
         )
-        
-        // 缩放控制和重置按钮
+
         Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
         ) {
             FloatingActionButton(
-                onClick = { canvasViewModel.updateScale(canvasState.scale * 1.2f) },
+                onClick = { canvasViewModel.zoomIn() },
                 modifier = Modifier.size(48.dp),
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(Icons.Default.Add, contentDescription = "放大")
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             FloatingActionButton(
-                onClick = { canvasViewModel.updateScale(canvasState.scale * 0.8f) },
+                onClick = { canvasViewModel.zoomOut() },
                 modifier = Modifier.size(48.dp),
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(Icons.Default.Remove, contentDescription = "缩小")
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             FloatingActionButton(
-                onClick = { 
-                    canvasViewModel.updateScale(1.0f)
-                    canvasViewModel.updateOffset(0f, 0f)
-                },
+                onClick = { canvasViewModel.resetZoom() },
                 modifier = Modifier.size(48.dp),
                 containerColor = MaterialTheme.colorScheme.secondary
             ) {
@@ -286,8 +265,7 @@ fun WorkflowEditor(
                 )
             }
         }
-        
-        // 连接状态提示
+
         if (connectingNodeId != null) {
             val connectingNode = workflow.nodes.find { it.id == connectingNodeId }
             Card(
@@ -306,8 +284,7 @@ fun WorkflowEditor(
                 )
             }
         }
-        
-        // 结束节点双击提示
+
         if (selectedNodeId?.startsWith("end_tip_") == true) {
             Card(
                 modifier = Modifier
@@ -321,9 +298,9 @@ fun WorkflowEditor(
                     color = Color.White
                 )
             }
-            
+
             LaunchedEffect(selectedNodeId) {
-                kotlinx.coroutines.delay(2000)
+                delay(2000)
                 workflowViewModel.selectNode(null)
             }
         }
