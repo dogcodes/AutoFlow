@@ -10,6 +10,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -44,6 +50,9 @@ fun WorkflowEditor(
     val connectingNodeId by workflowViewModel.connectingNodeId.collectAsState()
     val selectedNodeId by workflowViewModel.selectedNodeId.collectAsState()
     val density = LocalDensity.current
+
+    // 控制节点选择面板的显示/隐藏状态
+    var isPanelVisible by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Box(
@@ -221,12 +230,33 @@ fun WorkflowEditor(
         }
 
         // UI元素（面板、按钮等）保持在最上层，不受缩放影响
-        NodeSelectionPanel(
-            modifier = Modifier.align(Alignment.CenterStart),
-            onNodeSelected = { nodeType ->
-                workflowViewModel.addNode(nodeType, 100f, 100f)
-            }
-        )
+        AnimatedVisibility(
+            visible = isPanelVisible,
+            enter = slideInHorizontally(),
+            exit = slideOutHorizontally(),
+            modifier = Modifier.align(Alignment.CenterStart)
+        ) {
+            NodeSelectionPanel(
+                onNodeSelected = { nodeType ->
+                    workflowViewModel.addNode(nodeType, 100f, 100f)
+                }
+            )
+        }
+        
+        // 切换节点选择面板可见性的FAB
+        FloatingActionButton(
+            onClick = { isPanelVisible = !isPanelVisible },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(16.dp),
+            containerColor = MaterialTheme.colorScheme.primary
+        ) {
+            Icon(
+                imageVector = if (isPanelVisible) Icons.Default.Close else Icons.Default.Menu,
+                contentDescription = if (isPanelVisible) "关闭节点面板" else "打开节点面板",
+                tint = Color.White
+            )
+        }
 
         Column(
             modifier = Modifier
