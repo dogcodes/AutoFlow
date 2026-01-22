@@ -59,6 +59,11 @@ fun WorkflowEditor(
     var isPanelVisible by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        CanvasBackground(
+            modifier = Modifier.fillMaxSize(),
+            canvasState = canvasState
+        )
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -83,10 +88,6 @@ fun WorkflowEditor(
                 )
         ) {
             // 背景网格、连接线和节点都在这个被统一变换的Box中
-            CanvasBackground(
-                modifier = Modifier.fillMaxSize(),
-                canvasState = canvasState
-            )
 
             WorkflowConnections(
                 workflow = workflow,

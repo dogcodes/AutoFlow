@@ -16,37 +16,72 @@ fun CanvasBackground(
     canvasState: CanvasState
 ) {
     Canvas(modifier = modifier) {
-        // 绘制网格
         val gridSizePx = Dimens.WorkflowEditor.GridSize.toPx()
-        val worldLeft = -canvasState.offsetX / canvasState.scale
-        val worldTop = -canvasState.offsetY / canvasState.scale
-        val worldRight = worldLeft + size.width / canvasState.scale
-        val worldBottom = worldTop + size.height / canvasState.scale
 
-        // 绘制垂直线
-        val firstVerticalLineX = (floor(worldLeft / gridSizePx) * gridSizePx)
-        var currentX = firstVerticalLineX
-        while (currentX <= worldRight) {
-            drawLine(
-                color = Dimens.WorkflowEditorColors.GridLine,
-                start = Offset(currentX, worldTop),
-                end = Offset(currentX, worldBottom),
-                strokeWidth = (1.dp.toPx()) / canvasState.scale
-            )
-            currentX += gridSizePx
+        // Calculate the effective grid size on screen
+        val effectiveGridSizeScreen = gridSizePx * canvasState.scale
+
+        // Determine the visible screen area
+        val screenWidth = size.width
+        val screenHeight = size.height
+
+        // Calculate the offset for the grid lines based on canvasState.offsetX/Y
+        // This makes the grid appear to move with the canvas.
+        val gridOffsetX = canvasState.offsetX % effectiveGridSizeScreen
+        val gridOffsetY = canvasState.offsetY % effectiveGridSizeScreen
+
+
+        // Draw vertical lines
+        var currentXScreen = gridOffsetX
+        while (currentXScreen < screenWidth) {
+            if (currentXScreen >= 0f) { // Only draw if line is within screen bounds
+                drawLine(
+                    color = Dimens.WorkflowEditorColors.GridLine,
+                    start = Offset(currentXScreen, 0f),
+                    end = Offset(currentXScreen, screenHeight),
+                    strokeWidth = (1.dp.toPx())
+                )
+            }
+            currentXScreen += effectiveGridSizeScreen
         }
 
-        // 绘制水平线
-        val firstHorizontalLineY = (floor(worldTop / gridSizePx) * gridSizePx)
-        var currentY = firstHorizontalLineY
-        while (currentY <= worldBottom) {
+        // Draw vertical lines for negative offset
+        currentXScreen = gridOffsetX - effectiveGridSizeScreen
+        while (currentXScreen >= 0f) {
             drawLine(
                 color = Dimens.WorkflowEditorColors.GridLine,
-                start = Offset(worldLeft, currentY),
-                end = Offset(worldRight, currentY),
-                strokeWidth = (1.dp.toPx()) / canvasState.scale
+                start = Offset(currentXScreen, 0f),
+                end = Offset(currentXScreen, screenHeight),
+                strokeWidth = (1.dp.toPx())
             )
-            currentY += gridSizePx
+            currentXScreen -= effectiveGridSizeScreen
+        }
+
+
+        // Draw horizontal lines
+        var currentYScreen = gridOffsetY
+        while (currentYScreen < screenHeight) {
+            if (currentYScreen >= 0f) { // Only draw if line is within screen bounds
+                drawLine(
+                    color = Dimens.WorkflowEditorColors.GridLine,
+                    start = Offset(0f, currentYScreen),
+                    end = Offset(screenWidth, currentYScreen),
+                    strokeWidth = (1.dp.toPx())
+                )
+            }
+            currentYScreen += effectiveGridSizeScreen
+        }
+
+        // Draw horizontal lines for negative offset
+        currentYScreen = gridOffsetY - effectiveGridSizeScreen
+        while (currentYScreen >= 0f) {
+            drawLine(
+                color = Dimens.WorkflowEditorColors.GridLine,
+                start = Offset(0f, currentYScreen),
+                end = Offset(screenWidth, currentYScreen),
+                strokeWidth = (1.dp.toPx())
+            )
+            currentYScreen -= effectiveGridSizeScreen
         }
     }
 }
