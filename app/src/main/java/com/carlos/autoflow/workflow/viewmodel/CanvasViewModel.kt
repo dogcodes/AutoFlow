@@ -10,7 +10,8 @@ data class CanvasState(
     val offsetX: Float = 0f,
     val offsetY: Float = 0f,
     val minScale: Float = 0.3f,
-    val maxScale: Float = 3f
+    val maxScale: Float = 3f,
+    val isAdaptiveGridEnabled: Boolean = true // 是否启用自适应网格密度（用于控制网格在缩放时是否自动调整密度）
 )
 
 class CanvasViewModel : ViewModel() {
@@ -43,5 +44,12 @@ class CanvasViewModel : ViewModel() {
     
     fun zoomOut() {
         updateScale(_canvasState.value.scale / 1.2f)
+    }
+
+    // Function to toggle adaptive grid density
+    fun toggleAdaptiveGrid() {
+        _canvasState.value = _canvasState.value.copy(
+            isAdaptiveGridEnabled = !_canvasState.value.isAdaptiveGridEnabled
+        )
     }
 }
