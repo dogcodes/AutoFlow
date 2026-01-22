@@ -11,7 +11,7 @@ data class CanvasState(
     val offsetY: Float = 0f,
     val minScale: Float = 0.3f,
     val maxScale: Float = 3f,
-    val isAdaptiveGridEnabled: Boolean = true // 是否启用自适应网格密度（用于控制网格在缩放时是否自动调整密度）
+    val isAdaptiveGridEnabled: Boolean = false // 是否启用自适应网格密度（用于控制网格在缩放时是否自动调整密度）
 )
 
 class CanvasViewModel : ViewModel() {

@@ -33,11 +33,16 @@ import com.carlos.autoflow.ui.theme.Dimens
 import com.carlos.autoflow.workflow.viewmodel.CanvasViewModel
 import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
 
+import androidx.compose.runtime.collectAsState
+
 @Composable
 fun WorkflowControls(
     workflowViewModel: WorkflowViewModel = viewModel(),
     canvasViewModel: CanvasViewModel = viewModel()
 ) {
+    // Collect canvasState to get the current scale
+    val canvasState by canvasViewModel.canvasState.collectAsState()
+
     // 控制节点选择面板的显示/隐藏状态
     var isPanelVisible by remember { mutableStateOf(false) }
 
@@ -84,6 +89,14 @@ fun WorkflowControls(
                 Icon(Icons.Default.Add, contentDescription = "放大")
             }
 
+            // Zoom percentage display
+            Spacer(modifier = Modifier.height(Dimens.WorkflowEditor.SmallPadding))
+            Text(
+                text = "${(canvasState.scale * 100).toInt()}%",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
             Spacer(modifier = Modifier.height(Dimens.WorkflowEditor.SmallPadding))
 
             FloatingActionButton(
