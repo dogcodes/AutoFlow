@@ -33,7 +33,7 @@ fun NodeSelectionPanel(
 ) {
     val nodeTemplates = listOf(
         NodeTemplate(NodeType.START, "开始", "工作流起点", Icons.Default.PlayArrow),
-        NodeTemplate(NodeType.END, "结束", "工作流终点", Icons.Default.Close),
+        NodeTemplate(NodeType.END, "结束", "工作流终点", Icons.Default.Stop),
         NodeTemplate(NodeType.HTTP_REQUEST, "HTTP请求", "发送网络请求", Icons.Default.Send),
         NodeTemplate(NodeType.DATA_TRANSFORM, "数据转换", "处理数据", Icons.Default.Build),
         NodeTemplate(NodeType.CONDITION, "条件判断", "分支逻辑", Icons.Default.Info),

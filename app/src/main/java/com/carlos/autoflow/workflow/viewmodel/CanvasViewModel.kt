@@ -11,7 +11,8 @@ data class CanvasState(
     val offsetY: Float = 0f,
     val minScale: Float = 0.3f,
     val maxScale: Float = 3f,
-    val isAdaptiveGridEnabled: Boolean = false // 是否启用自适应网格密度（用于控制网格在缩放时是否自动调整密度）
+    val isAdaptiveGridEnabled: Boolean = false, // 是否启用自适应网格密度（用于控制网格在缩放时是否自动调整密度）
+    val showFlowAnimation: Boolean = true // 是否显示连接线流动动画
 )
 
 class CanvasViewModel : ViewModel() {
@@ -50,6 +51,13 @@ class CanvasViewModel : ViewModel() {
     fun toggleAdaptiveGrid() {
         _canvasState.value = _canvasState.value.copy(
             isAdaptiveGridEnabled = !_canvasState.value.isAdaptiveGridEnabled
+        )
+    }
+    
+    // Function to toggle flow animation
+    fun toggleFlowAnimation() {
+        _canvasState.value = _canvasState.value.copy(
+            showFlowAnimation = !_canvasState.value.showFlowAnimation
         )
     }
 }

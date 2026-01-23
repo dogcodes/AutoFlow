@@ -99,7 +99,8 @@ fun WorkflowEditor(
 
             WorkflowConnections(
                 workflow = workflow,
-                workflowViewModel = workflowViewModel
+                workflowViewModel = workflowViewModel,
+                canvasState = canvasState
             )
 
             WorkflowNodes(

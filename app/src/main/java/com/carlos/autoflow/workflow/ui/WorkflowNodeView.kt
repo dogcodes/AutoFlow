@@ -116,7 +116,7 @@ fun WorkflowNodeView(
 
 private fun getNodeIcon(type: NodeType): ImageVector = when (type) {
     NodeType.START -> Icons.Default.PlayArrow
-    NodeType.END -> Icons.Default.Close
+    NodeType.END -> Icons.Default.Stop
     NodeType.HTTP_REQUEST -> Icons.Default.Send
     NodeType.DATA_TRANSFORM -> Icons.Default.Build
     NodeType.CONDITION -> Icons.Default.Info

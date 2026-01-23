@@ -137,6 +137,15 @@ fun WorkflowControls(
                         onShowExecuteDialog()
                     }
                 )
+                DropdownMenuItem(
+                    text = { 
+                        Text(if (canvasState.showFlowAnimation) "🔄 关闭流动动画" else "🔄 开启流动动画") 
+                    },
+                    onClick = {
+                        showMenu = false
+                        canvasViewModel.toggleFlowAnimation()
+                    }
+                )
             }
         }
 
