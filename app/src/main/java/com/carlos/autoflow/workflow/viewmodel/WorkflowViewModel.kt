@@ -423,16 +423,34 @@ class WorkflowViewModel : ViewModel() {
             // UI交互节点
             NodeType.UI_CLICK -> {
                 val selector = node.config["selector"] as? String ?: ""
-                val clickType = node.config["clickType"] as? String ?: "single"
+                val clickType = node.config["clickType"] as? String ?: "SINGLE"
                 
                 result.appendLine("   👆 点击操作: $selector")
                 result.appendLine("   🔧 点击类型: $clickType")
                 
-                // 检查无障碍服务状态
                 if (!com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
                     result.appendLine("   ❌ 无障碍服务未启用")
                 } else {
-                    result.appendLine("   ✅ 点击操作已执行")
+                    try {
+                        val elementSelector = com.carlos.autoflow.workflow.models.ElementSelector.parse(selector)
+                        val operation = com.carlos.autoflow.accessibility.ClickOperation(
+                            elementSelector, 
+                            com.carlos.autoflow.accessibility.ClickType.valueOf(clickType)
+                        )
+                        
+                        val operationResult = com.carlos.autoflow.accessibility.AutoFlowAccessibilityService
+                            .getInstance()?.executeOperation(operation)
+                        
+                        when (operationResult) {
+                            is com.carlos.autoflow.accessibility.OperationResult.Success -> 
+                                result.appendLine("   ✅ 点击成功")
+                            is com.carlos.autoflow.accessibility.OperationResult.Error -> 
+                                result.appendLine("   ❌ 点击失败: ${operationResult.message}")
+                            null -> result.appendLine("   ❌ 服务不可用")
+                        }
+                    } catch (e: Exception) {
+                        result.appendLine("   ❌ 操作异常: ${e.message}")
+                    }
                 }
             }
             NodeType.UI_INPUT -> {
@@ -442,12 +460,29 @@ class WorkflowViewModel : ViewModel() {
                 
                 result.appendLine("   ⌨️ 输入操作: $selector")
                 result.appendLine("   📝 输入内容: $text")
-                result.appendLine("   🗑️ 先清空: $clearFirst")
                 
                 if (!com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
                     result.appendLine("   ❌ 无障碍服务未启用")
                 } else {
-                    result.appendLine("   ✅ 输入操作已执行")
+                    try {
+                        val elementSelector = com.carlos.autoflow.workflow.models.ElementSelector.parse(selector)
+                        val operation = com.carlos.autoflow.accessibility.InputOperation(
+                            elementSelector, text, clearFirst
+                        )
+                        
+                        val operationResult = com.carlos.autoflow.accessibility.AutoFlowAccessibilityService
+                            .getInstance()?.executeOperation(operation)
+                        
+                        when (operationResult) {
+                            is com.carlos.autoflow.accessibility.OperationResult.Success -> 
+                                result.appendLine("   ✅ 输入成功")
+                            is com.carlos.autoflow.accessibility.OperationResult.Error -> 
+                                result.appendLine("   ❌ 输入失败: ${operationResult.message}")
+                            null -> result.appendLine("   ❌ 服务不可用")
+                        }
+                    } catch (e: Exception) {
+                        result.appendLine("   ❌ 操作异常: ${e.message}")
+                    }
                 }
             }
             NodeType.UI_SCROLL -> {
@@ -455,25 +490,57 @@ class WorkflowViewModel : ViewModel() {
                 val distance = node.config["distance"] as? Number ?: 1
                 
                 result.appendLine("   📜 滚动操作: $direction")
-                result.appendLine("   📏 滚动距离: $distance")
                 
                 if (!com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
                     result.appendLine("   ❌ 无障碍服务未启用")
                 } else {
-                    result.appendLine("   ✅ 滚动操作已执行")
+                    try {
+                        val operation = com.carlos.autoflow.accessibility.ScrollOperation(
+                            direction, distance.toInt()
+                        )
+                        
+                        val operationResult = com.carlos.autoflow.accessibility.AutoFlowAccessibilityService
+                            .getInstance()?.executeOperation(operation)
+                        
+                        when (operationResult) {
+                            is com.carlos.autoflow.accessibility.OperationResult.Success -> 
+                                result.appendLine("   ✅ 滚动成功")
+                            is com.carlos.autoflow.accessibility.OperationResult.Error -> 
+                                result.appendLine("   ❌ 滚动失败: ${operationResult.message}")
+                            null -> result.appendLine("   ❌ 服务不可用")
+                        }
+                    } catch (e: Exception) {
+                        result.appendLine("   ❌ 操作异常: ${e.message}")
+                    }
                 }
             }
             NodeType.UI_FIND -> {
                 val selector = node.config["selector"] as? String ?: ""
-                val multiple = node.config["multiple"] as? Boolean ?: false
                 
                 result.appendLine("   🔍 查找元素: $selector")
-                result.appendLine("   🔢 查找多个: $multiple")
                 
                 if (!com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
                     result.appendLine("   ❌ 无障碍服务未启用")
                 } else {
-                    result.appendLine("   ✅ 查找操作已执行")
+                    try {
+                        val elementSelector = com.carlos.autoflow.workflow.models.ElementSelector.parse(selector)
+                        val operation = com.carlos.autoflow.accessibility.FindOperation(elementSelector)
+                        
+                        val operationResult = com.carlos.autoflow.accessibility.AutoFlowAccessibilityService
+                            .getInstance()?.executeOperation(operation)
+                        
+                        when (operationResult) {
+                            is com.carlos.autoflow.accessibility.OperationResult.Success -> {
+                                val count = operationResult.data["count"] as? Int ?: 0
+                                result.appendLine("   ✅ 找到 $count 个元素")
+                            }
+                            is com.carlos.autoflow.accessibility.OperationResult.Error -> 
+                                result.appendLine("   ❌ 查找失败: ${operationResult.message}")
+                            null -> result.appendLine("   ❌ 服务不可用")
+                        }
+                    } catch (e: Exception) {
+                        result.appendLine("   ❌ 操作异常: ${e.message}")
+                    }
                 }
             }
             NodeType.UI_WAIT -> {
@@ -481,12 +548,29 @@ class WorkflowViewModel : ViewModel() {
                 val timeout = node.config["timeout"] as? Number ?: 10000
                 
                 result.appendLine("   ⏳ 等待元素: $selector")
-                result.appendLine("   ⏰ 超时时间: ${timeout}ms")
                 
                 if (!com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
                     result.appendLine("   ❌ 无障碍服务未启用")
                 } else {
-                    result.appendLine("   ✅ 等待操作已执行")
+                    try {
+                        val elementSelector = com.carlos.autoflow.workflow.models.ElementSelector.parse(selector)
+                        val operation = com.carlos.autoflow.accessibility.WaitOperation(
+                            elementSelector, timeout.toLong()
+                        )
+                        
+                        val operationResult = com.carlos.autoflow.accessibility.AutoFlowAccessibilityService
+                            .getInstance()?.executeOperation(operation)
+                        
+                        when (operationResult) {
+                            is com.carlos.autoflow.accessibility.OperationResult.Success -> 
+                                result.appendLine("   ✅ 元素已出现")
+                            is com.carlos.autoflow.accessibility.OperationResult.Error -> 
+                                result.appendLine("   ❌ 等待超时: ${operationResult.message}")
+                            null -> result.appendLine("   ❌ 服务不可用")
+                        }
+                    } catch (e: Exception) {
+                        result.appendLine("   ❌ 操作异常: ${e.message}")
+                    }
                 }
             }
             else -> {

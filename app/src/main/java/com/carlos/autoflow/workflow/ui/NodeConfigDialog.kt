@@ -40,6 +40,13 @@ fun NodeConfigDialog(
                     NodeType.DELAY -> DelayConfig(config) { config = it }
                     NodeType.SCRIPT -> ScriptConfig(config) { config = it }
                     NodeType.LOOP -> LoopConfig(config) { config = it }
+                    // UI交互节点配置
+                    NodeType.UI_CLICK -> UIClickConfig(config) { config = it }
+                    NodeType.UI_INPUT -> UIInputConfig(config) { config = it }
+                    NodeType.UI_SCROLL -> UIScrollConfig(config) { config = it }
+                    // UI检测节点配置
+                    NodeType.UI_FIND -> UIFindConfig(config) { config = it }
+                    NodeType.UI_WAIT -> UIWaitConfig(config) { config = it }
                     else -> {
                         Text("此节点暂无配置项", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -208,6 +215,255 @@ private fun LoopConfig(
         },
         label = { Text("循环次数") },
         placeholder = { Text("1") },
+        modifier = Modifier.fillMaxWidth()
+    )
+}
+
+// UI交互节点配置
+@Composable
+private fun UIClickConfig(
+    config: MutableMap<String, Any>,
+    onUpdate: (MutableMap<String, Any>) -> Unit
+) {
+    var selector by remember { mutableStateOf(config["selector"] as? String ?: "") }
+    var clickType by remember { mutableStateOf(config["clickType"] as? String ?: "SINGLE") }
+    
+    OutlinedTextField(
+        value = selector,
+        onValueChange = { 
+            selector = it
+            config["selector"] = it
+            onUpdate(config)
+        },
+        label = { Text("元素选择器") },
+        placeholder = { Text("id=button1 或 text=确定") },
+        modifier = Modifier.fillMaxWidth(),
+        supportingText = {
+            Text(
+                "支持: id=资源ID, text=文本, desc=描述, class=类名",
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    )
+    
+    Spacer(modifier = Modifier.height(8.dp))
+    
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = when(clickType) {
+                "SINGLE" -> "单击"
+                "LONG" -> "长按"
+                else -> "单击"
+            },
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("点击类型") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.menuAnchor().fillMaxWidth()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            listOf("SINGLE" to "单击", "LONG" to "长按").forEach { (value, label) ->
+                DropdownMenuItem(
+                    text = { Text(label) },
+                    onClick = {
+                        clickType = value
+                        config["clickType"] = value
+                        onUpdate(config)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun UIInputConfig(
+    config: MutableMap<String, Any>,
+    onUpdate: (MutableMap<String, Any>) -> Unit
+) {
+    var selector by remember { mutableStateOf(config["selector"] as? String ?: "") }
+    var text by remember { mutableStateOf(config["text"] as? String ?: "") }
+    var clearFirst by remember { mutableStateOf(config["clearFirst"] as? Boolean ?: true) }
+    
+    OutlinedTextField(
+        value = selector,
+        onValueChange = { 
+            selector = it
+            config["selector"] = it
+            onUpdate(config)
+        },
+        label = { Text("元素选择器") },
+        placeholder = { Text("id=editText1 或 text=输入框") },
+        modifier = Modifier.fillMaxWidth()
+    )
+    
+    Spacer(modifier = Modifier.height(8.dp))
+    
+    OutlinedTextField(
+        value = text,
+        onValueChange = { 
+            text = it
+            config["text"] = it
+            onUpdate(config)
+        },
+        label = { Text("输入文本") },
+        modifier = Modifier.fillMaxWidth()
+    )
+    
+    Spacer(modifier = Modifier.height(8.dp))
+    
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Checkbox(
+            checked = clearFirst,
+            onCheckedChange = { 
+                clearFirst = it
+                config["clearFirst"] = it
+                onUpdate(config)
+            }
+        )
+        Text("输入前清空原有内容")
+    }
+}
+
+@Composable
+private fun UIScrollConfig(
+    config: MutableMap<String, Any>,
+    onUpdate: (MutableMap<String, Any>) -> Unit
+) {
+    var direction by remember { mutableStateOf(config["direction"] as? String ?: "down") }
+    var distance by remember { mutableStateOf(config["distance"] as? String ?: "1") }
+    
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = when(direction) {
+                "up" -> "向上"
+                "down" -> "向下"
+                else -> "向下"
+            },
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("滚动方向") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.menuAnchor().fillMaxWidth()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            listOf("up" to "向上", "down" to "向下").forEach { (value, label) ->
+                DropdownMenuItem(
+                    text = { Text(label) },
+                    onClick = {
+                        direction = value
+                        config["direction"] = value
+                        onUpdate(config)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+    
+    Spacer(modifier = Modifier.height(8.dp))
+    
+    OutlinedTextField(
+        value = distance,
+        onValueChange = { 
+            distance = it
+            config["distance"] = it.toIntOrNull() ?: 1
+            onUpdate(config)
+        },
+        label = { Text("滚动距离") },
+        placeholder = { Text("1") },
+        modifier = Modifier.fillMaxWidth()
+    )
+}
+
+@Composable
+private fun UIFindConfig(
+    config: MutableMap<String, Any>,
+    onUpdate: (MutableMap<String, Any>) -> Unit
+) {
+    var selector by remember { mutableStateOf(config["selector"] as? String ?: "") }
+    var multiple by remember { mutableStateOf(config["multiple"] as? Boolean ?: false) }
+    
+    OutlinedTextField(
+        value = selector,
+        onValueChange = { 
+            selector = it
+            config["selector"] = it
+            onUpdate(config)
+        },
+        label = { Text("查找条件") },
+        placeholder = { Text("id=button 或 text=按钮") },
+        modifier = Modifier.fillMaxWidth()
+    )
+    
+    Spacer(modifier = Modifier.height(8.dp))
+    
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Checkbox(
+            checked = multiple,
+            onCheckedChange = { 
+                multiple = it
+                config["multiple"] = it
+                onUpdate(config)
+            }
+        )
+        Text("查找多个元素")
+    }
+}
+
+@Composable
+private fun UIWaitConfig(
+    config: MutableMap<String, Any>,
+    onUpdate: (MutableMap<String, Any>) -> Unit
+) {
+    var selector by remember { mutableStateOf(config["selector"] as? String ?: "") }
+    var timeout by remember { mutableStateOf(config["timeout"] as? String ?: "10000") }
+    
+    OutlinedTextField(
+        value = selector,
+        onValueChange = { 
+            selector = it
+            config["selector"] = it
+            onUpdate(config)
+        },
+        label = { Text("等待元素") },
+        placeholder = { Text("id=loading 或 text=加载完成") },
+        modifier = Modifier.fillMaxWidth()
+    )
+    
+    Spacer(modifier = Modifier.height(8.dp))
+    
+    OutlinedTextField(
+        value = timeout,
+        onValueChange = { 
+            timeout = it
+            config["timeout"] = it.toLongOrNull() ?: 10000L
+            onUpdate(config)
+        },
+        label = { Text("超时时间 (毫秒)") },
+        placeholder = { Text("10000") },
         modifier = Modifier.fillMaxWidth()
     )
 }
