@@ -90,15 +90,34 @@ fun WorkflowNodeView(
                     )
                     
                     if (isSelected) {
-                        IconButton(
-                            onClick = onDelete,
-                            modifier = Modifier.size(20.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = "删除",
-                                modifier = Modifier.size(16.dp)
-                            )
+                        Row {
+                            // 连接按钮（除了END节点）
+                            if (node.type != NodeType.END) {
+                                IconButton(
+                                    onClick = onStartConnection,
+                                    modifier = Modifier.size(20.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Link,
+                                        contentDescription = "连接",
+                                        modifier = Modifier.size(14.dp),
+                                        tint = if (isConnecting) Color(0xFFFF9800) else Color(0xFF4CAF50)
+                                    )
+                                }
+                            }
+                            
+                            // 删除按钮
+                            IconButton(
+                                onClick = onDelete,
+                                modifier = Modifier.size(20.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "删除",
+                                    modifier = Modifier.size(14.dp),
+                                    tint = Color(0xFFE57373)
+                                )
+                            }
                         }
                     }
                 }
@@ -111,7 +130,7 @@ fun WorkflowNodeView(
                         maxLines = 1
                     )
                     
-                    // 显示配置状态
+                    // 显示操作提示
                     if (node.config.isNotEmpty()) {
                         Text(
                             text = "已配置",
@@ -120,9 +139,9 @@ fun WorkflowNodeView(
                         )
                     } else if (node.type != NodeType.START && node.type != NodeType.END) {
                         Text(
-                            text = "双击配置",
+                            text = if (isSelected) "双击配置" else "点击选择",
                             fontSize = 10.sp,
-                            color = Color(0xFFFF9800)
+                            color = if (isSelected) Color(0xFFFF9800) else Color.Gray
                         )
                     }
                 }
