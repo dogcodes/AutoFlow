@@ -127,6 +127,22 @@ class WorkflowViewModel : ViewModel() {
     fun cancelConnection() {
         _connectingNodeId.value = null
     }
+    
+    fun updateNodeConfig(nodeId: String, config: Map<String, Any>) {
+        val currentWorkflow = _workflow.value
+        val updatedNodes = currentWorkflow.nodes.map { node ->
+            if (node.id == nodeId) {
+                node.copy(config = config)
+            } else {
+                node
+            }
+        }
+        
+        _workflow.value = currentWorkflow.copy(
+            nodes = updatedNodes,
+            updatedAt = System.currentTimeMillis()
+        )
+    }
 
     private fun createEmptyWorkflow() = Workflow(
         id = UUID.randomUUID().toString(),

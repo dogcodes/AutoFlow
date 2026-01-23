@@ -2,19 +2,15 @@ package com.carlos.autoflow.workflow.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -34,81 +30,134 @@ fun WorkflowNodeView(
     onMove: (Float, Float) -> Unit,
     onSelect: () -> Unit,
     onDelete: () -> Unit,
-    onDoubleClick: () -> Unit = {},
+    onConfig: () -> Unit = {},
+    onStartConnection: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var isDragging by remember { mutableStateOf(false) }
+    var showContextMenu by remember { mutableStateOf(false) }
     val density = LocalDensity.current
 
-    Card(
-        modifier = modifier
-            .size(160.dp, 100.dp)
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = { isDragging = true },
-                    onDragEnd = { isDragging = false }
-                ) { _, dragAmount ->
-                    // 将像素转换为dp
-                    val deltaXDp = with(density) { dragAmount.x.toDp().value }
-                    val deltaYDp = with(density) { dragAmount.y.toDp().value }
-                    onMove(deltaXDp, deltaYDp)
+    Box {
+        Card(
+            modifier = modifier
+                .size(160.dp, 100.dp)
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { isDragging = true },
+                        onDragEnd = { isDragging = false }
+                    ) { _, dragAmount ->
+                        val deltaXDp = with(density) { dragAmount.x.toDp().value }
+                        val deltaYDp = with(density) { dragAmount.y.toDp().value }
+                        onMove(deltaXDp, deltaYDp)
+                    }
                 }
-            }
-            .combinedClickable(
-                onClick = onSelect,
-                onDoubleClick = onDoubleClick
+                .combinedClickable(
+                    onClick = onSelect,
+                    onDoubleClick = onConfig,
+                    onLongClick = { showContextMenu = true }
+                ),
+            colors = CardDefaults.cardColors(
+                containerColor = when {
+                    isConnecting -> Color(0xFFFFEB3B).copy(alpha = 0.3f)
+                    isSelected -> Color(0xFFE3F2FD)
+                    else -> Color.White
+                }
             ),
-        colors = CardDefaults.cardColors(
-            containerColor = when {
-                isConnecting -> Color(0xFFFFEB3B).copy(alpha = 0.3f) // 黄色连接状态
-                isSelected -> Color(0xFFE3F2FD) // 蓝色选中状态
-                else -> Color.White
-            }
-        ),
-        border = when {
-            isConnecting -> BorderStroke(3.dp, Color(0xFFFF9800)) // 橙色连接边框
-            isSelected -> BorderStroke(2.dp, Color(0xFF1976D2)) // 蓝色选中边框
-            else -> null
-        },
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isDragging) 8.dp else 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+            border = when {
+                isConnecting -> BorderStroke(3.dp, Color(0xFFFF9800))
+                isSelected -> BorderStroke(2.dp, Color(0xFF1976D2))
+                else -> null
+            },
+            elevation = CardDefaults.cardElevation(defaultElevation = if (isDragging) 8.dp else 2.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Icon(
-                    imageVector = getNodeIcon(node.type),
-                    contentDescription = null,
-                    tint = Color(0xFF1976D2),
-                    modifier = Modifier.size(20.dp)
-                )
-                
-                if (isSelected) {
-                    IconButton(
-                        onClick = onDelete,
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = getNodeIcon(node.type),
+                        contentDescription = null,
+                        tint = Color(0xFF1976D2),
                         modifier = Modifier.size(20.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = "删除",
-                            modifier = Modifier.size(16.dp)
+                    )
+                    
+                    if (isSelected) {
+                        IconButton(
+                            onClick = onDelete,
+                            modifier = Modifier.size(20.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "删除",
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+                
+                Column {
+                    Text(
+                        text = node.title,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1
+                    )
+                    
+                    // 显示配置状态
+                    if (node.config.isNotEmpty()) {
+                        Text(
+                            text = "已配置",
+                            fontSize = 10.sp,
+                            color = Color(0xFF4CAF50)
+                        )
+                    } else if (node.type != NodeType.START && node.type != NodeType.END) {
+                        Text(
+                            text = "双击配置",
+                            fontSize = 10.sp,
+                            color = Color(0xFFFF9800)
                         )
                     }
                 }
             }
-            
-            Text(
-                text = node.title,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                maxLines = 2
+        }
+        
+        // 右键菜单
+        DropdownMenu(
+            expanded = showContextMenu,
+            onDismissRequest = { showContextMenu = false }
+        ) {
+            if (node.type != NodeType.START && node.type != NodeType.END) {
+                DropdownMenuItem(
+                    text = { Text("⚙️ 配置节点") },
+                    onClick = {
+                        showContextMenu = false
+                        onConfig()
+                    }
+                )
+            }
+            if (node.type != NodeType.END) {
+                DropdownMenuItem(
+                    text = { Text("🔗 开始连接") },
+                    onClick = {
+                        showContextMenu = false
+                        onStartConnection()
+                    }
+                )
+            }
+            DropdownMenuItem(
+                text = { Text("🗑️ 删除节点") },
+                onClick = {
+                    showContextMenu = false
+                    onDelete()
+                }
             )
         }
     }

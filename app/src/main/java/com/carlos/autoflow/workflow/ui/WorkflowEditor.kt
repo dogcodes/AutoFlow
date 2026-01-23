@@ -39,7 +39,9 @@ import com.carlos.autoflow.workflow.ui.CanvasBackground
 import com.carlos.autoflow.workflow.ui.ImportDialog
 import com.carlos.autoflow.workflow.ui.ExportDialog
 import com.carlos.autoflow.workflow.ui.ExecuteResultDialog
+import com.carlos.autoflow.workflow.ui.NodeConfigDialog
 import com.carlos.autoflow.workflow.models.NodeType
+import com.carlos.autoflow.workflow.models.WorkflowNode
 import com.carlos.autoflow.workflow.viewmodel.CanvasViewModel
 import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
 import kotlinx.coroutines.delay
@@ -65,6 +67,7 @@ fun WorkflowEditor(
     var showExecuteDialog by remember { mutableStateOf(false) }
     var executeResult by remember { mutableStateOf("") }
     var importError by remember { mutableStateOf<String?>(null) }
+    var configNode by remember { mutableStateOf<WorkflowNode?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         CanvasBackground(
@@ -107,7 +110,8 @@ fun WorkflowEditor(
                 workflow = workflow,
                 selectedNodeId = selectedNodeId,
                 connectingNodeId = connectingNodeId,
-                workflowViewModel = workflowViewModel
+                workflowViewModel = workflowViewModel,
+                onShowNodeConfig = { node -> configNode = node }
             )
         }
 
@@ -175,6 +179,18 @@ fun WorkflowEditor(
         ExecuteResultDialog(
             result = executeResult,
             onDismiss = { showExecuteDialog = false }
+        )
+    }
+
+    // 节点配置对话框
+    configNode?.let { node ->
+        NodeConfigDialog(
+            node = node,
+            onDismiss = { configNode = null },
+            onSave = { config ->
+                workflowViewModel.updateNodeConfig(node.id, config)
+                configNode = null
+            }
         )
     }
 }

@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.carlos.autoflow.workflow.models.NodeType
+import com.carlos.autoflow.workflow.models.WorkflowNode
 import com.carlos.autoflow.workflow.models.Workflow
 import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
 
@@ -15,7 +15,8 @@ fun WorkflowNodes(
     workflow: Workflow,
     selectedNodeId: String?,
     connectingNodeId: String?,
-    workflowViewModel: WorkflowViewModel
+    workflowViewModel: WorkflowViewModel,
+    onShowNodeConfig: (WorkflowNode) -> Unit = {}
 ) {
     workflow.nodes.forEach { node ->
         key(node.id) {
@@ -27,11 +28,7 @@ fun WorkflowNodes(
                     isSelected = selectedNodeId == node.id,
                     isConnecting = connectingNodeId == node.id,
                     onMove = { deltaX, deltaY ->
-                        workflowViewModel.moveNode(
-                            node.id,
-                            deltaX,
-                            deltaY
-                        )
+                        workflowViewModel.moveNode(node.id, deltaX, deltaY)
                     },
                     onSelect = {
                         if (connectingNodeId != null) {
@@ -41,13 +38,10 @@ fun WorkflowNodes(
                         }
                     },
                     onDelete = { workflowViewModel.deleteNode(node.id) },
-                    onDoubleClick = {
+                    onConfig = { onShowNodeConfig(node) },
+                    onStartConnection = { 
                         if (connectingNodeId == null) {
-                            if (node.type == NodeType.END) {
-                                workflowViewModel.selectNode("end_tip_${node.id}")
-                            } else {
-                                workflowViewModel.startConnection(node.id)
-                            }
+                            workflowViewModel.startConnection(node.id)
                         } else {
                             workflowViewModel.cancelConnection()
                         }
