@@ -1,5 +1,6 @@
 package com.carlos.autoflow.workflow.ui
 
+import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -35,6 +36,9 @@ import com.carlos.autoflow.workflow.ui.WorkflowControls
 import com.carlos.autoflow.workflow.ui.WorkflowNodes
 import com.carlos.autoflow.workflow.ui.WorkflowConnections
 import com.carlos.autoflow.workflow.ui.CanvasBackground
+import com.carlos.autoflow.workflow.ui.ImportDialog
+import com.carlos.autoflow.workflow.ui.ExportDialog
+import com.carlos.autoflow.workflow.ui.ExecuteResultDialog
 import com.carlos.autoflow.workflow.models.NodeType
 import com.carlos.autoflow.workflow.viewmodel.CanvasViewModel
 import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
@@ -60,6 +64,7 @@ fun WorkflowEditor(
     var showExportDialog by remember { mutableStateOf(false) }
     var showExecuteDialog by remember { mutableStateOf(false) }
     var executeResult by remember { mutableStateOf("") }
+    var importError by remember { mutableStateOf<String?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         CanvasBackground(
@@ -131,11 +136,30 @@ fun WorkflowEditor(
     // 对话框处理
     if (showImportDialog) {
         ImportDialog(
-            onDismiss = { showImportDialog = false },
-            onImport = { json ->
-                workflowViewModel.importFromJson(json)
+            onDismiss = { 
                 showImportDialog = false
-            }
+                importError = null
+            },
+            onImport = { json ->
+                val success = workflowViewModel.importFromJson(json)
+                if (success) {
+                    showImportDialog = false
+                    importError = null
+                } else {
+                    importError = "JSON格式错误"
+                }
+            },
+            onImportFromUrl = { url ->
+                workflowViewModel.loadFromUrl(url) { success, error ->
+                    if (success) {
+                        showImportDialog = false
+                        importError = null
+                    } else {
+                        importError = error ?: "未知错误"
+                    }
+                }
+            },
+            errorMessage = importError
         )
     }
 

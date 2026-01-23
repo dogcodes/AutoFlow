@@ -4,5 +4,6 @@
         <domain includeSubdomains="true">api.github.com</domain>
         <domain includeSubdomains="true">httpbin.org</domain>
         <domain includeSubdomains="true">jsonplaceholder.typicode.com</domain>
+        <domain includeSubdomains="true">xbdcc.cn</domain>
     </domain-config>
 </network-security-config>

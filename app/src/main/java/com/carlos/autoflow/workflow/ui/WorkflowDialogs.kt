@@ -18,28 +18,89 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun ImportDialog(
     onDismiss: () -> Unit,
-    onImport: (String) -> Unit
+    onImport: (String) -> Unit,
+    onImportFromUrl: (String) -> Unit,
+    errorMessage: String? = null
 ) {
     var jsonText by remember { mutableStateOf("") }
+    var urlText by remember { mutableStateOf("") }
+    var selectedTab by remember { mutableStateOf(0) }
     
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("导入工作流") },
         text = {
-            OutlinedTextField(
-                value = jsonText,
-                onValueChange = { jsonText = it },
-                label = { Text("JSON配置") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                maxLines = 10
-            )
+            Column {
+                // 标签页选择
+                Row {
+                    TextButton(
+                        onClick = { selectedTab = 0 },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = if (selectedTab == 0) MaterialTheme.colorScheme.primary else Color.Gray
+                        )
+                    ) {
+                        Text("JSON文本")
+                    }
+                    TextButton(
+                        onClick = { selectedTab = 1 },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = if (selectedTab == 1) MaterialTheme.colorScheme.primary else Color.Gray
+                        )
+                    ) {
+                        Text("URL链接")
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                when (selectedTab) {
+                    0 -> {
+                        OutlinedTextField(
+                            value = jsonText,
+                            onValueChange = { jsonText = it },
+                            label = { Text("JSON配置") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            maxLines = 10
+                        )
+                    }
+                    1 -> {
+                        OutlinedTextField(
+                            value = urlText,
+                            onValueChange = { urlText = it },
+                            label = { Text("配置文件URL") },
+                            placeholder = { Text("https://example.com/workflow.json") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                    }
+                }
+                
+                // 错误信息显示
+                if (errorMessage != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "❌ $errorMessage",
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp
+                    )
+                }
+            }
         },
         confirmButton = {
             TextButton(
-                onClick = { onImport(jsonText) },
-                enabled = jsonText.isNotBlank()
+                onClick = {
+                    when (selectedTab) {
+                        0 -> onImport(jsonText)
+                        1 -> onImportFromUrl(urlText)
+                    }
+                },
+                enabled = when (selectedTab) {
+                    0 -> jsonText.isNotBlank()
+                    1 -> urlText.isNotBlank()
+                    else -> false
+                }
             ) {
                 Text("导入")
             }

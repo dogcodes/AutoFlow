@@ -221,9 +221,56 @@ class WorkflowViewModel : ViewModel() {
         _workflow.value = sampleWorkflow
     }
     
+    fun loadFromUrl(url: String, onResult: (Boolean, String?) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                println("开始从URL加载: $url")
+                val request = Request.Builder()
+                    .url(url)
+                    .addHeader("User-Agent", "AutoFlow/1.0")
+                    .addHeader("Accept", "application/json, text/plain, */*")
+                    .build()
+                
+                val response = httpClient.newCall(request).execute()
+                
+                println("响应状态码: ${response.code}")
+                
+                if (response.isSuccessful) {
+                    val json = response.body?.string() ?: ""
+                    println("响应内容长度: ${json.length}")
+                    println("响应内容预览: ${json.take(200)}")
+                    
+                    if (json.isBlank()) {
+                        withContext(Dispatchers.Main) {
+                            onResult(false, "响应内容为空")
+                        }
+                        return@launch
+                    }
+                    
+                    withContext(Dispatchers.Main) {
+                        val success = importFromJson(json)
+                        onResult(success, if (success) null else "JSON解析失败")
+                    }
+                } else {
+                    val errorBody = response.body?.string() ?: ""
+                    println("错误响应: $errorBody")
+                    withContext(Dispatchers.Main) {
+                        onResult(false, "HTTP ${response.code}: ${response.message}")
+                    }
+                }
+            } catch (e: Exception) {
+                println("URL加载异常: ${e.javaClass.simpleName} - ${e.message}")
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    onResult(false, "${e.javaClass.simpleName}: ${e.message}")
+                }
+            }
+        }
+    }
+    
     // 工作流执行引擎
     fun executeWorkflow(onResult: (String) -> Unit) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = StringBuilder()
                 result.appendLine("🚀 开始执行工作流: ${_workflow.value.name}")
@@ -238,10 +285,14 @@ class WorkflowViewModel : ViewModel() {
                 }
                 
                 result.appendLine("✅ 工作流执行完成")
-                onResult(result.toString())
+                withContext(Dispatchers.Main) {
+                    onResult(result.toString())
+                }
                 
             } catch (e: Exception) {
-                onResult("❌ 执行失败: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    onResult("❌ 执行失败: ${e.message}")
+                }
             }
         }
     }
@@ -281,10 +332,8 @@ class WorkflowViewModel : ViewModel() {
                     val request = requestBuilder.build()
                     result.appendLine("   ⏳ 发送请求...")
                     
-                    // 在IO线程执行网络请求
-                    val response = withContext(Dispatchers.IO) {
-                        httpClient.newCall(request).execute()
-                    }
+                    // 直接执行网络请求（已在IO线程中）
+                    val response = httpClient.newCall(request).execute()
                     val responseBody = response.body?.string() ?: ""
                     
                     result.appendLine("   📊 状态码: ${response.code}")
