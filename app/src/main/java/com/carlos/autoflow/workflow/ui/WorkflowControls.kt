@@ -57,23 +57,30 @@ fun WorkflowControls(
             NodeSelectionPanel(
                 onNodeSelected = { nodeType ->
                     workflowViewModel.addNode(nodeType, 100f, 100f)
-                }
+                },
+                onClose = { isPanelVisible = false }
             )
         }
         
         // 切换节点选择面板可见性的FAB
-        FloatingActionButton(
-            onClick = { isPanelVisible = !isPanelVisible },
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(Dimens.WorkflowEditor.DefaultPadding),
-            containerColor = MaterialTheme.colorScheme.primary
+        AnimatedVisibility(
+            visible = !isPanelVisible,
+            enter = slideInHorizontally(),
+            exit = slideOutHorizontally(),
+            modifier = Modifier.align(Alignment.TopStart)
         ) {
-            Icon(
-                imageVector = if (isPanelVisible) Icons.Default.Close else Icons.Default.Menu,
-                contentDescription = if (isPanelVisible) "关闭节点面板" else "打开节点面板",
-                tint = Color.White
-            )
+            FloatingActionButton(
+                onClick = { isPanelVisible = true },
+                modifier = Modifier
+                    .padding(Dimens.WorkflowEditor.DefaultPadding),
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "打开节点面板",
+                    tint = Color.White
+                )
+            }
         }
 
         Column(

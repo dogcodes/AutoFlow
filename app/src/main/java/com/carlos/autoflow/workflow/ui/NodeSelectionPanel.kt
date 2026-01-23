@@ -28,6 +28,7 @@ data class NodeTemplate(
 @Composable
 fun NodeSelectionPanel(
     onNodeSelected: (NodeType) -> Unit,
+    onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val nodeTemplates = listOf(
@@ -53,12 +54,25 @@ fun NodeSelectionPanel(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            Text(
-                text = "节点库",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1976D2)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "节点库",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1976D2)
+                )
+                IconButton(onClick = onClose) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "关闭面板",
+                        tint = Color(0xFF1976D2)
+                    )
+                }
+            }
             
             Spacer(modifier = Modifier.height(16.dp))
             
