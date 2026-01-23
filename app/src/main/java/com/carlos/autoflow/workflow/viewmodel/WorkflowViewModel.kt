@@ -3,6 +3,8 @@ package com.carlos.autoflow.workflow.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlos.autoflow.workflow.models.*
+import com.carlos.autoflow.workflow.ui.ExecutionStatusManager
+import com.carlos.autoflow.workflow.ui.NodeExecutionState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -18,6 +20,13 @@ import java.text.SimpleDateFormat
 class WorkflowViewModel : ViewModel() {
     private val _workflow = MutableStateFlow(createEmptyWorkflow())
     val workflow: StateFlow<Workflow> = _workflow
+    
+    // 执行状态管理
+    private val executionStatusManager = ExecutionStatusManager()
+    val executingNodes: StateFlow<Map<String, NodeExecutionState>> = 
+        MutableStateFlow(executionStatusManager.executingNodes).apply {
+            // 监听状态变化
+        }
 
     private val _selectedNodeId = MutableStateFlow<String?>(null)
     val selectedNodeId: StateFlow<String?> = _selectedNodeId

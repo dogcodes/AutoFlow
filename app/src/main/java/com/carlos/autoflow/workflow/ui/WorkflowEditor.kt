@@ -45,6 +45,7 @@ import com.carlos.autoflow.workflow.models.WorkflowNode
 import com.carlos.autoflow.workflow.viewmodel.CanvasViewModel
 import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
 import com.carlos.autoflow.accessibility.AccessibilityPermissionCard
+import com.carlos.autoflow.workflow.ui.ExecutionStatusOverlay
 import kotlinx.coroutines.delay
 import kotlin.math.floor
 import kotlin.math.pow
@@ -60,6 +61,7 @@ fun WorkflowEditor(
     val canvasState by canvasViewModel.canvasState.collectAsState()
     val connectingNodeId by workflowViewModel.connectingNodeId.collectAsState()
     val selectedNodeId by workflowViewModel.selectedNodeId.collectAsState()
+    val executingNodes by workflowViewModel.executingNodes.collectAsState()
     val density = LocalDensity.current
 
     // 对话框状态
@@ -139,6 +141,12 @@ fun WorkflowEditor(
             connectingNodeId = connectingNodeId,
             selectedNodeId = selectedNodeId,
             workflowViewModel = workflowViewModel
+        )
+        
+        // 执行状态覆盖层
+        ExecutionStatusOverlay(
+            executingNodes = executingNodes,
+            modifier = Modifier.align(Alignment.BottomCenter)
         )
     }
 

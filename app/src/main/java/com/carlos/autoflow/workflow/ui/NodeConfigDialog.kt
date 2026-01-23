@@ -6,11 +6,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carlos.autoflow.workflow.models.NodeType
 import com.carlos.autoflow.workflow.models.WorkflowNode
+import com.carlos.autoflow.accessibility.ElementPickerDialog
 
 @Composable
 fun NodeConfigDialog(
@@ -227,25 +229,50 @@ private fun UIClickConfig(
 ) {
     var selector by remember { mutableStateOf(config["selector"] as? String ?: "") }
     var clickType by remember { mutableStateOf(config["clickType"] as? String ?: "SINGLE") }
+    var showElementPicker by remember { mutableStateOf(false) }
     
-    OutlinedTextField(
-        value = selector,
-        onValueChange = { 
-            selector = it
-            config["selector"] = it
-            onUpdate(config)
-        },
-        label = { Text("元素选择器") },
-        placeholder = { Text("id=button1 或 text=确定") },
+    Row(
         modifier = Modifier.fillMaxWidth(),
-        supportingText = {
-            Text(
-                "支持: id=资源ID, text=文本, desc=描述, class=类名",
-                fontSize = 10.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        OutlinedTextField(
+            value = selector,
+            onValueChange = { 
+                selector = it
+                config["selector"] = it
+                onUpdate(config)
+            },
+            label = { Text("元素选择器") },
+            placeholder = { Text("id=button1 或 text=确定") },
+            modifier = Modifier.weight(1f),
+            supportingText = {
+                Text(
+                    "支持: id=资源ID, text=文本, desc=描述, class=类名",
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        )
+        
+        OutlinedButton(
+            onClick = { showElementPicker = true },
+            modifier = Modifier.align(Alignment.CenterVertically)
+        ) {
+            Text("拾取")
         }
-    )
+    }
+    
+    if (showElementPicker) {
+        ElementPickerDialog(
+            onDismiss = { showElementPicker = false },
+            onElementSelected = { selectedSelector ->
+                selector = selectedSelector
+                config["selector"] = selectedSelector
+                onUpdate(config)
+                showElementPicker = false
+            }
+        )
+    }
     
     Spacer(modifier = Modifier.height(8.dp))
     
