@@ -5,16 +5,22 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.FileOpen
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,21 +40,19 @@ import com.carlos.autoflow.ui.theme.Dimens
 import com.carlos.autoflow.workflow.viewmodel.CanvasViewModel
 import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
 
-import androidx.compose.runtime.collectAsState
-
 @Composable
 fun WorkflowControls(
     workflowViewModel: WorkflowViewModel = viewModel(),
-    canvasViewModel: CanvasViewModel = viewModel()
+    canvasViewModel: CanvasViewModel = viewModel(),
+    onShowImportDialog: () -> Unit = {},
+    onShowExportDialog: () -> Unit = {},
+    onShowExecuteDialog: () -> Unit = {}
 ) {
-    // Collect canvasState to get the current scale
     val canvasState by canvasViewModel.canvasState.collectAsState()
-
-    // 控制节点选择面板的显示/隐藏状态
     var isPanelVisible by remember { mutableStateOf(false) }
 
-    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
-        // UI元素（面板、按钮等）保持在最上层，不受缩放影响
+    Box(modifier = Modifier.fillMaxSize()) {
+        // 节点选择面板
         AnimatedVisibility(
             visible = isPanelVisible,
             enter = slideInHorizontally(),
@@ -62,7 +67,7 @@ fun WorkflowControls(
             )
         }
         
-        // 切换节点选择面板可见性的FAB
+        // 左上角：节点面板按钮
         AnimatedVisibility(
             visible = !isPanelVisible,
             enter = slideInHorizontally(),
@@ -71,8 +76,7 @@ fun WorkflowControls(
         ) {
             FloatingActionButton(
                 onClick = { isPanelVisible = true },
-                modifier = Modifier
-                    .padding(Dimens.WorkflowEditor.DefaultPadding),
+                modifier = Modifier.padding(Dimens.WorkflowEditor.DefaultPadding),
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(
@@ -83,6 +87,52 @@ fun WorkflowControls(
             }
         }
 
+        // 顶部中央：功能按钮组
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(Dimens.WorkflowEditor.DefaultPadding)
+        ) {
+            FloatingActionButton(
+                onClick = onShowImportDialog,
+                modifier = Modifier.size(48.dp),
+                containerColor = MaterialTheme.colorScheme.tertiary
+            ) {
+                Icon(Icons.Default.FileOpen, "导入", tint = Color.White)
+            }
+            
+            Spacer(modifier = Modifier.width(8.dp))
+            
+            FloatingActionButton(
+                onClick = { workflowViewModel.loadSampleWorkflow() },
+                modifier = Modifier.size(48.dp),
+                containerColor = MaterialTheme.colorScheme.secondary
+            ) {
+                Icon(Icons.Default.Lightbulb, "示例", tint = Color.White)
+            }
+            
+            Spacer(modifier = Modifier.width(8.dp))
+            
+            FloatingActionButton(
+                onClick = onShowExportDialog,
+                modifier = Modifier.size(48.dp),
+                containerColor = MaterialTheme.colorScheme.tertiary
+            ) {
+                Icon(Icons.Default.Save, "导出", tint = Color.White)
+            }
+            
+            Spacer(modifier = Modifier.width(8.dp))
+            
+            FloatingActionButton(
+                onClick = onShowExecuteDialog,
+                modifier = Modifier.size(48.dp),
+                containerColor = Color(0xFF4CAF50)
+            ) {
+                Icon(Icons.Default.PlayArrow, "执行", tint = Color.White)
+            }
+        }
+
+        // 右下角：缩放控制
         Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -96,7 +146,6 @@ fun WorkflowControls(
                 Icon(Icons.Default.Add, contentDescription = "放大")
             }
 
-            // Zoom percentage display
             Spacer(modifier = Modifier.height(Dimens.WorkflowEditor.SmallPadding))
             Text(
                 text = "${(canvasState.scale * 100).toInt()}%",

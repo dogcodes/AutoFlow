@@ -55,8 +55,11 @@ fun WorkflowEditor(
     val selectedNodeId by workflowViewModel.selectedNodeId.collectAsState()
     val density = LocalDensity.current
 
-    // 控制节点选择面板的显示/隐藏状态
-    var isPanelVisible by remember { mutableStateOf(false) }
+    // 对话框状态
+    var showImportDialog by remember { mutableStateOf(false) }
+    var showExportDialog by remember { mutableStateOf(false) }
+    var showExecuteDialog by remember { mutableStateOf(false) }
+    var executeResult by remember { mutableStateOf("") }
 
     Box(modifier = Modifier.fillMaxSize()) {
         CanvasBackground(
@@ -106,15 +109,47 @@ fun WorkflowEditor(
 
         WorkflowControls(
             workflowViewModel = workflowViewModel,
-            canvasViewModel = canvasViewModel
+            canvasViewModel = canvasViewModel,
+            onShowImportDialog = { showImportDialog = true },
+            onShowExportDialog = { showExportDialog = true },
+            onShowExecuteDialog = { 
+                showExecuteDialog = true
+                workflowViewModel.executeWorkflow { result ->
+                    executeResult = result
+                }
+            }
         )
-
 
         WorkflowStatusMessages(
             workflow = workflow,
             connectingNodeId = connectingNodeId,
             selectedNodeId = selectedNodeId,
             workflowViewModel = workflowViewModel
+        )
+    }
+
+    // 对话框处理
+    if (showImportDialog) {
+        ImportDialog(
+            onDismiss = { showImportDialog = false },
+            onImport = { json ->
+                workflowViewModel.importFromJson(json)
+                showImportDialog = false
+            }
+        )
+    }
+
+    if (showExportDialog) {
+        ExportDialog(
+            json = workflowViewModel.exportToJson(),
+            onDismiss = { showExportDialog = false }
+        )
+    }
+
+    if (showExecuteDialog) {
+        ExecuteResultDialog(
+            result = executeResult,
+            onDismiss = { showExecuteDialog = false }
         )
     }
 }

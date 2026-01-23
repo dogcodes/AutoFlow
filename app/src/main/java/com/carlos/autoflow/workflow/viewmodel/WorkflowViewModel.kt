@@ -1,10 +1,16 @@
 package com.carlos.autoflow.workflow.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.carlos.autoflow.workflow.models.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import java.util.*
+import com.google.gson.Gson
+import okhttp3.*
+import java.io.IOException
+import java.text.SimpleDateFormat
 
 class WorkflowViewModel : ViewModel() {
     private val _workflow = MutableStateFlow(createEmptyWorkflow())
@@ -12,6 +18,10 @@ class WorkflowViewModel : ViewModel() {
 
     private val _selectedNodeId = MutableStateFlow<String?>(null)
     val selectedNodeId: StateFlow<String?> = _selectedNodeId
+    
+    // 第二阶段新增：JSON和HTTP支持
+    private val gson = Gson()
+    private val httpClient = OkHttpClient()
 
     fun addNode(type: NodeType, x: Float, y: Float) {
         val newNode = WorkflowNode(
@@ -151,5 +161,137 @@ class WorkflowViewModel : ViewModel() {
         NodeType.LOOP -> listOf(NodeOutput("output", "输出", "any"))
         NodeType.DELAY -> listOf(NodeOutput("output", "输出", "any"))
         NodeType.SCRIPT -> listOf(NodeOutput("result", "结果", "any"))
+    }
+    
+    // 第二阶段新增功能：配置管理
+    fun exportToJson(): String = gson.toJson(_workflow.value)
+
+    fun importFromJson(json: String): Boolean {
+        return try {
+            val workflow = gson.fromJson(json, Workflow::class.java)
+            _workflow.value = workflow.copy(updatedAt = System.currentTimeMillis())
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun loadSampleWorkflow() {
+        val sampleWorkflow = Workflow(
+            id = "sample-workflow",
+            name = "示例工作流",
+            description = "获取GitHub用户信息的示例工作流",
+            nodes = listOf(
+                WorkflowNode(
+                    id = "start",
+                    type = NodeType.START,
+                    title = "开始",
+                    x = 100f, y = 200f,
+                    outputs = listOf(NodeOutput("out", "输出", "any"))
+                ),
+                WorkflowNode(
+                    id = "http",
+                    type = NodeType.HTTP_REQUEST,
+                    title = "获取GitHub用户",
+                    x = 350f, y = 200f,
+                    inputs = listOf(NodeInput("in", "输入", "any", true)),
+                    outputs = listOf(NodeOutput("response", "响应", "object")),
+                    config = mapOf(
+                        "url" to "https://api.github.com/users/octocat",
+                        "method" to "GET"
+                    )
+                ),
+                WorkflowNode(
+                    id = "end",
+                    type = NodeType.END,
+                    title = "结束",
+                    x = 600f, y = 200f,
+                    inputs = listOf(NodeInput("in", "输入", "any"))
+                )
+            ),
+            connections = listOf(
+                WorkflowConnection("c1", "start", "out", "http", "in"),
+                WorkflowConnection("c2", "http", "response", "end", "in")
+            )
+        )
+        
+        _workflow.value = sampleWorkflow
+    }
+    
+    // 工作流执行引擎
+    fun executeWorkflow(onResult: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val result = StringBuilder()
+                result.appendLine("🚀 开始执行工作流: ${_workflow.value.name}")
+                result.appendLine("⏰ 执行时间: ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
+                result.appendLine()
+                
+                val executedNodes = mutableSetOf<String>()
+                val startNode = _workflow.value.nodes.find { it.type == NodeType.START }
+                
+                if (startNode != null) {
+                    executeNode(startNode, result, executedNodes)
+                }
+                
+                result.appendLine("✅ 工作流执行完成")
+                onResult(result.toString())
+                
+            } catch (e: Exception) {
+                onResult("❌ 执行失败: ${e.message}")
+            }
+        }
+    }
+
+    private suspend fun executeNode(
+        node: WorkflowNode, 
+        result: StringBuilder, 
+        executed: MutableSet<String>
+    ) {
+        if (node.id in executed) return
+        executed.add(node.id)
+        
+        result.appendLine("📍 执行节点: ${node.title} (${node.type.displayName})")
+        
+        when (node.type) {
+            NodeType.START -> {
+                result.appendLine("   ▶️ 工作流启动")
+            }
+            NodeType.HTTP_REQUEST -> {
+                val url = node.config["url"] as? String ?: "未配置URL"
+                result.appendLine("   🌐 请求URL: $url")
+                
+                try {
+                    val request = Request.Builder().url(url).build()
+                    val response = httpClient.newCall(request).execute()
+                    val responseBody = response.body?.string() ?: ""
+                    
+                    result.appendLine("   📊 状态码: ${response.code}")
+                    result.appendLine("   📄 响应长度: ${responseBody.length} 字符")
+                    if (responseBody.length < 200) {
+                        result.appendLine("   📝 响应内容: ${responseBody.take(100)}...")
+                    }
+                } catch (e: Exception) {
+                    result.appendLine("   ❌ 请求失败: ${e.message}")
+                }
+            }
+            NodeType.END -> {
+                result.appendLine("   🏁 工作流结束")
+            }
+            else -> {
+                result.appendLine("   ⚙️ 节点处理完成")
+            }
+        }
+        
+        result.appendLine()
+        
+        // 执行下一个连接的节点
+        val connections = _workflow.value.connections.filter { it.sourceNodeId == node.id }
+        connections.forEach { connection ->
+            val nextNode = _workflow.value.nodes.find { it.id == connection.targetNodeId }
+            if (nextNode != null) {
+                executeNode(nextNode, result, executed)
+            }
+        }
     }
 }
