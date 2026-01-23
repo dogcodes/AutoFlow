@@ -39,7 +39,14 @@ fun NodeSelectionPanel(
         NodeTemplate(NodeType.CONDITION, "条件判断", "分支逻辑", Icons.Default.Info),
         NodeTemplate(NodeType.LOOP, "循环", "重复执行", Icons.Default.Refresh),
         NodeTemplate(NodeType.DELAY, "延时", "等待指定时间", Icons.Default.DateRange),
-        NodeTemplate(NodeType.SCRIPT, "脚本", "自定义代码", Icons.Default.Edit)
+        NodeTemplate(NodeType.SCRIPT, "脚本", "自定义代码", Icons.Default.Edit),
+        // UI交互节点
+        NodeTemplate(NodeType.UI_CLICK, "点击操作", "点击屏幕元素", Icons.Default.TouchApp),
+        NodeTemplate(NodeType.UI_INPUT, "文本输入", "输入文本内容", Icons.Default.Keyboard),
+        NodeTemplate(NodeType.UI_SCROLL, "滚动操作", "滚动页面", Icons.Default.SwipeUp),
+        // UI检测节点
+        NodeTemplate(NodeType.UI_FIND, "查找元素", "查找页面元素", Icons.Default.Search),
+        NodeTemplate(NodeType.UI_WAIT, "等待元素", "等待元素出现", Icons.Default.HourglassEmpty)
     )
 
     Card(

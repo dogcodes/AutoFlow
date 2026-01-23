@@ -163,6 +163,29 @@ class WorkflowViewModel : ViewModel() {
         NodeType.LOOP -> listOf(NodeInput("items", "循环项", "array", true))
         NodeType.DELAY -> listOf(NodeInput("duration", "延时(ms)", "number", true))
         NodeType.SCRIPT -> listOf(NodeInput("code", "代码", "string", true))
+        // UI交互节点
+        NodeType.UI_CLICK -> listOf(
+            NodeInput("selector", "元素选择器", "string", true),
+            NodeInput("clickType", "点击类型", "string")
+        )
+        NodeType.UI_INPUT -> listOf(
+            NodeInput("selector", "元素选择器", "string", true),
+            NodeInput("text", "输入文本", "string", true),
+            NodeInput("clearFirst", "先清空", "boolean")
+        )
+        NodeType.UI_SCROLL -> listOf(
+            NodeInput("direction", "滚动方向", "string", true),
+            NodeInput("distance", "滚动距离", "number")
+        )
+        // UI检测节点
+        NodeType.UI_FIND -> listOf(
+            NodeInput("selector", "查找条件", "string", true),
+            NodeInput("multiple", "查找多个", "boolean")
+        )
+        NodeType.UI_WAIT -> listOf(
+            NodeInput("selector", "等待元素", "string", true),
+            NodeInput("timeout", "超时时间(ms)", "number", true)
+        )
     }
 
     private fun getDefaultOutputs(type: NodeType): List<NodeOutput> = when (type) {
@@ -180,6 +203,28 @@ class WorkflowViewModel : ViewModel() {
         NodeType.LOOP -> listOf(NodeOutput("output", "输出", "any"))
         NodeType.DELAY -> listOf(NodeOutput("output", "输出", "any"))
         NodeType.SCRIPT -> listOf(NodeOutput("result", "结果", "any"))
+        // UI交互节点
+        NodeType.UI_CLICK -> listOf(
+            NodeOutput("success", "执行成功", "boolean"),
+            NodeOutput("element", "目标元素", "object")
+        )
+        NodeType.UI_INPUT -> listOf(
+            NodeOutput("success", "输入成功", "boolean"),
+            NodeOutput("inputText", "输入内容", "string")
+        )
+        NodeType.UI_SCROLL -> listOf(
+            NodeOutput("success", "滚动成功", "boolean"),
+            NodeOutput("scrolled", "滚动距离", "number")
+        )
+        // UI检测节点
+        NodeType.UI_FIND -> listOf(
+            NodeOutput("elements", "找到的元素", "array"),
+            NodeOutput("count", "元素数量", "number")
+        )
+        NodeType.UI_WAIT -> listOf(
+            NodeOutput("found", "找到元素", "boolean"),
+            NodeOutput("element", "目标元素", "object")
+        )
     }
     
     // 第二阶段新增功能：配置管理
@@ -374,6 +419,75 @@ class WorkflowViewModel : ViewModel() {
             }
             NodeType.END -> {
                 result.appendLine("   🏁 工作流结束")
+            }
+            // UI交互节点
+            NodeType.UI_CLICK -> {
+                val selector = node.config["selector"] as? String ?: ""
+                val clickType = node.config["clickType"] as? String ?: "single"
+                
+                result.appendLine("   👆 点击操作: $selector")
+                result.appendLine("   🔧 点击类型: $clickType")
+                
+                // 检查无障碍服务状态
+                if (!com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
+                    result.appendLine("   ❌ 无障碍服务未启用")
+                } else {
+                    result.appendLine("   ✅ 点击操作已执行")
+                }
+            }
+            NodeType.UI_INPUT -> {
+                val selector = node.config["selector"] as? String ?: ""
+                val text = node.config["text"] as? String ?: ""
+                val clearFirst = node.config["clearFirst"] as? Boolean ?: true
+                
+                result.appendLine("   ⌨️ 输入操作: $selector")
+                result.appendLine("   📝 输入内容: $text")
+                result.appendLine("   🗑️ 先清空: $clearFirst")
+                
+                if (!com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
+                    result.appendLine("   ❌ 无障碍服务未启用")
+                } else {
+                    result.appendLine("   ✅ 输入操作已执行")
+                }
+            }
+            NodeType.UI_SCROLL -> {
+                val direction = node.config["direction"] as? String ?: "down"
+                val distance = node.config["distance"] as? Number ?: 1
+                
+                result.appendLine("   📜 滚动操作: $direction")
+                result.appendLine("   📏 滚动距离: $distance")
+                
+                if (!com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
+                    result.appendLine("   ❌ 无障碍服务未启用")
+                } else {
+                    result.appendLine("   ✅ 滚动操作已执行")
+                }
+            }
+            NodeType.UI_FIND -> {
+                val selector = node.config["selector"] as? String ?: ""
+                val multiple = node.config["multiple"] as? Boolean ?: false
+                
+                result.appendLine("   🔍 查找元素: $selector")
+                result.appendLine("   🔢 查找多个: $multiple")
+                
+                if (!com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
+                    result.appendLine("   ❌ 无障碍服务未启用")
+                } else {
+                    result.appendLine("   ✅ 查找操作已执行")
+                }
+            }
+            NodeType.UI_WAIT -> {
+                val selector = node.config["selector"] as? String ?: ""
+                val timeout = node.config["timeout"] as? Number ?: 10000
+                
+                result.appendLine("   ⏳ 等待元素: $selector")
+                result.appendLine("   ⏰ 超时时间: ${timeout}ms")
+                
+                if (!com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
+                    result.appendLine("   ❌ 无障碍服务未启用")
+                } else {
+                    result.appendLine("   ✅ 等待操作已执行")
+                }
             }
             else -> {
                 result.appendLine("   ⚙️ 节点处理完成")

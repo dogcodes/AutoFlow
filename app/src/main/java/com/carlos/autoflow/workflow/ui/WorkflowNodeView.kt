@@ -191,4 +191,11 @@ private fun getNodeIcon(type: NodeType): ImageVector = when (type) {
     NodeType.LOOP -> Icons.Default.Refresh
     NodeType.DELAY -> Icons.Default.DateRange
     NodeType.SCRIPT -> Icons.Default.Edit
+    // UI交互节点图标
+    NodeType.UI_CLICK -> Icons.Default.TouchApp
+    NodeType.UI_INPUT -> Icons.Default.Keyboard
+    NodeType.UI_SCROLL -> Icons.Default.SwipeUp
+    // UI检测节点图标
+    NodeType.UI_FIND -> Icons.Default.Search
+    NodeType.UI_WAIT -> Icons.Default.HourglassEmpty
 }
