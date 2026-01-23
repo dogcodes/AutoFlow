@@ -6,9 +6,12 @@ import com.carlos.autoflow.workflow.models.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.*
 import com.google.gson.Gson
 import okhttp3.*
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.text.SimpleDateFormat
 
@@ -197,7 +200,7 @@ class WorkflowViewModel : ViewModel() {
                     inputs = listOf(NodeInput("in", "输入", "any", true)),
                     outputs = listOf(NodeOutput("response", "响应", "object")),
                     config = mapOf(
-                        "url" to "https://api.github.com/users/octocat",
+                        "url" to "https://api.github.com/users/xbdcc",
                         "method" to "GET"
                     )
                 ),
@@ -259,20 +262,49 @@ class WorkflowViewModel : ViewModel() {
             }
             NodeType.HTTP_REQUEST -> {
                 val url = node.config["url"] as? String ?: "未配置URL"
+                val method = node.config["method"] as? String ?: "GET"
                 result.appendLine("   🌐 请求URL: $url")
+                result.appendLine("   📋 请求方法: $method")
                 
                 try {
-                    val request = Request.Builder().url(url).build()
-                    val response = httpClient.newCall(request).execute()
+                    val requestBuilder = Request.Builder().url(url)
+                    
+                    // 添加User-Agent避免被拒绝
+                    requestBuilder.addHeader("User-Agent", "AutoFlow/1.0")
+                    
+                    when (method.uppercase()) {
+                        "GET" -> requestBuilder.get()
+                        "POST" -> requestBuilder.post("".toRequestBody())
+                        else -> requestBuilder.get()
+                    }
+                    
+                    val request = requestBuilder.build()
+                    result.appendLine("   ⏳ 发送请求...")
+                    
+                    // 在IO线程执行网络请求
+                    val response = withContext(Dispatchers.IO) {
+                        httpClient.newCall(request).execute()
+                    }
                     val responseBody = response.body?.string() ?: ""
                     
                     result.appendLine("   📊 状态码: ${response.code}")
                     result.appendLine("   📄 响应长度: ${responseBody.length} 字符")
-                    if (responseBody.length < 200) {
-                        result.appendLine("   📝 响应内容: ${responseBody.take(100)}...")
+                    
+                    if (response.isSuccessful) {
+                        result.appendLine("   ✅ 请求成功")
+                        if (responseBody.length <= 200) {
+                            result.appendLine("   📝 响应内容: $responseBody")
+                        } else {
+                            result.appendLine("   📝 响应预览: ${responseBody.take(100)}...")
+                        }
+                    } else {
+                        result.appendLine("   ⚠️ 请求失败: HTTP ${response.code}")
                     }
+                    
                 } catch (e: Exception) {
-                    result.appendLine("   ❌ 请求失败: ${e.message}")
+                    result.appendLine("   ❌ 请求异常: ${e.javaClass.simpleName}")
+                    result.appendLine("   💬 错误信息: ${e.message}")
+                    e.printStackTrace()
                 }
             }
             NodeType.END -> {
