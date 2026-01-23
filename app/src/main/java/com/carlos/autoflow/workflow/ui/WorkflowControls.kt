@@ -20,7 +20,9 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.FileOpen
-import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -87,48 +89,54 @@ fun WorkflowControls(
             }
         }
 
-        // 顶部中央：功能按钮组
-        Row(
+        // 右上角：功能菜单
+        Box(
             modifier = Modifier
-                .align(Alignment.TopCenter)
+                .align(Alignment.TopEnd)
                 .padding(Dimens.WorkflowEditor.DefaultPadding)
         ) {
+            var showMenu by remember { mutableStateOf(false) }
+            
             FloatingActionButton(
-                onClick = onShowImportDialog,
+                onClick = { showMenu = true },
                 modifier = Modifier.size(48.dp),
-                containerColor = MaterialTheme.colorScheme.tertiary
+                containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Default.FileOpen, "导入", tint = Color.White)
+                Icon(Icons.Default.MoreVert, "菜单", tint = Color.White)
             }
             
-            Spacer(modifier = Modifier.width(8.dp))
-            
-            FloatingActionButton(
-                onClick = { workflowViewModel.loadSampleWorkflow() },
-                modifier = Modifier.size(48.dp),
-                containerColor = MaterialTheme.colorScheme.secondary
+            DropdownMenu(
+                expanded = showMenu,
+                onDismissRequest = { showMenu = false }
             ) {
-                Icon(Icons.Default.Lightbulb, "示例", tint = Color.White)
-            }
-            
-            Spacer(modifier = Modifier.width(8.dp))
-            
-            FloatingActionButton(
-                onClick = onShowExportDialog,
-                modifier = Modifier.size(48.dp),
-                containerColor = MaterialTheme.colorScheme.tertiary
-            ) {
-                Icon(Icons.Default.Save, "导出", tint = Color.White)
-            }
-            
-            Spacer(modifier = Modifier.width(8.dp))
-            
-            FloatingActionButton(
-                onClick = onShowExecuteDialog,
-                modifier = Modifier.size(48.dp),
-                containerColor = Color(0xFF4CAF50)
-            ) {
-                Icon(Icons.Default.PlayArrow, "执行", tint = Color.White)
+                DropdownMenuItem(
+                    text = { Text("📥 导入工作流") },
+                    onClick = {
+                        showMenu = false
+                        onShowImportDialog()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("💡 加载示例") },
+                    onClick = {
+                        showMenu = false
+                        workflowViewModel.loadSampleWorkflow()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("📤 导出工作流") },
+                    onClick = {
+                        showMenu = false
+                        onShowExportDialog()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("▶️ 执行工作流") },
+                    onClick = {
+                        showMenu = false
+                        onShowExecuteDialog()
+                    }
+                )
             }
         }
 
