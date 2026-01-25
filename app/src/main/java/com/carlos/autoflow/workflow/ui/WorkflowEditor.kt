@@ -47,6 +47,7 @@ import com.carlos.autoflow.workflow.viewmodel.CanvasViewModel
 import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
 import com.carlos.autoflow.accessibility.AccessibilityPermissionCard
 import com.carlos.autoflow.workflow.ui.ExecutionStatusOverlay
+import com.carlos.autoflow.recorder.ui.RecordingControlPanel
 import kotlinx.coroutines.delay
 import kotlin.math.floor
 import kotlin.math.pow
@@ -123,6 +124,17 @@ fun WorkflowEditor(
         // 无障碍权限状态卡片
         AccessibilityPermissionCard(
             modifier = Modifier.align(Alignment.TopCenter)
+        )
+
+        // 录制控制面板
+        RecordingControlPanel(
+            onWorkflowGenerated = { json ->
+                workflowViewModel.importFromJson(json)
+            },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+                .width(280.dp)
         )
 
         WorkflowControls(

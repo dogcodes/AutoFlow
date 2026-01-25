@@ -8,6 +8,7 @@ import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.carlos.autoflow.workflow.models.ElementSelector
+import com.carlos.autoflow.recorder.OperationRecorder
 import kotlinx.coroutines.*
 
 class AutoFlowAccessibilityService : AccessibilityService() {
@@ -20,6 +21,7 @@ class AutoFlowAccessibilityService : AccessibilityService() {
     }
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val operationRecorder = OperationRecorder()
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -35,7 +37,11 @@ class AutoFlowAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        event?.let { handleAccessibilityEvent(it) }
+        event?.let { 
+            handleAccessibilityEvent(it)
+            // 将事件传递给录制器
+            operationRecorder.handleAccessibilityEvent(it, rootInActiveWindow)
+        }
     }
 
     override fun onInterrupt() {
@@ -183,6 +189,18 @@ class AutoFlowAccessibilityService : AccessibilityService() {
             "matches" to actualState
         ))
     }
+
+    // 录制功能相关方法
+    fun startRecording() {
+        operationRecorder.startRecording()
+        Log.d(TAG, "开始录制操作")
+    }
+    
+    fun stopRecording() = operationRecorder.stopRecording()
+    
+    fun isRecording() = operationRecorder.isRecording()
+    
+    fun getRecordedCount() = operationRecorder.getRecordedCount()
 
     private fun findElement(selector: ElementSelector): AccessibilityNodeInfo? {
         val root = rootInActiveWindow ?: return null
