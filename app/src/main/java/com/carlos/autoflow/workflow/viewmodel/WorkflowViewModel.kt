@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 import java.util.*
 import com.google.gson.Gson
 import okhttp3.*
@@ -177,6 +178,15 @@ class WorkflowViewModel : ViewModel() {
             NodeInput("selector", "元素选择器", "string", true),
             NodeInput("clickType", "点击类型", "string")
         )
+        NodeType.UI_LONG_CLICK -> listOf(
+            NodeInput("selector", "元素选择器", "string", true)
+        )
+        NodeType.UI_SWIPE -> listOf(
+            NodeInput("startX", "起始X", "number", true),
+            NodeInput("startY", "起始Y", "number", true),
+            NodeInput("endX", "结束X", "number", true),
+            NodeInput("endY", "结束Y", "number", true)
+        )
         NodeType.UI_INPUT -> listOf(
             NodeInput("selector", "元素选择器", "string", true),
             NodeInput("text", "输入文本", "string", true),
@@ -194,6 +204,23 @@ class WorkflowViewModel : ViewModel() {
         NodeType.UI_WAIT -> listOf(
             NodeInput("selector", "等待元素", "string", true),
             NodeInput("timeout", "超时时间(ms)", "number", true)
+        )
+        NodeType.UI_GET_TEXT -> listOf(
+            NodeInput("selector", "元素选择器", "string", true)
+        )
+        NodeType.UI_CHECK -> listOf(
+            NodeInput("selector", "元素选择器", "string", true),
+            NodeInput("expectedState", "期望状态", "string", true)
+        )
+        // 系统事件节点
+        NodeType.APP_LAUNCH -> listOf(
+            NodeInput("packageName", "应用包名", "string", true)
+        )
+        NodeType.NOTIFICATION -> listOf(
+            NodeInput("action", "处理动作", "string", true)
+        )
+        NodeType.SCREEN_STATE -> listOf(
+            NodeInput("state", "屏幕状态", "string", true)
         )
     }
 
@@ -217,6 +244,13 @@ class WorkflowViewModel : ViewModel() {
             NodeOutput("success", "执行成功", "boolean"),
             NodeOutput("element", "目标元素", "object")
         )
+        NodeType.UI_LONG_CLICK -> listOf(
+            NodeOutput("success", "执行成功", "boolean"),
+            NodeOutput("element", "目标元素", "object")
+        )
+        NodeType.UI_SWIPE -> listOf(
+            NodeOutput("success", "滑动成功", "boolean")
+        )
         NodeType.UI_INPUT -> listOf(
             NodeOutput("success", "输入成功", "boolean"),
             NodeOutput("inputText", "输入内容", "string")
@@ -233,6 +267,27 @@ class WorkflowViewModel : ViewModel() {
         NodeType.UI_WAIT -> listOf(
             NodeOutput("found", "找到元素", "boolean"),
             NodeOutput("element", "目标元素", "object")
+        )
+        NodeType.UI_GET_TEXT -> listOf(
+            NodeOutput("text", "获取的文本", "string"),
+            NodeOutput("success", "获取成功", "boolean")
+        )
+        NodeType.UI_CHECK -> listOf(
+            NodeOutput("matches", "状态匹配", "boolean"),
+            NodeOutput("actualState", "实际状态", "string")
+        )
+        // 系统事件节点
+        NodeType.APP_LAUNCH -> listOf(
+            NodeOutput("launched", "启动成功", "boolean"),
+            NodeOutput("packageName", "应用包名", "string")
+        )
+        NodeType.NOTIFICATION -> listOf(
+            NodeOutput("handled", "处理成功", "boolean"),
+            NodeOutput("content", "通知内容", "string")
+        )
+        NodeType.SCREEN_STATE -> listOf(
+            NodeOutput("state", "屏幕状态", "string"),
+            NodeOutput("changed", "状态改变", "boolean")
         )
     }
     
@@ -585,6 +640,169 @@ class WorkflowViewModel : ViewModel() {
                         result.appendLine("   ❌ 操作异常: ${e.message}")
                     }
                 }
+            }
+            // 新增的UI交互节点
+            NodeType.UI_LONG_CLICK -> {
+                val selector = node.config["selector"] as? String ?: ""
+                
+                result.appendLine("   👆 长按操作: $selector")
+                
+                if (!com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
+                    result.appendLine("   ❌ 无障碍服务未启用")
+                } else {
+                    try {
+                        val elementSelector = com.carlos.autoflow.workflow.models.ElementSelector.parse(selector)
+                        val operation = com.carlos.autoflow.accessibility.ClickOperation(
+                            elementSelector, 
+                            com.carlos.autoflow.accessibility.ClickType.LONG
+                        )
+                        
+                        val operationResult = com.carlos.autoflow.accessibility.AutoFlowAccessibilityService
+                            .getInstance()?.executeOperation(operation)
+                        
+                        when (operationResult) {
+                            is com.carlos.autoflow.accessibility.OperationResult.Success -> 
+                                result.appendLine("   ✅ 长按成功")
+                            is com.carlos.autoflow.accessibility.OperationResult.Error -> 
+                                result.appendLine("   ❌ 长按失败: ${operationResult.message}")
+                            null -> result.appendLine("   ❌ 服务不可用")
+                        }
+                    } catch (e: Exception) {
+                        result.appendLine("   ❌ 操作异常: ${e.message}")
+                    }
+                }
+            }
+            NodeType.UI_SWIPE -> {
+                val startX = node.config["startX"] as? Number ?: 0
+                val startY = node.config["startY"] as? Number ?: 0
+                val endX = node.config["endX"] as? Number ?: 0
+                val endY = node.config["endY"] as? Number ?: 0
+                val duration = node.config["duration"] as? Number ?: 500
+                
+                result.appendLine("   👋 滑动操作: (${startX},${startY}) → (${endX},${endY})")
+                
+                if (!com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
+                    result.appendLine("   ❌ 无障碍服务未启用")
+                } else {
+                    try {
+                        val operation = com.carlos.autoflow.accessibility.SwipeOperation(
+                            startX.toFloat(), startY.toFloat(),
+                            endX.toFloat(), endY.toFloat(),
+                            duration.toLong()
+                        )
+                        
+                        val operationResult = com.carlos.autoflow.accessibility.AutoFlowAccessibilityService
+                            .getInstance()?.executeOperation(operation)
+                        
+                        when (operationResult) {
+                            is com.carlos.autoflow.accessibility.OperationResult.Success -> 
+                                result.appendLine("   ✅ 滑动成功")
+                            is com.carlos.autoflow.accessibility.OperationResult.Error -> 
+                                result.appendLine("   ❌ 滑动失败: ${operationResult.message}")
+                            null -> result.appendLine("   ❌ 服务不可用")
+                        }
+                    } catch (e: Exception) {
+                        result.appendLine("   ❌ 操作异常: ${e.message}")
+                    }
+                }
+            }
+            // 新增的UI检测节点
+            NodeType.UI_GET_TEXT -> {
+                val selector = node.config["selector"] as? String ?: ""
+                
+                result.appendLine("   📝 获取文本: $selector")
+                
+                if (!com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
+                    result.appendLine("   ❌ 无障碍服务未启用")
+                } else {
+                    try {
+                        val elementSelector = com.carlos.autoflow.workflow.models.ElementSelector.parse(selector)
+                        val operation = com.carlos.autoflow.accessibility.GetTextOperation(elementSelector)
+                        
+                        val operationResult = com.carlos.autoflow.accessibility.AutoFlowAccessibilityService
+                            .getInstance()?.executeOperation(operation)
+                        
+                        when (operationResult) {
+                            is com.carlos.autoflow.accessibility.OperationResult.Success -> {
+                                val text = operationResult.data["text"] as? String ?: ""
+                                result.appendLine("   ✅ 获取到文本: $text")
+                            }
+                            is com.carlos.autoflow.accessibility.OperationResult.Error -> 
+                                result.appendLine("   ❌ 获取失败: ${operationResult.message}")
+                            null -> result.appendLine("   ❌ 服务不可用")
+                        }
+                    } catch (e: Exception) {
+                        result.appendLine("   ❌ 操作异常: ${e.message}")
+                    }
+                }
+            }
+            NodeType.UI_CHECK -> {
+                val selector = node.config["selector"] as? String ?: ""
+                val expectedState = node.config["expectedState"] as? String ?: "visible"
+                
+                result.appendLine("   ✅ 检查状态: $selector ($expectedState)")
+                
+                if (!com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
+                    result.appendLine("   ❌ 无障碍服务未启用")
+                } else {
+                    try {
+                        val elementSelector = com.carlos.autoflow.workflow.models.ElementSelector.parse(selector)
+                        val operation = com.carlos.autoflow.accessibility.CheckStateOperation(
+                            elementSelector, expectedState
+                        )
+                        
+                        val operationResult = com.carlos.autoflow.accessibility.AutoFlowAccessibilityService
+                            .getInstance()?.executeOperation(operation)
+                        
+                        when (operationResult) {
+                            is com.carlos.autoflow.accessibility.OperationResult.Success -> {
+                                val matches = operationResult.data["matches"] as? Boolean ?: false
+                                if (matches) {
+                                    result.appendLine("   ✅ 状态匹配")
+                                } else {
+                                    result.appendLine("   ⚠️ 状态不匹配")
+                                }
+                            }
+                            is com.carlos.autoflow.accessibility.OperationResult.Error -> 
+                                result.appendLine("   ❌ 检查失败: ${operationResult.message}")
+                            null -> result.appendLine("   ❌ 服务不可用")
+                        }
+                    } catch (e: Exception) {
+                        result.appendLine("   ❌ 操作异常: ${e.message}")
+                    }
+                }
+            }
+            // 控制流节点
+            NodeType.CONDITION -> {
+                result.appendLine("   🔀 条件判断节点")
+                // TODO: 实现条件逻辑
+            }
+            NodeType.LOOP -> {
+                result.appendLine("   🔄 循环节点")
+                // TODO: 实现循环逻辑
+            }
+            NodeType.DELAY -> {
+                val delayTime = node.config["delay"] as? Number ?: 1000
+                result.appendLine("   ⏱️ 延时: ${delayTime}ms")
+                delay(delayTime.toLong())
+                result.appendLine("   ✅ 延时完成")
+            }
+            NodeType.SCRIPT -> {
+                result.appendLine("   📜 脚本执行节点")
+                // TODO: 实现脚本执行
+            }
+            // 系统事件节点
+            NodeType.APP_LAUNCH -> {
+                result.appendLine("   🚀 应用启动检测")
+                // TODO: 实现应用启动检测
+            }
+            NodeType.NOTIFICATION -> {
+                result.appendLine("   🔔 通知处理")
+                // TODO: 实现通知处理
+            }
+            NodeType.SCREEN_STATE -> {
+                result.appendLine("   📱 屏幕状态检测")
+                // TODO: 实现屏幕状态检测
             }
             else -> {
                 result.appendLine("   ⚙️ 节点处理完成")

@@ -46,9 +46,13 @@ fun NodeConfigDialog(
                     NodeType.UI_CLICK -> UIClickConfig(config) { config = it }
                     NodeType.UI_INPUT -> UIInputConfig(config) { config = it }
                     NodeType.UI_SCROLL -> UIScrollConfig(config) { config = it }
+                    NodeType.UI_LONG_CLICK -> UILongClickConfig(config) { config = it }
+                    NodeType.UI_SWIPE -> UISwipeConfig(config) { config = it }
                     // UI检测节点配置
                     NodeType.UI_FIND -> UIFindConfig(config) { config = it }
                     NodeType.UI_WAIT -> UIWaitConfig(config) { config = it }
+                    NodeType.UI_GET_TEXT -> UIGetTextConfig(config) { config = it }
+                    NodeType.UI_CHECK -> UICheckConfig(config) { config = it }
                     else -> {
                         Text("此节点暂无配置项", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -493,4 +497,203 @@ private fun UIWaitConfig(
         placeholder = { Text("10000") },
         modifier = Modifier.fillMaxWidth()
     )
+}
+
+// 新增的UI交互节点配置
+@Composable
+private fun UILongClickConfig(
+    config: MutableMap<String, Any>,
+    onUpdate: (MutableMap<String, Any>) -> Unit
+) {
+    var selector by remember { mutableStateOf(config["selector"] as? String ?: "") }
+    
+    OutlinedTextField(
+        value = selector,
+        onValueChange = { 
+            selector = it
+            config["selector"] = it
+            onUpdate(config)
+        },
+        label = { Text("元素选择器") },
+        placeholder = { Text("id=button1 或 text=确定") },
+        modifier = Modifier.fillMaxWidth(),
+        supportingText = {
+            Text(
+                "支持: id=资源ID, text=文本, desc=描述, class=类名",
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    )
+}
+
+@Composable
+private fun UISwipeConfig(
+    config: MutableMap<String, Any>,
+    onUpdate: (MutableMap<String, Any>) -> Unit
+) {
+    var startX by remember { mutableStateOf(config["startX"] as? String ?: "0") }
+    var startY by remember { mutableStateOf(config["startY"] as? String ?: "0") }
+    var endX by remember { mutableStateOf(config["endX"] as? String ?: "0") }
+    var endY by remember { mutableStateOf(config["endY"] as? String ?: "0") }
+    var duration by remember { mutableStateOf(config["duration"] as? String ?: "500") }
+    
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        OutlinedTextField(
+            value = startX,
+            onValueChange = { 
+                startX = it
+                config["startX"] = it.toFloatOrNull() ?: 0f
+                onUpdate(config)
+            },
+            label = { Text("起始X") },
+            modifier = Modifier.weight(1f)
+        )
+        OutlinedTextField(
+            value = startY,
+            onValueChange = { 
+                startY = it
+                config["startY"] = it.toFloatOrNull() ?: 0f
+                onUpdate(config)
+            },
+            label = { Text("起始Y") },
+            modifier = Modifier.weight(1f)
+        )
+    }
+    
+    Spacer(modifier = Modifier.height(8.dp))
+    
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        OutlinedTextField(
+            value = endX,
+            onValueChange = { 
+                endX = it
+                config["endX"] = it.toFloatOrNull() ?: 0f
+                onUpdate(config)
+            },
+            label = { Text("结束X") },
+            modifier = Modifier.weight(1f)
+        )
+        OutlinedTextField(
+            value = endY,
+            onValueChange = { 
+                endY = it
+                config["endY"] = it.toFloatOrNull() ?: 0f
+                onUpdate(config)
+            },
+            label = { Text("结束Y") },
+            modifier = Modifier.weight(1f)
+        )
+    }
+    
+    Spacer(modifier = Modifier.height(8.dp))
+    
+    OutlinedTextField(
+        value = duration,
+        onValueChange = { 
+            duration = it
+            config["duration"] = it.toLongOrNull() ?: 500L
+            onUpdate(config)
+        },
+        label = { Text("滑动时长 (毫秒)") },
+        placeholder = { Text("500") },
+        modifier = Modifier.fillMaxWidth()
+    )
+}
+
+// 新增的UI检测节点配置
+@Composable
+private fun UIGetTextConfig(
+    config: MutableMap<String, Any>,
+    onUpdate: (MutableMap<String, Any>) -> Unit
+) {
+    var selector by remember { mutableStateOf(config["selector"] as? String ?: "") }
+    
+    OutlinedTextField(
+        value = selector,
+        onValueChange = { 
+            selector = it
+            config["selector"] = it
+            onUpdate(config)
+        },
+        label = { Text("元素选择器") },
+        placeholder = { Text("id=textView1 或 text=标题") },
+        modifier = Modifier.fillMaxWidth(),
+        supportingText = {
+            Text(
+                "获取指定元素的文本内容",
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    )
+}
+
+@Composable
+private fun UICheckConfig(
+    config: MutableMap<String, Any>,
+    onUpdate: (MutableMap<String, Any>) -> Unit
+) {
+    var selector by remember { mutableStateOf(config["selector"] as? String ?: "") }
+    var expectedState by remember { mutableStateOf(config["expectedState"] as? String ?: "visible") }
+    
+    OutlinedTextField(
+        value = selector,
+        onValueChange = { 
+            selector = it
+            config["selector"] = it
+            onUpdate(config)
+        },
+        label = { Text("元素选择器") },
+        placeholder = { Text("id=checkbox1 或 text=选项") },
+        modifier = Modifier.fillMaxWidth()
+    )
+    
+    Spacer(modifier = Modifier.height(8.dp))
+    
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = when(expectedState) {
+                "checked" -> "已选中"
+                "enabled" -> "已启用"
+                "visible" -> "可见"
+                else -> "可见"
+            },
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("检查状态") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.menuAnchor().fillMaxWidth()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            listOf(
+                "visible" to "可见",
+                "enabled" to "已启用", 
+                "checked" to "已选中"
+            ).forEach { (value, label) ->
+                DropdownMenuItem(
+                    text = { Text(label) },
+                    onClick = {
+                        expectedState = value
+                        config["expectedState"] = value
+                        onUpdate(config)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
 }

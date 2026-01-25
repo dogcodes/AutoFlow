@@ -60,6 +60,9 @@ class AutoFlowAccessibilityService : AccessibilityService() {
                     is ScrollOperation -> performScroll(operation)
                     is FindOperation -> performFind(operation)
                     is WaitOperation -> performWait(operation)
+                    is SwipeOperation -> performSwipe(operation)
+                    is GetTextOperation -> performGetText(operation)
+                    is CheckStateOperation -> performCheckState(operation)
                 }
             }
         }
@@ -139,6 +142,46 @@ class AutoFlowAccessibilityService : AccessibilityService() {
         }
         
         return OperationResult.Error("等待超时")
+    }
+
+    private suspend fun performSwipe(operation: SwipeOperation): OperationResult {
+        val path = Path().apply {
+            moveTo(operation.startX, operation.startY)
+            lineTo(operation.endX, operation.endY)
+        }
+        
+        val gesture = GestureDescription.Builder()
+            .addStroke(GestureDescription.StrokeDescription(path, 0, operation.duration))
+            .build()
+        
+        return withContext(Dispatchers.Main) {
+            val success = dispatchGesture(gesture, null, null)
+            if (success) OperationResult.Success(mapOf("swiped" to true))
+            else OperationResult.Error("滑动操作失败")
+        }
+    }
+
+    private fun performGetText(operation: GetTextOperation): OperationResult {
+        val node = findElement(operation.selector) ?: return OperationResult.Error("元素未找到")
+        val text = node.text?.toString() ?: ""
+        return OperationResult.Success(mapOf("text" to text))
+    }
+
+    private fun performCheckState(operation: CheckStateOperation): OperationResult {
+        val node = findElement(operation.selector) ?: return OperationResult.Error("元素未找到")
+        
+        val actualState = when (operation.expectedState) {
+            "checked" -> node.isChecked
+            "enabled" -> node.isEnabled
+            "visible" -> node.isVisibleToUser
+            else -> return OperationResult.Error("不支持的状态检查: ${operation.expectedState}")
+        }
+        
+        return OperationResult.Success(mapOf(
+            "state" to operation.expectedState,
+            "actual" to actualState,
+            "matches" to actualState
+        ))
     }
 
     private fun findElement(selector: ElementSelector): AccessibilityNodeInfo? {
@@ -245,6 +288,29 @@ data class WaitOperation(
     val checkInterval: Long = 500,
     override val timeout: Long = 10000,
     override val retryCount: Int = 1
+) : AccessibilityOperation()
+
+data class SwipeOperation(
+    val startX: Float,
+    val startY: Float,
+    val endX: Float,
+    val endY: Float,
+    val duration: Long = 500,
+    override val timeout: Long = 3000,
+    override val retryCount: Int = 2
+) : AccessibilityOperation()
+
+data class GetTextOperation(
+    val selector: ElementSelector,
+    override val timeout: Long = 3000,
+    override val retryCount: Int = 2
+) : AccessibilityOperation()
+
+data class CheckStateOperation(
+    val selector: ElementSelector,
+    val expectedState: String, // "checked", "enabled", "visible"
+    override val timeout: Long = 3000,
+    override val retryCount: Int = 2
 ) : AccessibilityOperation()
 
 enum class ClickType { SINGLE, LONG }

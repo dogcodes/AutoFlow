@@ -195,7 +195,15 @@ private fun getNodeIcon(type: NodeType): ImageVector = when (type) {
     NodeType.UI_CLICK -> Icons.Default.TouchApp
     NodeType.UI_INPUT -> Icons.Default.Keyboard
     NodeType.UI_SCROLL -> Icons.Default.SwipeUp
+    NodeType.UI_LONG_CLICK -> Icons.Default.TouchApp
+    NodeType.UI_SWIPE -> Icons.Default.SwipeLeft
     // UI检测节点图标
     NodeType.UI_FIND -> Icons.Default.Search
     NodeType.UI_WAIT -> Icons.Default.HourglassEmpty
+    NodeType.UI_GET_TEXT -> Icons.Default.TextFields
+    NodeType.UI_CHECK -> Icons.Default.CheckCircle
+    // 系统事件节点图标
+    NodeType.APP_LAUNCH -> Icons.Default.Launch
+    NodeType.NOTIFICATION -> Icons.Default.Notifications
+    NodeType.SCREEN_STATE -> Icons.Default.ScreenLockPortrait
 }
