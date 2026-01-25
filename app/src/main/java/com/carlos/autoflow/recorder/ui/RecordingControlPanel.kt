@@ -20,6 +20,7 @@ import com.carlos.autoflow.recorder.RecordedOperation
 import com.carlos.autoflow.billing.FeatureManager
 import com.carlos.autoflow.billing.BannerAdView
 import com.carlos.autoflow.billing.RewardedAdButton
+import com.carlos.autoflow.billing.PaymentDialog
 
 @Composable
 fun RecordingControlPanel(
@@ -34,6 +35,7 @@ fun RecordingControlPanel(
     var showSaveDialog by remember { mutableStateOf(false) }
     var recordedOperations by remember { mutableStateOf<List<RecordedOperation>>(emptyList()) }
     var showUpgradeHint by remember { mutableStateOf(false) }
+    var showPaymentDialog by remember { mutableStateOf(false) }
     
     // 定期更新录制状态
     LaunchedEffect(isRecording) {
@@ -192,14 +194,29 @@ fun RecordingControlPanel(
                 // 激励视频按钮 (录制次数用完时显示)
                 if (!featureManager.canStartRecording()) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    RewardedAdButton(
-                        onRewardEarned = {
-                            featureManager.earnExtraRecording()
-                            showUpgradeHint = false
-                        },
-                        text = "观看广告获得1次录制",
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        RewardedAdButton(
+                            onRewardEarned = {
+                                featureManager.earnExtraRecording()
+                                showUpgradeHint = false
+                            },
+                            text = "看广告+1次",
+                            modifier = Modifier.weight(1f)
+                        )
+                        
+                        Button(
+                            onClick = { showPaymentDialog = true },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF1976D2)
+                            )
+                        ) {
+                            Text("购买专业版", fontSize = 12.sp)
+                        }
+                    }
                 }
             }
         }
@@ -225,6 +242,17 @@ fun RecordingControlPanel(
                 recordedCount = 0
             },
             onDismiss = { showSaveDialog = false }
+        )
+    }
+    
+    // 支付对话框
+    if (showPaymentDialog) {
+        PaymentDialog(
+            onDismiss = { showPaymentDialog = false },
+            onPaymentSuccess = {
+                showPaymentDialog = false
+                showUpgradeHint = false
+            }
         )
     }
 }

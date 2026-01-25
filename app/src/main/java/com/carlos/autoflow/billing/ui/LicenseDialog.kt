@@ -15,6 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carlos.autoflow.billing.LicenseManager
+import com.carlos.autoflow.billing.PaymentDialog
 
 @Composable
 fun LicenseDialog(
@@ -27,6 +28,7 @@ fun LicenseDialog(
     var licenseStatus by remember { mutableStateOf(licenseManager.getLicenseStatus()) }
     var activationCode by remember { mutableStateOf("") }
     var showActivation by remember { mutableStateOf(false) }
+    var showPayment by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
     
     AlertDialog(
@@ -117,14 +119,25 @@ fun LicenseDialog(
                 // 激活区域
                 if (licenseStatus != LicenseManager.STATUS_PREMIUM) {
                     if (!showActivation) {
-                        Button(
-                            onClick = { showActivation = true },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF1976D2)
-                            )
-                        ) {
-                            Text("升级到专业版")
+                        Column {
+                            Button(
+                                onClick = { showPayment = true },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF1976D2)
+                                )
+                            ) {
+                                Text("立即购买专业版")
+                            }
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            OutlinedButton(
+                                onClick = { showActivation = true },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("已有激活码")
+                            }
                         }
                     } else {
                         Column {
@@ -196,6 +209,18 @@ fun LicenseDialog(
             }
         }
     )
+    
+    // 支付对话框
+    if (showPayment) {
+        PaymentDialog(
+            onDismiss = { showPayment = false },
+            onPaymentSuccess = {
+                licenseStatus = LicenseManager.STATUS_PREMIUM
+                message = "购买成功，专业版已激活！"
+                showPayment = false
+            }
+        )
+    }
 }
 
 @Composable
