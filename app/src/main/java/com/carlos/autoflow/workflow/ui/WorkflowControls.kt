@@ -48,7 +48,8 @@ fun WorkflowControls(
     canvasViewModel: CanvasViewModel = viewModel(),
     onShowImportDialog: () -> Unit = {},
     onShowExportDialog: () -> Unit = {},
-    onShowExecuteDialog: () -> Unit = {}
+    onShowExecuteDialog: () -> Unit = {},
+    onShowAccessibilityExamples: () -> Unit = {}
 ) {
     val canvasState by canvasViewModel.canvasState.collectAsState()
     var isPanelVisible by remember { mutableStateOf(false) }
@@ -144,6 +145,13 @@ fun WorkflowControls(
                     onClick = {
                         showMenu = false
                         canvasViewModel.toggleFlowAnimation()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("📱 无障碍示例") },
+                    onClick = {
+                        showMenu = false
+                        onShowAccessibilityExamples()
                     }
                 )
             }

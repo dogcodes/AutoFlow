@@ -40,6 +40,7 @@ import com.carlos.autoflow.workflow.ui.ImportDialog
 import com.carlos.autoflow.workflow.ui.ExportDialog
 import com.carlos.autoflow.workflow.ui.ExecuteResultDialog
 import com.carlos.autoflow.workflow.ui.NodeConfigDialog
+import com.carlos.autoflow.workflow.ui.AccessibilityExamplesDialog
 import com.carlos.autoflow.workflow.models.NodeType
 import com.carlos.autoflow.workflow.models.WorkflowNode
 import com.carlos.autoflow.workflow.viewmodel.CanvasViewModel
@@ -68,6 +69,7 @@ fun WorkflowEditor(
     var showImportDialog by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
     var showExecuteDialog by remember { mutableStateOf(false) }
+    var showAccessibilityExamples by remember { mutableStateOf(false) }
     var executeResult by remember { mutableStateOf("") }
     var importError by remember { mutableStateOf<String?>(null) }
     var configNode by remember { mutableStateOf<WorkflowNode?>(null) }
@@ -133,7 +135,8 @@ fun WorkflowEditor(
                 workflowViewModel.executeWorkflow { result ->
                     executeResult = result
                 }
-            }
+            },
+            onShowAccessibilityExamples = { showAccessibilityExamples = true }
         )
 
         WorkflowStatusMessages(
@@ -202,6 +205,17 @@ fun WorkflowEditor(
             onSave = { config ->
                 workflowViewModel.updateNodeConfig(node.id, config)
                 configNode = null
+            }
+        )
+    }
+    
+    // 无障碍示例对话框
+    if (showAccessibilityExamples) {
+        AccessibilityExamplesDialog(
+            onDismiss = { showAccessibilityExamples = false },
+            onExampleSelected = { example ->
+                workflowViewModel.loadWorkflow(example)
+                showAccessibilityExamples = false
             }
         )
     }

@@ -238,6 +238,10 @@ class WorkflowViewModel : ViewModel() {
     
     // 第二阶段新增功能：配置管理
     fun exportToJson(): String = gson.toJson(_workflow.value)
+    
+    fun loadWorkflow(workflow: Workflow) {
+        _workflow.value = workflow
+    }
 
     fun importFromJson(json: String): Boolean {
         return try {
