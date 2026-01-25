@@ -49,7 +49,8 @@ fun WorkflowControls(
     onShowImportDialog: () -> Unit = {},
     onShowExportDialog: () -> Unit = {},
     onShowExecuteDialog: () -> Unit = {},
-    onShowAccessibilityExamples: () -> Unit = {}
+    onShowAccessibilityExamples: () -> Unit = {},
+    onShowLicenseDialog: () -> Unit = {}
 ) {
     val canvasState by canvasViewModel.canvasState.collectAsState()
     var isPanelVisible by remember { mutableStateOf(false) }
@@ -145,6 +146,13 @@ fun WorkflowControls(
                     onClick = {
                         showMenu = false
                         canvasViewModel.toggleFlowAnimation()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("💎 许可证管理") },
+                    onClick = {
+                        showMenu = false
+                        onShowLicenseDialog()
                     }
                 )
                 DropdownMenuItem(

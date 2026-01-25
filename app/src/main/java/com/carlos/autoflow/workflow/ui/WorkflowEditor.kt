@@ -48,6 +48,7 @@ import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
 import com.carlos.autoflow.accessibility.AccessibilityPermissionCard
 import com.carlos.autoflow.workflow.ui.ExecutionStatusOverlay
 import com.carlos.autoflow.recorder.ui.RecordingControlPanel
+import com.carlos.autoflow.billing.ui.LicenseDialog
 import kotlinx.coroutines.delay
 import kotlin.math.floor
 import kotlin.math.pow
@@ -71,6 +72,7 @@ fun WorkflowEditor(
     var showExportDialog by remember { mutableStateOf(false) }
     var showExecuteDialog by remember { mutableStateOf(false) }
     var showAccessibilityExamples by remember { mutableStateOf(false) }
+    var showLicenseDialog by remember { mutableStateOf(false) }
     var executeResult by remember { mutableStateOf("") }
     var importError by remember { mutableStateOf<String?>(null) }
     var configNode by remember { mutableStateOf<WorkflowNode?>(null) }
@@ -148,7 +150,8 @@ fun WorkflowEditor(
                     executeResult = result
                 }
             },
-            onShowAccessibilityExamples = { showAccessibilityExamples = true }
+            onShowAccessibilityExamples = { showAccessibilityExamples = true },
+            onShowLicenseDialog = { showLicenseDialog = true }
         )
 
         WorkflowStatusMessages(
@@ -229,6 +232,13 @@ fun WorkflowEditor(
                 workflowViewModel.loadWorkflow(example)
                 showAccessibilityExamples = false
             }
+        )
+    }
+    
+    // 许可证管理对话框
+    if (showLicenseDialog) {
+        LicenseDialog(
+            onDismiss = { showLicenseDialog = false }
         )
     }
 }

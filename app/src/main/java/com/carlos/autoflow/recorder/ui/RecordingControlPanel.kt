@@ -10,22 +10,28 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carlos.autoflow.accessibility.AutoFlowAccessibilityService
 import com.carlos.autoflow.recorder.ConfigurationGenerator
 import com.carlos.autoflow.recorder.RecordedOperation
+import com.carlos.autoflow.billing.FeatureManager
 
 @Composable
 fun RecordingControlPanel(
     onWorkflowGenerated: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val featureManager = remember { FeatureManager(context) }
+    
     var isRecording by remember { mutableStateOf(false) }
     var recordedCount by remember { mutableStateOf(0) }
     var showSaveDialog by remember { mutableStateOf(false) }
     var recordedOperations by remember { mutableStateOf<List<RecordedOperation>>(emptyList()) }
+    var showUpgradeHint by remember { mutableStateOf(false) }
     
     // 定期更新录制状态
     LaunchedEffect(isRecording) {
@@ -93,11 +99,17 @@ fun RecordingControlPanel(
                 if (!isRecording) {
                     Button(
                         onClick = {
-                            val service = AutoFlowAccessibilityService.getInstance()
-                            if (service != null) {
-                                service.startRecording()
-                                isRecording = true
-                                recordedCount = 0
+                            if (featureManager.canStartRecording()) {
+                                val service = AutoFlowAccessibilityService.getInstance()
+                                if (service != null) {
+                                    service.startRecording()
+                                    featureManager.recordRecordingUsage()
+                                    isRecording = true
+                                    recordedCount = 0
+                                    showUpgradeHint = false
+                                }
+                            } else {
+                                showUpgradeHint = true
                             }
                         },
                         colors = ButtonDefaults.buttonColors(
@@ -151,6 +163,28 @@ fun RecordingControlPanel(
                     text = "请在其他应用中执行需要录制的操作",
                     fontSize = 12.sp,
                     color = Color.Gray
+                )
+            } else {
+                // 显示剩余次数
+                val remaining = featureManager.getRemainingRecordings()
+                if (remaining != Int.MAX_VALUE) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "今日剩余录制次数: $remaining",
+                        fontSize = 12.sp,
+                        color = if (remaining > 0) Color.Gray else Color.Red
+                    )
+                }
+            }
+            
+            // 升级提示
+            if (showUpgradeHint) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = featureManager.getUpgradeMessage(),
+                    fontSize = 11.sp,
+                    color = Color(0xFFFF9800),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
             }
         }
