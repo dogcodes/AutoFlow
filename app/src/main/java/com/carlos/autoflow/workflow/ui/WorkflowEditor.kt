@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.carlos.autoflow.ui.theme.Dimens
@@ -49,6 +50,8 @@ import com.carlos.autoflow.accessibility.AccessibilityPermissionCard
 import com.carlos.autoflow.workflow.ui.ExecutionStatusOverlay
 import com.carlos.autoflow.recorder.ui.RecordingControlPanel
 import com.carlos.autoflow.billing.ui.LicenseDialog
+import com.carlos.autoflow.billing.BannerAdView
+import com.carlos.autoflow.billing.FeatureManager
 import kotlinx.coroutines.delay
 import kotlin.math.floor
 import kotlin.math.pow
@@ -60,6 +63,8 @@ fun WorkflowEditor(
     workflowViewModel: WorkflowViewModel = viewModel(),
     canvasViewModel: CanvasViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+    val featureManager = remember { FeatureManager(context) }
     val workflow by workflowViewModel.workflow.collectAsState()
     val canvasState by canvasViewModel.canvasState.collectAsState()
     val connectingNodeId by workflowViewModel.connectingNodeId.collectAsState()
@@ -166,6 +171,15 @@ fun WorkflowEditor(
             executingNodes = executingNodes,
             modifier = Modifier.align(Alignment.BottomCenter)
         )
+        
+        // 底部广告 (仅免费版)
+        if (featureManager.shouldShowAds()) {
+            BannerAdView(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp)
+            )
+        }
     }
 
     // 对话框处理

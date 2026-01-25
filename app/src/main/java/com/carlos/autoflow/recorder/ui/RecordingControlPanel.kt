@@ -18,6 +18,8 @@ import com.carlos.autoflow.accessibility.AutoFlowAccessibilityService
 import com.carlos.autoflow.recorder.ConfigurationGenerator
 import com.carlos.autoflow.recorder.RecordedOperation
 import com.carlos.autoflow.billing.FeatureManager
+import com.carlos.autoflow.billing.BannerAdView
+import com.carlos.autoflow.billing.RewardedAdButton
 
 @Composable
 fun RecordingControlPanel(
@@ -186,7 +188,26 @@ fun RecordingControlPanel(
                     color = Color(0xFFFF9800),
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
+                
+                // 激励视频按钮 (录制次数用完时显示)
+                if (!featureManager.canStartRecording()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    RewardedAdButton(
+                        onRewardEarned = {
+                            featureManager.earnExtraRecording()
+                            showUpgradeHint = false
+                        },
+                        text = "观看广告获得1次录制",
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
+        }
+        
+        // 广告显示 (仅免费版)
+        if (featureManager.shouldShowAds()) {
+            Spacer(modifier = Modifier.height(12.dp))
+            BannerAdView()
         }
     }
     

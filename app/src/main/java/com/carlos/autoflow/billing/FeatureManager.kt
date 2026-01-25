@@ -107,6 +107,17 @@ class FeatureManager(private val context: Context) {
     }
     
     /**
+     * 通过观看广告获得额外录制次数
+     */
+    fun earnExtraRecording() {
+        resetDailyCountIfNeeded()
+        val todayCount = prefs.getInt(KEY_DAILY_RECORDINGS, 0)
+        if (todayCount > 0) {
+            prefs.edit().putInt(KEY_DAILY_RECORDINGS, todayCount - 1).apply()
+        }
+    }
+    
+    /**
      * 获取升级提示消息
      */
     fun getUpgradeMessage(): String {
