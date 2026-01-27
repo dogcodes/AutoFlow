@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.carlos.autoflow.ui.theme.Dimens
@@ -48,10 +49,15 @@ import com.carlos.autoflow.workflow.viewmodel.CanvasViewModel
 import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
 import com.carlos.autoflow.accessibility.AccessibilityPermissionCard
 import com.carlos.autoflow.workflow.ui.ExecutionStatusOverlay
-import com.carlos.autoflow.recorder.ui.RecordingControlPanel
 import com.carlos.autoflow.billing.ui.LicenseDialog
 import com.carlos.autoflow.billing.BannerAdView
 import com.carlos.autoflow.billing.FeatureManager
+import com.carlos.autoflow.ui.SideDrawer
+import com.carlos.autoflow.ui.screens.HistoryScreen
+import com.carlos.autoflow.ui.screens.SettingsScreen
+import com.carlos.autoflow.ui.screens.AboutScreen
+import com.carlos.autoflow.demo.DemoAppScreen
+import com.carlos.autoflow.recorder.ui.RecordingControlPanel
 import kotlinx.coroutines.delay
 import kotlin.math.floor
 import kotlin.math.pow
@@ -78,108 +84,221 @@ fun WorkflowEditor(
     var showExecuteDialog by remember { mutableStateOf(false) }
     var showAccessibilityExamples by remember { mutableStateOf(false) }
     var showLicenseDialog by remember { mutableStateOf(false) }
+    var showSideDrawer by remember { mutableStateOf(false) }
+    var currentScreen by remember { mutableStateOf("workflow") }
     var executeResult by remember { mutableStateOf("") }
     var importError by remember { mutableStateOf<String?>(null) }
     var configNode by remember { mutableStateOf<WorkflowNode?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        CanvasBackground(
-            modifier = Modifier.fillMaxSize(),
-            canvasState = canvasState
-        )
+        when (currentScreen) {
+            "workflow" -> {
+                CanvasBackground(
+                    modifier = Modifier.fillMaxSize(),
+                    canvasState = canvasState
+                )
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .pointerInput(Unit) {
-                    detectTransformGestures { centroid, pan, zoom, _ ->
-                        val oldScale = canvasState.scale
-                        val newScale = (oldScale * zoom).coerceIn(canvasState.minScale, canvasState.maxScale)
-                        val effectiveZoom = newScale / oldScale
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            detectTransformGestures { centroid, pan, zoom, _ ->
+                                val oldScale = canvasState.scale
+                                val newScale = (oldScale * zoom).coerceIn(canvasState.minScale, canvasState.maxScale)
+                                val effectiveZoom = newScale / oldScale
 
-                        val newOffsetX = canvasState.offsetX + pan.x + (centroid.x - canvasState.offsetX) * (1 - effectiveZoom)
-                        val newOffsetY = canvasState.offsetY + pan.y + (centroid.y - canvasState.offsetY) * (1 - effectiveZoom)
+                                val newOffsetX = canvasState.offsetX + pan.x + (centroid.x - canvasState.offsetX) * (1 - effectiveZoom)
+                                val newOffsetY = canvasState.offsetY + pan.y + (centroid.y - canvasState.offsetY) * (1 - effectiveZoom)
 
-                        canvasViewModel.updateScale(newScale)
-                        canvasViewModel.updateOffset(newOffsetX, newOffsetY)
+                                canvasViewModel.updateScale(newScale)
+                                canvasViewModel.updateOffset(newOffsetX, newOffsetY)
+                            }
+                        }
+                        .graphicsLayer(
+                            scaleX = canvasState.scale,
+                            scaleY = canvasState.scale,
+                            translationX = canvasState.offsetX,
+                            translationY = canvasState.offsetY
+                        )
+                ) {
+                    WorkflowConnections(
+                        workflow = workflow,
+                        workflowViewModel = workflowViewModel,
+                        canvasState = canvasState
+                    )
+
+                    WorkflowNodes(
+                        workflow = workflow,
+                        selectedNodeId = selectedNodeId,
+                        connectingNodeId = connectingNodeId,
+                        workflowViewModel = workflowViewModel,
+                        onShowNodeConfig = { node -> configNode = node }
+                    )
+                }
+
+                // 无障碍权限状态卡片
+                AccessibilityPermissionCard(
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
+
+                WorkflowControls(
+                    workflowViewModel = workflowViewModel,
+                    canvasViewModel = canvasViewModel,
+                    onShowImportDialog = { showImportDialog = true },
+                    onShowExportDialog = { showExportDialog = true },
+                    onShowExecuteDialog = { 
+                        showExecuteDialog = true
+                        workflowViewModel.executeWorkflow { result ->
+                            executeResult = result
+                        }
+                    },
+                    onShowAccessibilityExamples = { showAccessibilityExamples = true },
+                    onShowLicenseDialog = { showLicenseDialog = true },
+                    onShowSideDrawer = { showSideDrawer = true }
+                )
+
+                WorkflowStatusMessages(
+                    workflow = workflow,
+                    connectingNodeId = connectingNodeId,
+                    selectedNodeId = selectedNodeId,
+                    workflowViewModel = workflowViewModel
+                )
+                
+                // 执行状态覆盖层
+                ExecutionStatusOverlay(
+                    executingNodes = executingNodes,
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                )
+                
+                // 底部广告 (仅免费版)
+                if (featureManager.shouldShowAds()) {
+                    BannerAdView(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(16.dp)
+                    )
+                }
+            }
+            "demo" -> {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    DemoAppScreen()
+                    
+                    // 侧滑栏按钮
+                    FloatingActionButton(
+                        onClick = { showSideDrawer = true },
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(16.dp)
+                            .size(48.dp),
+                        containerColor = MaterialTheme.colorScheme.secondary
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "打开侧滑栏",
+                            tint = Color.White
+                        )
                     }
                 }
-                .graphicsLayer(
-                    scaleX = canvasState.scale,
-                    scaleY = canvasState.scale,
-                    translationX = canvasState.offsetX,
-                    translationY = canvasState.offsetY
-                )
-        ) {
-            // 背景网格、连接线和节点都在这个被统一变换的Box中
-
-            WorkflowConnections(
-                workflow = workflow,
-                workflowViewModel = workflowViewModel,
-                canvasState = canvasState
-            )
-
-            WorkflowNodes(
-                workflow = workflow,
-                selectedNodeId = selectedNodeId,
-                connectingNodeId = connectingNodeId,
-                workflowViewModel = workflowViewModel,
-                onShowNodeConfig = { node -> configNode = node }
-            )
-        }
-
-        // 无障碍权限状态卡片
-        AccessibilityPermissionCard(
-            modifier = Modifier.align(Alignment.TopCenter)
-        )
-
-        // 录制控制面板
-        RecordingControlPanel(
-            onWorkflowGenerated = { json ->
-                workflowViewModel.importFromJson(json)
-            },
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-                .width(280.dp)
-        )
-
-        WorkflowControls(
-            workflowViewModel = workflowViewModel,
-            canvasViewModel = canvasViewModel,
-            onShowImportDialog = { showImportDialog = true },
-            onShowExportDialog = { showExportDialog = true },
-            onShowExecuteDialog = { 
-                showExecuteDialog = true
-                workflowViewModel.executeWorkflow { result ->
-                    executeResult = result
+            }
+            "recording" -> {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    RecordingControlPanel(
+                        onWorkflowGenerated = { json ->
+                            workflowViewModel.importFromJson(json)
+                            currentScreen = "workflow"
+                        },
+                        modifier = Modifier.fillMaxSize().padding(16.dp)
+                    )
+                    
+                    // 侧滑栏按钮
+                    FloatingActionButton(
+                        onClick = { showSideDrawer = true },
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(16.dp)
+                            .size(48.dp),
+                        containerColor = MaterialTheme.colorScheme.secondary
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "打开侧滑栏",
+                            tint = Color.White
+                        )
+                    }
                 }
-            },
-            onShowAccessibilityExamples = { showAccessibilityExamples = true },
-            onShowLicenseDialog = { showLicenseDialog = true }
-        )
-
-        WorkflowStatusMessages(
-            workflow = workflow,
-            connectingNodeId = connectingNodeId,
-            selectedNodeId = selectedNodeId,
-            workflowViewModel = workflowViewModel
-        )
-        
-        // 执行状态覆盖层
-        ExecutionStatusOverlay(
-            executingNodes = executingNodes,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
-        
-        // 底部广告 (仅免费版)
-        if (featureManager.shouldShowAds()) {
-            BannerAdView(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-            )
+            }
+            "history" -> {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    HistoryScreen()
+                    
+                    // 侧滑栏按钮
+                    FloatingActionButton(
+                        onClick = { showSideDrawer = true },
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(16.dp)
+                            .size(48.dp),
+                        containerColor = MaterialTheme.colorScheme.secondary
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "打开侧滑栏",
+                            tint = Color.White
+                        )
+                    }
+                }
+            }
+            "settings" -> {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    SettingsScreen()
+                    
+                    // 侧滑栏按钮
+                    FloatingActionButton(
+                        onClick = { showSideDrawer = true },
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(16.dp)
+                            .size(48.dp),
+                        containerColor = MaterialTheme.colorScheme.secondary
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "打开侧滑栏",
+                            tint = Color.White
+                        )
+                    }
+                }
+            }
+            "about" -> {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    AboutScreen()
+                    
+                    // 侧滑栏按钮
+                    FloatingActionButton(
+                        onClick = { showSideDrawer = true },
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(16.dp)
+                            .size(48.dp),
+                        containerColor = MaterialTheme.colorScheme.secondary
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "打开侧滑栏",
+                            tint = Color.White
+                        )
+                    }
+                }
+            }
         }
+        
+        // 侧滑栏
+        SideDrawer(
+            isVisible = showSideDrawer,
+            onDismiss = { showSideDrawer = false },
+            onItemSelected = { screen -> currentScreen = screen },
+            modifier = Modifier.fillMaxSize()
+        )
     }
 
     // 对话框处理

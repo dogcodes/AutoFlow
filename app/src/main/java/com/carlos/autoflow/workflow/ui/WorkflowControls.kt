@@ -50,7 +50,8 @@ fun WorkflowControls(
     onShowExportDialog: () -> Unit = {},
     onShowExecuteDialog: () -> Unit = {},
     onShowAccessibilityExamples: () -> Unit = {},
-    onShowLicenseDialog: () -> Unit = {}
+    onShowLicenseDialog: () -> Unit = {},
+    onShowSideDrawer: () -> Unit = {}
 ) {
     val canvasState by canvasViewModel.canvasState.collectAsState()
     var isPanelVisible by remember { mutableStateOf(false) }
@@ -71,23 +72,44 @@ fun WorkflowControls(
             )
         }
         
-        // 左上角：节点面板按钮
-        AnimatedVisibility(
-            visible = !isPanelVisible,
-            enter = slideInHorizontally(),
-            exit = slideOutHorizontally(),
-            modifier = Modifier.align(Alignment.TopStart)
+        // 左上角：侧滑栏和节点面板按钮
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(Dimens.WorkflowEditor.DefaultPadding)
         ) {
+            // 侧滑栏按钮
             FloatingActionButton(
-                onClick = { isPanelVisible = true },
-                modifier = Modifier.padding(Dimens.WorkflowEditor.DefaultPadding),
-                containerColor = MaterialTheme.colorScheme.primary
+                onClick = onShowSideDrawer,
+                modifier = Modifier.size(48.dp),
+                containerColor = MaterialTheme.colorScheme.secondary
             ) {
                 Icon(
                     imageVector = Icons.Default.Menu,
-                    contentDescription = "打开节点面板",
+                    contentDescription = "打开侧滑栏",
                     tint = Color.White
                 )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // 节点面板按钮
+            AnimatedVisibility(
+                visible = !isPanelVisible,
+                enter = slideInHorizontally(),
+                exit = slideOutHorizontally()
+            ) {
+                FloatingActionButton(
+                    onClick = { isPanelVisible = true },
+                    modifier = Modifier.size(48.dp),
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "打开节点面板",
+                        tint = Color.White
+                    )
+                }
             }
         }
 
