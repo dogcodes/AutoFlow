@@ -148,7 +148,7 @@ fun WorkflowEditor(
                     onShowExportDialog = { showExportDialog = true },
                     onShowExecuteDialog = { 
                         showExecuteDialog = true
-                        workflowViewModel.executeWorkflow { result ->
+                        workflowViewModel.executeWorkflow(context) { result ->
                             executeResult = result
                         }
                     },

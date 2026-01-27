@@ -3,6 +3,7 @@ package com.carlos.autoflow.workflow.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlos.autoflow.workflow.models.*
+import com.carlos.autoflow.workflow.repository.ExecutionHistoryRepository
 import com.carlos.autoflow.workflow.ui.ExecutionStatusManager
 import com.carlos.autoflow.workflow.ui.NodeExecutionState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +32,12 @@ class WorkflowViewModel : ViewModel() {
 
     private val _selectedNodeId = MutableStateFlow<String?>(null)
     val selectedNodeId: StateFlow<String?> = _selectedNodeId
+    
+    // 执行控制
+    private var isExecutionStopped = false
+    private var currentContext: android.content.Context? = null
+    private var currentExecution: WorkflowExecution? = null
+    private var historyRepository: ExecutionHistoryRepository? = null
     
     // 第二阶段新增：JSON和HTTP支持
     private val gson = Gson()
@@ -398,9 +405,39 @@ class WorkflowViewModel : ViewModel() {
     }
     
     // 工作流执行引擎
-    fun executeWorkflow(onResult: (String) -> Unit) {
+    fun executeWorkflow(context: android.content.Context, onResult: (String) -> Unit) {
+        currentContext = context
+        if (historyRepository == null) {
+            historyRepository = ExecutionHistoryRepository(context)
+        }
+        
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                isExecutionStopped = false
+                
+                // 创建执行记录
+                currentExecution = WorkflowExecution(
+                    workflowId = _workflow.value.id,
+                    workflowName = _workflow.value.name,
+                    status = ExecutionStatus.RUNNING,
+                    result = ""
+                )
+                historyRepository?.addExecution(currentExecution!!)
+                
+                // 显示浮动按钮
+                withContext(Dispatchers.Main) {
+                    com.carlos.autoflow.ui.FloatingStopService.start(context,
+                        onStart = { 
+                            // 重新开始执行
+                            executeWorkflow(context, onResult)
+                        },
+                        onStop = { 
+                            stopWorkflowExecution()
+                        }
+                    )
+                    com.carlos.autoflow.ui.FloatingStopService.updateExecutionState(true)
+                }
+                
                 val result = StringBuilder()
                 result.appendLine("🚀 开始执行工作流: ${_workflow.value.name}")
                 result.appendLine("⏰ 执行时间: ${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())}")
@@ -409,32 +446,80 @@ class WorkflowViewModel : ViewModel() {
                 val executedNodes = mutableSetOf<String>()
                 val startNode = _workflow.value.nodes.find { it.type == NodeType.START }
                 
-                if (startNode != null) {
+                if (startNode != null && !isExecutionStopped) {
                     executeNode(startNode, result, executedNodes)
                 }
                 
-                result.appendLine("✅ 工作流执行完成")
+                // 更新执行状态
                 withContext(Dispatchers.Main) {
-                    onResult(result.toString())
+                    com.carlos.autoflow.ui.FloatingStopService.updateExecutionState(false)
+                }
+                
+                val finalStatus = if (isExecutionStopped) ExecutionStatus.STOPPED else ExecutionStatus.SUCCESS
+                val finalResult = if (isExecutionStopped) {
+                    result.appendLine("⏹️ 工作流执行已停止")
+                    result.toString()
+                } else {
+                    result.appendLine("✅ 工作流执行完成")
+                    result.toString()
+                }
+                
+                // 更新执行记录
+                currentExecution?.let { execution ->
+                    val updatedExecution = execution.copy(
+                        endTime = System.currentTimeMillis(),
+                        status = finalStatus,
+                        result = finalResult
+                    )
+                    historyRepository?.updateExecution(updatedExecution)
+                }
+                
+                withContext(Dispatchers.Main) {
+                    onResult(finalResult)
                 }
                 
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
+                    com.carlos.autoflow.ui.FloatingStopService.updateExecutionState(false)
+                    
+                    // 更新执行记录为失败
+                    currentExecution?.let { execution ->
+                        val updatedExecution = execution.copy(
+                            endTime = System.currentTimeMillis(),
+                            status = ExecutionStatus.FAILED,
+                            result = "❌ 执行失败: ${e.message}"
+                        )
+                        historyRepository?.updateExecution(updatedExecution)
+                    }
+                    
                     onResult("❌ 执行失败: ${e.message}")
                 }
             }
         }
     }
+    
+    fun stopWorkflowExecution() {
+        isExecutionStopped = true
+        com.carlos.autoflow.ui.FloatingStopService.updateExecutionState(false)
+    }
+    
+    fun getExecutionHistory() = historyRepository?.executions
 
     private suspend fun executeNode(
         node: WorkflowNode, 
         result: StringBuilder, 
         executed: MutableSet<String>
     ) {
-        if (node.id in executed) return
+        if (node.id in executed || isExecutionStopped) return
         executed.add(node.id)
         
         result.appendLine("📍 执行节点: ${node.title} (${node.type.displayName})")
+        
+        // 检查是否被停止
+        if (isExecutionStopped) {
+            result.appendLine("   ⏹️ 执行已停止")
+            return
+        }
         
         when (node.type) {
             NodeType.START -> {
