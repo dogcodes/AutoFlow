@@ -15,12 +15,13 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 
-class FloatingStopService : Service() {
+class FloatingControlService : Service() {
     
     private var windowManager: WindowManager? = null
     private var floatingView: View? = null
     
     companion object {
+        private var instance: FloatingControlService? = null
         private var startCallback: (() -> Unit)? = null
         private var stopCallback: (() -> Unit)? = null
         private var isExecuting = false
@@ -34,15 +35,16 @@ class FloatingStopService : Service() {
             startCallback = onStart
             stopCallback = onStop
             isExecuting = false
-            context.startService(Intent(context, FloatingStopService::class.java))
+            context.startService(Intent(context, FloatingControlService::class.java))
         }
         
         fun updateExecutionState(executing: Boolean) {
             isExecuting = executing
+            instance?.updateButtonState()
         }
         
         fun stop(context: Context) {
-            context.stopService(Intent(context, FloatingStopService::class.java))
+            context.stopService(Intent(context, FloatingControlService::class.java))
         }
         
         private fun canDrawOverlays(context: Context): Boolean {
@@ -67,6 +69,7 @@ class FloatingStopService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         if (canDrawOverlays(this)) {
             showFloatingButtons()
         } else {
@@ -76,6 +79,7 @@ class FloatingStopService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        instance = null
         hideFloatingButtons()
     }
 
@@ -91,36 +95,18 @@ class FloatingStopService : Service() {
         try {
             windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
             
-            val layout = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-            }
-            
-            val startButton = ImageView(this).apply {
-                setImageResource(android.R.drawable.ic_media_play)
+            val button = ImageView(this).apply {
+                updateButtonState()
                 setBackgroundResource(android.R.drawable.btn_default)
-                setPadding(15, 15, 15, 15)
-                setOnClickListener {
-                    if (!isExecuting) {
-                        startCallback?.invoke()
-                        isExecuting = true
-                    }
-                }
-            }
-            
-            val stopButton = ImageView(this).apply {
-                setImageResource(android.R.drawable.ic_media_pause)
-                setBackgroundResource(android.R.drawable.btn_default)
-                setPadding(15, 15, 15, 15)
+                setPadding(20, 20, 20, 20)
                 setOnClickListener {
                     if (isExecuting) {
                         stopCallback?.invoke()
-                        isExecuting = false
+                    } else {
+                        startCallback?.invoke()
                     }
                 }
             }
-            
-            layout.addView(startButton)
-            layout.addView(stopButton)
             
             val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -141,12 +127,23 @@ class FloatingStopService : Service() {
                 y = 200
             }
             
-            floatingView = layout
+            floatingView = button
             windowManager?.addView(floatingView, params)
         } catch (e: Exception) {
             e.printStackTrace()
             stopSelf()
         }
+    }
+    
+    private fun ImageView.updateButtonState() {
+        setImageResource(
+            if (isExecuting) android.R.drawable.ic_media_pause
+            else android.R.drawable.ic_media_play
+        )
+    }
+    
+    fun updateButtonState() {
+        (floatingView as? ImageView)?.updateButtonState()
     }
     
     private fun hideFloatingButtons() {

@@ -426,7 +426,7 @@ class WorkflowViewModel : ViewModel() {
                 
                 // 显示浮动按钮
                 withContext(Dispatchers.Main) {
-                    com.carlos.autoflow.ui.FloatingStopService.start(context,
+                    com.carlos.autoflow.ui.FloatingControlService.start(context,
                         onStart = { 
                             // 重新开始执行
                             executeWorkflow(context, onResult)
@@ -435,7 +435,7 @@ class WorkflowViewModel : ViewModel() {
                             stopWorkflowExecution()
                         }
                     )
-                    com.carlos.autoflow.ui.FloatingStopService.updateExecutionState(true)
+                    com.carlos.autoflow.ui.FloatingControlService.updateExecutionState(true)
                 }
                 
                 val result = StringBuilder()
@@ -452,7 +452,7 @@ class WorkflowViewModel : ViewModel() {
                 
                 // 更新执行状态
                 withContext(Dispatchers.Main) {
-                    com.carlos.autoflow.ui.FloatingStopService.updateExecutionState(false)
+                    com.carlos.autoflow.ui.FloatingControlService.updateExecutionState(false)
                 }
                 
                 val finalStatus = if (isExecutionStopped) ExecutionStatus.STOPPED else ExecutionStatus.SUCCESS
@@ -480,7 +480,7 @@ class WorkflowViewModel : ViewModel() {
                 
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    com.carlos.autoflow.ui.FloatingStopService.updateExecutionState(false)
+                    com.carlos.autoflow.ui.FloatingControlService.updateExecutionState(false)
                     
                     // 更新执行记录为失败
                     currentExecution?.let { execution ->
@@ -500,7 +500,7 @@ class WorkflowViewModel : ViewModel() {
     
     fun stopWorkflowExecution() {
         isExecutionStopped = true
-        com.carlos.autoflow.ui.FloatingStopService.updateExecutionState(false)
+        com.carlos.autoflow.ui.FloatingControlService.updateExecutionState(false)
     }
     
     fun getExecutionHistory() = historyRepository?.executions
