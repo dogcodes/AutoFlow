@@ -37,6 +37,7 @@ fun SideDrawer(
     val drawerItems = remember {
         listOf(
             DrawerItem("工作流编辑器", Icons.Default.AccountTree, "workflow"),
+            DrawerItem("节点监控器", Icons.Default.Visibility, "monitor"),
             DrawerItem("示例应用", Icons.Default.Apps, "demo"),
             DrawerItem("操作录制", Icons.Default.FiberManualRecord, "recording"),
             DrawerItem("历史记录", Icons.Default.History, "history"),

@@ -61,7 +61,7 @@ import com.carlos.autoflow.recorder.ui.RecordingControlPanel
 import kotlinx.coroutines.delay
 import kotlin.math.floor
 import kotlin.math.pow
-import kotlin.math.sqrt
+import com.carlos.autoflow.monitor.NodeMonitorDemo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -177,6 +177,27 @@ fun WorkflowEditor(
                             .align(Alignment.BottomCenter)
                             .padding(16.dp)
                     )
+                }
+            }
+            "monitor" -> {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    NodeMonitorDemo()
+                    
+                    // 侧滑栏按钮
+                    FloatingActionButton(
+                        onClick = { showSideDrawer = true },
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(16.dp)
+                            .size(48.dp),
+                        containerColor = MaterialTheme.colorScheme.secondary
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "打开侧滑栏",
+                            tint = Color.White
+                        )
+                    }
                 }
             }
             "demo" -> {
