@@ -28,6 +28,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".demo.DemoAppActivity"
+            android:exported="true"
+            android:label="AutoFlow Demo App"
+            android:theme="@style/Theme.AutoFlow">
+            <!-- No intent-filter with LAUNCHER category here to avoid a second icon in the app drawer -->
+            <!-- It can be launched via explicit intent or adb shell am start -->
+        </activity>
         
         <service
             android:name=".accessibility.AutoFlowAccessibilityService"

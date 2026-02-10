@@ -1,5 +1,7 @@
 package com.carlos.autoflow.workflow.viewmodel
 
+import android.content.Intent
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlos.autoflow.workflow.models.*
@@ -229,6 +231,13 @@ class WorkflowViewModel : ViewModel() {
         NodeType.SCREEN_STATE -> listOf(
             NodeInput("state", "屏幕状态", "string", true)
         )
+        NodeType.LAUNCH_ACTIVITY -> listOf(
+            NodeInput("packageName", "包名", "string"),
+            NodeInput("className", "类名", "string"),
+            NodeInput("action", "Action", "string"),
+            NodeInput("data", "Data URI", "string"),
+            NodeInput("extras", "额外参数 (JSON)", "string")
+        )
     }
 
     private fun getDefaultOutputs(type: NodeType): List<NodeOutput> = when (type) {
@@ -295,6 +304,9 @@ class WorkflowViewModel : ViewModel() {
         NodeType.SCREEN_STATE -> listOf(
             NodeOutput("state", "屏幕状态", "string"),
             NodeOutput("changed", "状态改变", "boolean")
+        )
+        NodeType.LAUNCH_ACTIVITY -> listOf(
+            NodeOutput("success", "启动成功", "boolean")
         )
     }
     
@@ -888,6 +900,52 @@ class WorkflowViewModel : ViewModel() {
             NodeType.SCREEN_STATE -> {
                 result.appendLine("   📱 屏幕状态检测")
                 // TODO: 实现屏幕状态检测
+            }
+            NodeType.LAUNCH_ACTIVITY -> {
+                result.appendLine("   🚀 启动应用Activity")
+                try {
+                    val packageName = node.config["packageName"] as? String
+                    val className = node.config["className"] as? String
+                    val action = node.config["action"] as? String
+                    val data = node.config["data"] as? String
+                    val extras = node.config["extras"] as? Map<String, String>
+                    
+                    if (currentContext == null) {
+                        result.appendLine("   ❌ 错误：Context未初始化，无法启动Activity。")
+                        return
+                    }
+                    
+                    val intent = Intent().apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK // 必须添加，因为是从非Activity上下文启动
+                        
+                        if (!packageName.isNullOrBlank() && !className.isNullOrBlank()) {
+                            setClassName(packageName, className)
+                            result.appendLine("   目标Activity: $packageName/$className")
+                        } else if (!action.isNullOrBlank()) {
+                            setAction(action)
+                            result.appendLine("   目标Action: $action")
+                        } else {
+                            throw IllegalArgumentException("必须指定packageName/className或action")
+                        }
+                        
+                        if (!data.isNullOrBlank()) {
+                            setData(Uri.parse(data))
+                            result.appendLine("   数据URI: $data")
+                        }
+                        
+                        extras?.forEach { (key, value) ->
+                            putExtra(key, value)
+                            result.appendLine("   额外参数: $key = $value")
+                        }
+                    }
+                    
+                    currentContext!!.startActivity(intent)
+                    result.appendLine("   ✅ Activity启动成功")
+                    
+                } catch (e: Exception) {
+                    result.appendLine("   ❌ 启动Activity失败: ${e.javaClass.simpleName} - ${e.message}")
+                    e.printStackTrace()
+                }
             }
             else -> {
                 result.appendLine("   ⚙️ 节点处理完成")

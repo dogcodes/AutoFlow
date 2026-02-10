@@ -53,6 +53,7 @@ fun NodeConfigDialog(
                     NodeType.UI_WAIT -> UIWaitConfig(config) { config = it }
                     NodeType.UI_GET_TEXT -> UIGetTextConfig(config) { config = it }
                     NodeType.UI_CHECK -> UICheckConfig(config) { config = it }
+                    NodeType.LAUNCH_ACTIVITY -> LaunchActivityConfig(config) { config = it }
                     else -> {
                         Text("此节点暂无配置项", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -696,4 +697,85 @@ private fun UICheckConfig(
             }
         }
     }
+}
+
+@Composable
+private fun LaunchActivityConfig(
+    config: MutableMap<String, Any>,
+    onUpdate: (MutableMap<String, Any>) -> Unit
+) {
+    var packageName by remember { mutableStateOf(config["packageName"] as? String ?: "") }
+    var className by remember { mutableStateOf(config["className"] as? String ?: "") }
+    var action by remember { mutableStateOf(config["action"] as? String ?: "") }
+    var data by remember { mutableStateOf(config["data"] as? String ?: "") }
+    // For extras, starting with a simple string input for JSON or key-value pairs
+    var extrasJson by remember { mutableStateOf(config["extras"] as? String ?: "") }
+
+    OutlinedTextField(
+        value = packageName,
+        onValueChange = {
+            packageName = it
+            config["packageName"] = it
+            onUpdate(config)
+        },
+        label = { Text("包名 (packageName)") },
+        placeholder = { Text("com.example.app") },
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    OutlinedTextField(
+        value = className,
+        onValueChange = {
+            className = it
+            config["className"] = it
+            onUpdate(config)
+        },
+        label = { Text("类名 (className)") },
+        placeholder = { Text("com.example.app.MainActivity") },
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    OutlinedTextField(
+        value = action,
+        onValueChange = {
+            action = it
+            config["action"] = it
+            onUpdate(config)
+        },
+        label = { Text("Action (可选)") },
+        placeholder = { Text("android.intent.action.VIEW") },
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    OutlinedTextField(
+        value = data,
+        onValueChange = {
+            data = it
+            config["data"] = it
+            onUpdate(config)
+        },
+        label = { Text("Data URI (可选)") },
+        placeholder = { Text("http://example.com/data") },
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+    
+    OutlinedTextField(
+        value = extrasJson,
+        onValueChange = {
+            extrasJson = it
+            config["extras"] = it // Store as JSON string for now
+            onUpdate(config)
+        },
+        label = { Text("额外参数 (JSON格式, 可选)") },
+        placeholder = { Text("{ \"key1\": \"value1\", \"key2\": \"value2\" }") },
+        modifier = Modifier.fillMaxWidth()
+    )
 }

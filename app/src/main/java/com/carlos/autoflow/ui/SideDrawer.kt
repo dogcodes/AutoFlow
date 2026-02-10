@@ -93,7 +93,6 @@ fun SideDrawer(
                                 item = item,
                                 onClick = { 
                                     onItemSelected(item.key)
-                                    onDismiss()
                                 }
                             )
                         }

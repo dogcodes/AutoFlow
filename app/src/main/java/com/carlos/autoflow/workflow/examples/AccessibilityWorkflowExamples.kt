@@ -15,11 +15,33 @@ object AccessibilityWorkflowExamples {
                 y = 100f
             ),
             WorkflowNode(
-                id = "wait_app_load",
-                type = NodeType.UI_WAIT,
-                title = "等待应用加载",
+                id = "launch_demo_app_3",
+                type = NodeType.LAUNCH_ACTIVITY,
+                title = "启动示例应用",
+                x = 100f,
+                y = 150f,
+                config = mutableMapOf(
+                    "packageName" to "com.carlos.autoflow",
+                    "className" to "com.carlos.autoflow.demo.DemoAppActivity"
+                )
+            ),
+            WorkflowNode(
+                id = "click_daily_checkin_card",
+                type = NodeType.UI_CLICK,
+                title = "点击每日签到卡片",
                 x = 100f,
                 y = 200f,
+                config = mutableMapOf(
+                    "selector" to "text=每日签到",
+                    "clickType" to "SINGLE"
+                )
+            ),
+            WorkflowNode(
+                id = "wait_checkin_page",
+                type = NodeType.UI_WAIT,
+                title = "等待每日签到页面",
+                x = 100f,
+                y = 250f,
                 config = mutableMapOf(
                     "selector" to "text=每日签到",
                     "timeout" to 5000L
@@ -88,7 +110,8 @@ object AccessibilityWorkflowExamples {
         )
         
         val connections = listOf(
-            WorkflowConnection(sourceNodeId = "start_3", sourceOutputId = "output", targetNodeId = "wait_app_load", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "start_3", sourceOutputId = "output", targetNodeId = "launch_demo_app_3", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "launch_demo_app_3", sourceOutputId = "output", targetNodeId = "wait_app_load", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "wait_app_load", sourceOutputId = "output", targetNodeId = "find_checkin_btn", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "find_checkin_btn", sourceOutputId = "output", targetNodeId = "check_btn_exists", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "check_btn_exists", sourceOutputId = "true", targetNodeId = "click_checkin", targetInputId = "input"),
@@ -116,6 +139,17 @@ object AccessibilityWorkflowExamples {
                 title = "开始",
                 x = 100f,
                 y = 100f
+            ),
+            WorkflowNode(
+                id = "launch_demo_app_4",
+                type = NodeType.LAUNCH_ACTIVITY,
+                title = "启动示例应用",
+                x = 100f,
+                y = 150f,
+                config = mutableMapOf(
+                    "packageName" to "com.carlos.autoflow",
+                    "className" to "com.carlos.autoflow.demo.DemoAppActivity"
+                )
             ),
             WorkflowNode(
                 id = "wait_demo_app",
@@ -206,7 +240,8 @@ object AccessibilityWorkflowExamples {
         )
         
         val connections = listOf(
-            WorkflowConnection(sourceNodeId = "start_4", sourceOutputId = "output", targetNodeId = "wait_demo_app", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "start_4", sourceOutputId = "output", targetNodeId = "launch_demo_app_4", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "launch_demo_app_4", sourceOutputId = "output", targetNodeId = "wait_demo_app", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "wait_demo_app", sourceOutputId = "output", targetNodeId = "click_login_card", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "click_login_card", sourceOutputId = "output", targetNodeId = "wait_login_page", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "wait_login_page", sourceOutputId = "output", targetNodeId = "input_username", targetInputId = "input"),
@@ -234,6 +269,17 @@ object AccessibilityWorkflowExamples {
                 title = "开始",
                 x = 100f,
                 y = 100f
+            ),
+            WorkflowNode(
+                id = "launch_demo_app_5",
+                type = NodeType.LAUNCH_ACTIVITY,
+                title = "启动示例应用",
+                x = 100f,
+                y = 150f,
+                config = mutableMapOf(
+                    "packageName" to "com.carlos.autoflow",
+                    "className" to "com.carlos.autoflow.demo.DemoAppActivity"
+                )
             ),
             WorkflowNode(
                 id = "click_form_card",
@@ -337,7 +383,8 @@ object AccessibilityWorkflowExamples {
         )
         
         val connections = listOf(
-            WorkflowConnection(sourceNodeId = "start_5", sourceOutputId = "output", targetNodeId = "click_form_card", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "start_5", sourceOutputId = "output", targetNodeId = "launch_demo_app_5", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "launch_demo_app_5", sourceOutputId = "output", targetNodeId = "click_form_card", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "click_form_card", sourceOutputId = "output", targetNodeId = "wait_form_page", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "wait_form_page", sourceOutputId = "output", targetNodeId = "fill_name", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "fill_name", sourceOutputId = "output", targetNodeId = "fill_phone", targetInputId = "input"),

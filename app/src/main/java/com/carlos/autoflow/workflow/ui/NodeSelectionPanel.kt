@@ -57,6 +57,7 @@ fun NodeSelectionPanel(
         ),
         NodeCategory.SYSTEM_EVENT to listOf(
             NodeTemplate(NodeType.APP_LAUNCH, "应用启动", "检测应用启动", Icons.Default.Launch),
+            NodeTemplate(NodeType.LAUNCH_ACTIVITY, "启动Activity", "启动指定Android Activity", Icons.Default.OpenInNew),
             NodeTemplate(NodeType.NOTIFICATION, "通知处理", "处理系统通知", Icons.Default.Notifications),
             NodeTemplate(NodeType.SCREEN_STATE, "屏幕状态", "检测屏幕开关", Icons.Default.ScreenLockPortrait)
         ),

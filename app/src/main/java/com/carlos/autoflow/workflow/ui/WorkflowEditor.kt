@@ -1,5 +1,6 @@
 package com.carlos.autoflow.workflow.ui
 
+import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -52,6 +53,7 @@ import com.carlos.autoflow.workflow.ui.ExecutionStatusOverlay
 import com.carlos.autoflow.billing.ui.LicenseDialog
 import com.carlos.autoflow.billing.BannerAdView
 import com.carlos.autoflow.billing.FeatureManager
+import com.carlos.autoflow.demo.DemoAppActivity
 import com.carlos.autoflow.ui.SideDrawer
 import com.carlos.autoflow.ui.screens.HistoryScreen
 import com.carlos.autoflow.ui.screens.SettingsScreen
@@ -201,25 +203,9 @@ fun WorkflowEditor(
                 }
             }
             "demo" -> {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    DemoAppScreen()
-                    
-                    // 侧滑栏按钮
-                    FloatingActionButton(
-                        onClick = { showSideDrawer = true },
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(16.dp)
-                            .size(48.dp),
-                        containerColor = MaterialTheme.colorScheme.secondary
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Menu,
-                            contentDescription = "打开侧滑栏",
-                            tint = Color.White
-                        )
-                    }
-                }
+                val intent = Intent(context, DemoAppActivity::class.java)
+                context.startActivity(intent)
+                currentScreen = "workflow" // Reset to workflow after launching
             }
             "recording" -> {
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -317,7 +303,17 @@ fun WorkflowEditor(
         SideDrawer(
             isVisible = showSideDrawer,
             onDismiss = { showSideDrawer = false },
-            onItemSelected = { screen -> currentScreen = screen },
+            onItemSelected = { screen ->
+                if (screen == "demo") {
+                    val intent = Intent(context, DemoAppActivity::class.java)
+                    context.startActivity(intent)
+                    currentScreen = "workflow" // Reset to workflow after launching
+                    // Do NOT dismiss drawer here, it will remain open when returning
+                } else {
+                    currentScreen = screen
+                    showSideDrawer = false // Dismiss drawer for internal screen changes
+                }
+            },
             modifier = Modifier.fillMaxSize()
         )
     }

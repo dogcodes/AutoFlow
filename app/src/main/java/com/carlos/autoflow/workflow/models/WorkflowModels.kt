@@ -94,6 +94,7 @@ enum class NodeType(val displayName: String, val category: NodeCategory, val des
     
     // 系统事件节点
     APP_LAUNCH("应用启动", NodeCategory.SYSTEM_EVENT, "检测应用启动"),
+    LAUNCH_ACTIVITY("启动应用Activity", NodeCategory.SYSTEM_EVENT, "启动指定的Android Activity"),
     NOTIFICATION("通知处理", NodeCategory.SYSTEM_EVENT, "处理系统通知"),
     SCREEN_STATE("屏幕状态", NodeCategory.SYSTEM_EVENT, "检测屏幕开关"),
     
