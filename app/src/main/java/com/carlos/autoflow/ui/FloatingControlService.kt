@@ -14,6 +14,8 @@ import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
+import android.view.MotionEvent
+import kotlin.math.abs
 
 class FloatingControlService : Service() {
     
@@ -99,11 +101,49 @@ class FloatingControlService : Service() {
                 updateButtonState()
                 setBackgroundResource(android.R.drawable.btn_default)
                 setPadding(20, 20, 20, 20)
-                setOnClickListener {
-                    if (isExecuting) {
-                        stopCallback?.invoke()
-                    } else {
-                        startCallback?.invoke()
+
+                var initialX: Int = 0
+                var initialY: Int = 0
+                var initialTouchX: Float = 0f
+                var initialTouchY: Float = 0f
+                var isDragging: Boolean = false
+
+                setOnTouchListener { v, event ->
+                    val layoutParams = v.layoutParams as WindowManager.LayoutParams
+                    when (event.action) {
+                        MotionEvent.ACTION_DOWN -> {
+                            initialX = layoutParams.x
+                            initialY = layoutParams.y
+                            initialTouchX = event.rawX
+                            initialTouchY = event.rawY
+                            isDragging = false
+                            true
+                        }
+                        MotionEvent.ACTION_MOVE -> {
+                            val dx = event.rawX - initialTouchX
+                            val dy = event.rawY - initialTouchY
+                            
+                            if (abs(dx) > 5 || abs(dy) > 5) {
+                                isDragging = true
+                                layoutParams.x = (initialX + dx).toInt()
+                                layoutParams.y = (initialY + dy).toInt()
+                                windowManager?.updateViewLayout(v, layoutParams)
+                            }
+                            true
+                        }
+                        MotionEvent.ACTION_UP -> {
+                            if (!isDragging) {
+                                // Only trigger click if it was not a drag
+                                if (isExecuting) {
+                                    stopCallback?.invoke()
+                                } else {
+                                    startCallback?.invoke()
+                                }
+                            }
+                            isDragging = false
+                            true
+                        }
+                        else -> false
                     }
                 }
             }
@@ -122,7 +162,7 @@ class FloatingControlService : Service() {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT
             ).apply {
-                gravity = Gravity.TOP or Gravity.END
+                gravity = Gravity.TOP or Gravity.START
                 x = 50
                 y = 200
             }
