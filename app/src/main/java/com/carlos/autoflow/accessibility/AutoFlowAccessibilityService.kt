@@ -41,6 +41,8 @@ class AutoFlowAccessibilityService : AccessibilityService() {
             handleAccessibilityEvent(it)
             // 将事件传递给录制器
             operationRecorder.handleAccessibilityEvent(it, rootInActiveWindow)
+            //打印所有节点
+            AccessibilityNodeUtils.printAccessibilityNodeTree(rootInActiveWindow)
         }
     }
 
