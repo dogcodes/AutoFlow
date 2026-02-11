@@ -110,3 +110,9 @@ enum class NodeCategory(val displayName: String, val color: String) {
     SYSTEM_EVENT("系统事件", "#9C27B0"),    // 紫色
     NETWORK("网络", "#F44336")              // 红色
 }
+
+enum class ClickStrategy(val displayName: String) {
+    DEFAULT("默认"),
+    FIND_CLICKABLE_PARENT("查找可点击父级"),
+    FIND_CLICKABLE_CHILD("查找可点击子级")
+}

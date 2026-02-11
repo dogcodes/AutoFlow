@@ -17,6 +17,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.carlos.autoflow.utils.AutoFlowLogger
+import com.carlos.autoflow.utils.logTag
+
+private val TAG = "ElementPicker"
 
 data class ElementInfo(
     val text: String?,
@@ -241,29 +245,36 @@ private fun SelectorChip(
 }
 
 private fun inspectCurrentScreen(): List<ElementInfo> {
+    AutoFlowLogger.d(TAG, "开始屏幕检测。")
     val service = AutoFlowAccessibilityService.getInstance()
     if (service == null) {
+        AutoFlowLogger.e(TAG, "无障碍服务未运行，无法检测屏幕。")
         return emptyList()
     }
     
     val rootNode = service.rootInActiveWindow
     if (rootNode == null) {
+        AutoFlowLogger.e(TAG, "根无障碍节点为空，无法检测屏幕。")
         return emptyList()
     }
     
     val elements = mutableListOf<ElementInfo>()
     collectElements(rootNode, elements)
     
-    return elements.filter { element ->
+    val filteredElements = elements.filter { element ->
         // 过滤有用的元素
         element.isClickable || 
         element.isEditable || 
         !element.text.isNullOrBlank() ||
         !element.resourceId.isNullOrBlank()
     }
+    AutoFlowLogger.d(TAG, "屏幕检测完成。找到 ${filteredElements.size} 个过滤后的元素。")
+    return filteredElements
 }
 
 private fun collectElements(node: android.view.accessibility.AccessibilityNodeInfo, elements: MutableList<ElementInfo>) {
+    val rect = android.graphics.Rect()
+    node.getBoundsInScreen(rect)
     val element = ElementInfo(
         text = node.text?.toString(),
         resourceId = node.viewIdResourceName,
@@ -271,10 +282,11 @@ private fun collectElements(node: android.view.accessibility.AccessibilityNodeIn
         contentDescription = node.contentDescription?.toString(),
         isClickable = node.isClickable,
         isEditable = node.isEditable,
-        bounds = "${node.getBoundsInScreen(android.graphics.Rect())}"
+        bounds = rect.toShortString()
     )
     
     elements.add(element)
+    AutoFlowLogger.d(TAG, "收集到的元素: text='${element.text}', id='${element.resourceId}', class='${element.className}', bounds='${element.bounds}'")
     
     // 递归收集子节点
     for (i in 0 until node.childCount) {
@@ -285,28 +297,35 @@ private fun collectElements(node: android.view.accessibility.AccessibilityNodeIn
 }
 
 private fun generateSelectors(element: ElementInfo): List<String> {
+    AutoFlowLogger.d(TAG, "正在为元素生成选择器: text='${element.text}', id='${element.resourceId}', class='${element.className}'")
     val selectors = mutableListOf<String>()
     
     // 按优先级生成选择器
     element.resourceId?.let { id ->
-        selectors.add("id=${id.substringAfterLast("/")}")
+        val shortId = id.substringAfterLast("/")
+        selectors.add("id=$shortId")
+        AutoFlowLogger.d(TAG, "生成的ID选择器: id=$shortId")
     }
     
     element.text?.let { text ->
         if (text.length <= 20) {
             selectors.add("text=$text")
+            AutoFlowLogger.d(TAG, "生成的文本选择器: text=$text")
         }
     }
     
     element.contentDescription?.let { desc ->
         if (desc.length <= 20) {
             selectors.add("desc=$desc")
+            AutoFlowLogger.d(TAG, "生成的内容描述选择器: desc=$desc")
         }
     }
     
     element.className?.let { className ->
-        selectors.add("class=${className.substringAfterLast(".")}")
+        val shortClassName = className.substringAfterLast(".")
+        selectors.add("class=$shortClassName")
+        AutoFlowLogger.d(TAG, "生成的类名选择器: class=$shortClassName")
     }
-    
+    AutoFlowLogger.d(TAG, "所有生成的选择器: $selectors")
     return selectors
 }

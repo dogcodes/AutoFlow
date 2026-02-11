@@ -589,9 +589,11 @@ class WorkflowViewModel : ViewModel() {
             NodeType.UI_CLICK -> {
                 val selector = node.config["selector"] as? String ?: ""
                 val clickType = node.config["clickType"] as? String ?: "SINGLE"
+                val clickStrategy = node.config["clickStrategy"] as? String ?: ClickStrategy.DEFAULT.name
                 
                 result.appendLine("   👆 点击操作: $selector")
                 result.appendLine("   🔧 点击类型: $clickType")
+                result.appendLine("   策略: $clickStrategy")
                 
                 if (!com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
                     result.appendLine("   ❌ 无障碍服务未启用")
@@ -600,7 +602,8 @@ class WorkflowViewModel : ViewModel() {
                         val elementSelector = com.carlos.autoflow.workflow.models.ElementSelector.parse(selector)
                         val operation = com.carlos.autoflow.accessibility.ClickOperation(
                             elementSelector, 
-                            com.carlos.autoflow.accessibility.ClickType.valueOf(clickType)
+                            com.carlos.autoflow.accessibility.ClickType.valueOf(clickType),
+                            ClickStrategy.valueOf(clickStrategy)
                         )
                         
                         val operationResult = com.carlos.autoflow.accessibility.AutoFlowAccessibilityService

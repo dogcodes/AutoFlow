@@ -1,11 +1,15 @@
 package com.carlos.autoflow.workflow.examples
 
+import com.carlos.autoflow.utils.AutoFlowLogger
 import com.carlos.autoflow.workflow.models.*
 
 object AccessibilityWorkflowExamples {
-    
+
+    private val TAG = AccessibilityWorkflowExamples::class.java.simpleName
+
     // 示例3: 应用自动签到
     fun createAppAutoCheckInWorkflow(): Workflow {
+        AutoFlowLogger.d(TAG, "正在创建应用自动签到工作流")
         val nodes = listOf(
             WorkflowNode(
                 id = "start_3",
@@ -33,7 +37,8 @@ object AccessibilityWorkflowExamples {
                 y = 200f,
                 config = mutableMapOf(
                     "selector" to "text=每日签到",
-                    "clickType" to "SINGLE"
+                    "clickType" to "SINGLE",
+                    "clickStrategy" to ClickStrategy.FIND_CLICKABLE_PARENT.name
                 )
             ),
             WorkflowNode(
@@ -108,11 +113,12 @@ object AccessibilityWorkflowExamples {
                 y = 700f
             )
         )
-        
+
         val connections = listOf(
             WorkflowConnection(sourceNodeId = "start_3", sourceOutputId = "output", targetNodeId = "launch_demo_app_3", targetInputId = "input"),
-            WorkflowConnection(sourceNodeId = "launch_demo_app_3", sourceOutputId = "output", targetNodeId = "wait_app_load", targetInputId = "input"),
-            WorkflowConnection(sourceNodeId = "wait_app_load", sourceOutputId = "output", targetNodeId = "find_checkin_btn", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "launch_demo_app_3", sourceOutputId = "output", targetNodeId = "click_daily_checkin_card", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "click_daily_checkin_card", sourceOutputId = "output", targetNodeId = "wait_checkin_page", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "wait_checkin_page", sourceOutputId = "output", targetNodeId = "find_checkin_btn", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "find_checkin_btn", sourceOutputId = "output", targetNodeId = "check_btn_exists", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "check_btn_exists", sourceOutputId = "true", targetNodeId = "click_checkin", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "check_btn_exists", sourceOutputId = "false", targetNodeId = "already_signed", targetInputId = "input"),
@@ -129,9 +135,10 @@ object AccessibilityWorkflowExamples {
             connections = connections
         )
     }
-    
+
     // 示例4: 基于示例应用的登录测试
     fun createDemoAppLoginWorkflow(): Workflow {
+        AutoFlowLogger.d(TAG, "正在创建演示应用登录工作流")
         val nodes = listOf(
             WorkflowNode(
                 id = "start_4",
@@ -170,7 +177,8 @@ object AccessibilityWorkflowExamples {
                 y = 300f,
                 config = mutableMapOf(
                     "selector" to "text=用户登录",
-                    "clickType" to "SINGLE"
+                    "clickType" to "SINGLE",
+                    "clickStrategy" to ClickStrategy.FIND_CLICKABLE_PARENT.name
                 )
             ),
             WorkflowNode(
@@ -259,9 +267,10 @@ object AccessibilityWorkflowExamples {
             connections = connections
         )
     }
-    
+
     // 示例5: 示例应用表单填写
     fun createDemoAppFormWorkflow(): Workflow {
+        AutoFlowLogger.d(TAG, "正在创建演示应用表单工作流")
         val nodes = listOf(
             WorkflowNode(
                 id = "start_5",
@@ -289,7 +298,8 @@ object AccessibilityWorkflowExamples {
                 y = 200f,
                 config = mutableMapOf(
                     "selector" to "text=信息表单",
-                    "clickType" to "SINGLE"
+                    "clickType" to "SINGLE",
+                    "clickStrategy" to ClickStrategy.FIND_CLICKABLE_PARENT.name
                 )
             ),
             WorkflowNode(
@@ -403,9 +413,10 @@ object AccessibilityWorkflowExamples {
             connections = connections
         )
     }
-    
+
     // 获取所有无障碍示例
     fun getAllAccessibilityExamples(): List<Workflow> {
+        AutoFlowLogger.d(TAG, "正在获取所有无障碍示例")
         return listOf(
             createDemoAppLoginWorkflow(),
             createDemoAppFormWorkflow(),

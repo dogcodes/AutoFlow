@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.sp
 import com.carlos.autoflow.workflow.models.NodeType
 import com.carlos.autoflow.workflow.models.WorkflowNode
 import com.carlos.autoflow.accessibility.ElementPickerDialog
+import com.carlos.autoflow.workflow.models.ClickStrategy
 
 @Composable
 fun NodeConfigDialog(
@@ -234,6 +235,7 @@ private fun UIClickConfig(
 ) {
     var selector by remember { mutableStateOf(config["selector"] as? String ?: "") }
     var clickType by remember { mutableStateOf(config["clickType"] as? String ?: "SINGLE") }
+    var clickStrategy by remember { mutableStateOf(config["clickStrategy"] as? String ?: ClickStrategy.DEFAULT.name) }
     var showElementPicker by remember { mutableStateOf(false) }
     
     Row(
@@ -310,6 +312,39 @@ private fun UIClickConfig(
                         config["clickType"] = value
                         onUpdate(config)
                         expanded = false
+                    }
+                )
+            }
+        }
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    var strategyExpanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = strategyExpanded,
+        onExpandedChange = { strategyExpanded = !strategyExpanded }
+    ) {
+        OutlinedTextField(
+            value = ClickStrategy.valueOf(clickStrategy).displayName,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("点击策略") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = strategyExpanded) },
+            modifier = Modifier.menuAnchor().fillMaxWidth()
+        )
+        ExposedDropdownMenu(
+            expanded = strategyExpanded,
+            onDismissRequest = { strategyExpanded = false }
+        ) {
+            ClickStrategy.values().forEach { strategy ->
+                DropdownMenuItem(
+                    text = { Text(strategy.displayName) },
+                    onClick = {
+                        clickStrategy = strategy.name
+                        config["clickStrategy"] = strategy.name
+                        onUpdate(config)
+                        strategyExpanded = false
                     }
                 )
             }
