@@ -53,43 +53,22 @@ object AccessibilityWorkflowExamples {
                 )
             ),
             WorkflowNode(
-                id = "wait_checkin_page",
+                id = "wait_checkin_btn",
                 type = NodeType.UI_WAIT,
-                title = "等待每日签到页面",
+                title = "等待签到按钮",
                 x = 100f,
                 y = 500f,
                 config = mutableMapOf(
-                    "selector" to "text_exact=每日签到",
-                    "timeout" to 5000L
-                )
-            ),
-            WorkflowNode(
-                id = "find_checkin_btn",
-                type = NodeType.UI_FIND,
-                title = "查找签到按钮",
-                x = 100f,
-                y = 600f,
-                config = mutableMapOf(
                     "selector" to "text_exact=签到",
-                    "multiple" to true
-                )
-            ),
-            WorkflowNode(
-                id = "check_btn_exists",
-                type = NodeType.CONDITION,
-                title = "检查按钮是否存在",
-                x = 100f,
-                y = 700f,
-                config = mutableMapOf(
-                    "condition" to "elements.count > 0"
+                    "timeout" to 3000L
                 )
             ),
             WorkflowNode(
                 id = "click_checkin",
                 type = NodeType.UI_CLICK,
-                title = "点击签到",
-                x = 50f,
-                y = 800f,
+                title = "点击签到按钮",
+                x = 100f,
+                y = 600f,
                 config = mutableMapOf(
                     "selector" to "text_exact=签到",
                     "clickType" to "SINGLE",
@@ -97,32 +76,11 @@ object AccessibilityWorkflowExamples {
                 )
             ),
             WorkflowNode(
-                id = "wait_success",
-                type = NodeType.UI_WAIT,
-                title = "等待签到成功",
-                x = 50f,
-                y = 900f,
-                config = mutableMapOf(
-                    "selector" to "text=签到成功",
-                    "timeout" to 3000L
-                )
-            ),
-            WorkflowNode(
-                id = "already_signed",
-                type = NodeType.DELAY,
-                title = "已签到提示",
-                x = 230f,
-                y = 800f,
-                config = mutableMapOf(
-                    "duration" to 1000L
-                )
-            ),
-            WorkflowNode(
                 id = "end_3",
                 type = NodeType.END,
                 title = "结束",
                 x = 100f,
-                y = 1000f
+                y = 700f
             )
         )
 
@@ -130,14 +88,9 @@ object AccessibilityWorkflowExamples {
             WorkflowConnection(sourceNodeId = "start_3", sourceOutputId = "output", targetNodeId = "launch_demo_app_3", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "launch_demo_app_3", sourceOutputId = "output", targetNodeId = "wait_demo_app_3", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "wait_demo_app_3", sourceOutputId = "output", targetNodeId = "click_daily_checkin_card", targetInputId = "input"),
-            WorkflowConnection(sourceNodeId = "click_daily_checkin_card", sourceOutputId = "output", targetNodeId = "wait_checkin_page", targetInputId = "input"),
-            WorkflowConnection(sourceNodeId = "wait_checkin_page", sourceOutputId = "output", targetNodeId = "find_checkin_btn", targetInputId = "input"),
-            WorkflowConnection(sourceNodeId = "find_checkin_btn", sourceOutputId = "output", targetNodeId = "check_btn_exists", targetInputId = "input"),
-            WorkflowConnection(sourceNodeId = "check_btn_exists", sourceOutputId = "true", targetNodeId = "click_checkin", targetInputId = "input"),
-            WorkflowConnection(sourceNodeId = "check_btn_exists", sourceOutputId = "false", targetNodeId = "already_signed", targetInputId = "input"),
-            WorkflowConnection(sourceNodeId = "click_checkin", sourceOutputId = "output", targetNodeId = "wait_success", targetInputId = "input"),
-            WorkflowConnection(sourceNodeId = "wait_success", sourceOutputId = "output", targetNodeId = "end_3", targetInputId = "input"),
-            WorkflowConnection(sourceNodeId = "already_signed", sourceOutputId = "output", targetNodeId = "end_3", targetInputId = "input")
+            WorkflowConnection(sourceNodeId = "click_daily_checkin_card", sourceOutputId = "output", targetNodeId = "wait_checkin_btn", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "wait_checkin_btn", sourceOutputId = "output", targetNodeId = "click_checkin", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "click_checkin", sourceOutputId = "output", targetNodeId = "end_3", targetInputId = "input")
         )
         
         return Workflow(
@@ -206,23 +159,11 @@ object AccessibilityWorkflowExamples {
                 )
             ),
             WorkflowNode(
-                id = "click_username_field_4",
-                type = NodeType.UI_CLICK,
-                title = "点击用户名输入框",
-                x = 100f,
-                y = 600f,
-                config = mutableMapOf(
-                    "selector" to "text=用户名",
-                    "clickType" to "SINGLE",
-                    "clickStrategy" to ClickStrategy.FIND_CLICKABLE_PARENT.name
-                )
-            ),
-            WorkflowNode(
                 id = "input_username",
                 type = NodeType.UI_INPUT,
                 title = "输入用户名",
                 x = 100f,
-                y = 700f,
+                y = 600f,
                 config = mutableMapOf(
                     "selector" to "text=用户名",
                     "text" to "testuser",
@@ -231,23 +172,11 @@ object AccessibilityWorkflowExamples {
                 )
             ),
             WorkflowNode(
-                id = "click_password_field_4",
-                type = NodeType.UI_CLICK,
-                title = "点击密码输入框",
-                x = 100f,
-                y = 800f,
-                config = mutableMapOf(
-                    "selector" to "text=密码",
-                    "clickType" to "SINGLE",
-                    "clickStrategy" to ClickStrategy.FIND_CLICKABLE_PARENT.name
-                )
-            ),
-            WorkflowNode(
                 id = "input_password",
                 type = NodeType.UI_INPUT,
                 title = "输入密码",
                 x = 100f,
-                y = 900f,
+                y = 700f,
                 config = mutableMapOf(
                     "selector" to "text=密码",
                     "text" to "123456",
@@ -260,10 +189,11 @@ object AccessibilityWorkflowExamples {
                 type = NodeType.UI_CLICK,
                 title = "点击登录按钮",
                 x = 100f,
-                y = 1000f,
+                y = 800f,
                 config = mutableMapOf(
-                    "selector" to "text=登录",
-                    "clickType" to "SINGLE"
+                    "selector" to "text_exact=登录",
+                    "clickType" to "SINGLE",
+                    "clickStrategy" to ClickStrategy.FIND_CLICKABLE_PARENT.name
                 )
             ),
             WorkflowNode(
@@ -271,7 +201,7 @@ object AccessibilityWorkflowExamples {
                 type = NodeType.UI_WAIT,
                 title = "等待登录成功",
                 x = 100f,
-                y = 1100f,
+                y = 900f,
                 config = mutableMapOf(
                     "selector" to "text=登录成功！",
                     "timeout" to 3000L
@@ -282,7 +212,7 @@ object AccessibilityWorkflowExamples {
                 type = NodeType.END,
                 title = "结束",
                 x = 100f,
-                y = 1200f
+                y = 1000f
             )
         )
         
@@ -291,10 +221,8 @@ object AccessibilityWorkflowExamples {
             WorkflowConnection(sourceNodeId = "launch_demo_app_4", sourceOutputId = "output", targetNodeId = "wait_demo_app", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "wait_demo_app", sourceOutputId = "output", targetNodeId = "click_login_card", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "click_login_card", sourceOutputId = "output", targetNodeId = "wait_login_page", targetInputId = "input"),
-            WorkflowConnection(sourceNodeId = "wait_login_page", sourceOutputId = "output", targetNodeId = "click_username_field_4", targetInputId = "input"),
-            WorkflowConnection(sourceNodeId = "click_username_field_4", sourceOutputId = "output", targetNodeId = "input_username", targetInputId = "input"),
-            WorkflowConnection(sourceNodeId = "input_username", sourceOutputId = "output", targetNodeId = "click_password_field_4", targetInputId = "input"),
-            WorkflowConnection(sourceNodeId = "click_password_field_4", sourceOutputId = "output", targetNodeId = "input_password", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "wait_login_page", sourceOutputId = "output", targetNodeId = "input_username", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "input_username", sourceOutputId = "output", targetNodeId = "input_password", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "input_password", sourceOutputId = "output", targetNodeId = "click_login_btn", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "click_login_btn", sourceOutputId = "output", targetNodeId = "wait_success", targetInputId = "input"),
             WorkflowConnection(sourceNodeId = "wait_success", sourceOutputId = "output", targetNodeId = "end_4", targetInputId = "input")
@@ -372,9 +300,10 @@ object AccessibilityWorkflowExamples {
                 x = 100f,
                 y = 600f,
                 config = mutableMapOf(
-                    "selector" to "text=请输入姓名",
+                    "selector" to "text=姓名",
                     "text" to "张三",
-                    "clearFirst" to true
+                    "clearFirst" to true,
+                    "inputStrategy" to InputStrategy.FIND_INPUTTABLE_PARENT.name
                 )
             ),
             WorkflowNode(
@@ -384,9 +313,10 @@ object AccessibilityWorkflowExamples {
                 x = 100f,
                 y = 700f,
                 config = mutableMapOf(
-                    "selector" to "text=请输入手机号",
+                    "selector" to "text=手机号",
                     "text" to "13800138000",
-                    "clearFirst" to true
+                    "clearFirst" to true,
+                    "inputStrategy" to InputStrategy.FIND_INPUTTABLE_PARENT.name
                 )
             ),
             WorkflowNode(
@@ -396,9 +326,10 @@ object AccessibilityWorkflowExamples {
                 x = 100f,
                 y = 800f,
                 config = mutableMapOf(
-                    "selector" to "text=请输入邮箱地址",
+                    "selector" to "text=邮箱",
                     "text" to "zhangsan@example.com",
-                    "clearFirst" to true
+                    "clearFirst" to true,
+                    "inputStrategy" to InputStrategy.FIND_INPUTTABLE_PARENT.name
                 )
             ),
             WorkflowNode(
@@ -408,9 +339,10 @@ object AccessibilityWorkflowExamples {
                 x = 100f,
                 y = 900f,
                 config = mutableMapOf(
-                    "selector" to "text=请输入详细地址",
+                    "selector" to "text=地址",
                     "text" to "北京市朝阳区xxx街道xxx号",
-                    "clearFirst" to true
+                    "clearFirst" to true,
+                    "inputStrategy" to InputStrategy.FIND_INPUTTABLE_PARENT.name
                 )
             ),
             WorkflowNode(
@@ -421,7 +353,8 @@ object AccessibilityWorkflowExamples {
                 y = 1000f,
                 config = mutableMapOf(
                     "selector" to "text=提交",
-                    "clickType" to "SINGLE"
+                    "clickType" to "SINGLE",
+                    "clickStrategy" to ClickStrategy.FIND_CLICKABLE_PARENT.name
                 )
             ),
             WorkflowNode(
