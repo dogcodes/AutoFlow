@@ -254,7 +254,7 @@ private fun UIClickConfig(
             modifier = Modifier.weight(1f),
             supportingText = {
                 Text(
-                    "支持: id=资源ID, text=文本, desc=描述, class=类名",
+                    "支持: id=资源ID, text=包含文本, text_exact=精确文本, text_starts=开头文本, text_ends=结尾文本, desc=描述, class=类名",
                     fontSize = 10.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -555,7 +555,7 @@ private fun UILongClickConfig(
         modifier = Modifier.fillMaxWidth(),
         supportingText = {
             Text(
-                "支持: id=资源ID, text=文本, desc=描述, class=类名",
+                "支持: id=资源ID, text=包含文本, text_exact=精确文本, text_starts=开头文本, text_ends=结尾文本, desc=描述, class=类名",
                 fontSize = 10.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

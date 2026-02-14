@@ -1,9 +1,10 @@
 package com.carlos.autoflow.accessibility
 
 import android.view.accessibility.AccessibilityNodeInfo
-import android.graphics.Rect // Add this import
+import android.graphics.Rect
 import com.carlos.autoflow.utils.AutoFlowLogger
 import com.carlos.autoflow.workflow.models.ElementSelector
+import com.carlos.autoflow.workflow.models.MatchType // Import MatchType
 
 object AccessibilityNodeUtils {
 
@@ -49,7 +50,7 @@ object AccessibilityNodeUtils {
 
         val foundNode = when (selector) {
             is ElementSelector.ById -> findNodeById(root, selector.resourceId)
-            is ElementSelector.ByText -> findNodeByText(root, selector.text)
+            is ElementSelector.ByText -> findNodeByText(root, selector.text, selector.matchType)
             is ElementSelector.ByDescription -> findNodeByDescription(root, selector.description)
             is ElementSelector.ByClassName -> findNodeByClassName(root, selector.className)
             is ElementSelector.ByCoordinate -> findNodeByCoordinate(root, selector.x, selector.y)
@@ -72,7 +73,7 @@ object AccessibilityNodeUtils {
         val results = mutableListOf<AccessibilityNodeInfo>()
 
         when (selector) {
-            is ElementSelector.ByText -> findNodesByText(root, selector.text, results)
+            is ElementSelector.ByText -> findNodesByText(root, selector.text, selector.matchType, results)
             else -> findElement(root, selector)?.let { results.add(it) } // Use the new findElement
         }
 
@@ -84,47 +85,72 @@ object AccessibilityNodeUtils {
         return root.findAccessibilityNodeInfosByViewId(resourceId).firstOrNull()
     }
 
-    fun findNodeByText(root: AccessibilityNodeInfo, text: String): AccessibilityNodeInfo? {
-        // First, try the system's findAccessibilityNodeInfosByText
-        val systemFoundNode = root.findAccessibilityNodeInfosByText(text).firstOrNull()
-        if (systemFoundNode != null) {
-            AutoFlowLogger.d(TAG, "findNodeByText: System found node by text: $text")
-            return systemFoundNode
+    fun findNodeByText(root: AccessibilityNodeInfo, text: String, matchType: MatchType): AccessibilityNodeInfo? {
+        // For CONTAINS, try system method first as it might be optimized
+        if (matchType == MatchType.CONTAINS) {
+            val systemFoundNodes = root.findAccessibilityNodeInfosByText(text)
+            if (systemFoundNodes.isNotEmpty()) {
+                // If system found multiple, we'd need to pick one or apply further filtering.
+                // For a single find, just take the first.
+                return systemFoundNodes.firstOrNull()
+            }
         }
 
-        // If system method fails, try our recursive method
-        val customFoundNode = findNodeByTextRecursive(root, text)
+        // Otherwise, or if system method failed for CONTAINS, use our precise recursive method
+        val customFoundNode = findNodeByTextRecursive(root, text, matchType)
         if (customFoundNode != null) {
-            AutoFlowLogger.d(TAG, "findNodeByText: Custom recursive method found node by text: $text")
+            AutoFlowLogger.d(TAG, "findNodeByText: Custom recursive method found node by text: $text (MatchType: $matchType)")
             return customFoundNode
         }
 
-        AutoFlowLogger.d(TAG, "findNodeByText: No node found by text: $text")
+        AutoFlowLogger.d(TAG, "findNodeByText: No node found by text: $text (MatchType: $matchType)")
         return null
     }
 
-    fun findNodesByText(root: AccessibilityNodeInfo, text: String, results: MutableList<AccessibilityNodeInfo>) {
-        results.addAll(root.findAccessibilityNodeInfosByText(text))
+    fun findNodesByText(root: AccessibilityNodeInfo, text: String, matchType: MatchType, results: MutableList<AccessibilityNodeInfo>) {
+        if (matchType == MatchType.CONTAINS) {
+            results.addAll(root.findAccessibilityNodeInfosByText(text))
+        } else {
+            findNodesByTextRecursive(root, text, matchType, results)
+        }
     }
 
     /**
-     * 递归搜索AccessibilityNodeInfo，在其text、contentDescription或hintText属性中查找包含指定文本的节点（不区分大小写）。
+     * 递归搜索AccessibilityNodeInfo，在其text、contentDescription或hintText属性中查找匹配指定文本的节点（不区分大小写）。
      * 此方法执行深度优先搜索。
      *
      * @param node 开始搜索的当前节点。
      * @param text 要搜索的文本。
+     * @param matchType 文本匹配类型。
      * @return 找到的第一个匹配的AccessibilityNodeInfo，如果未找到则返回null。
      */
-    fun findNodeByTextRecursive(node: AccessibilityNodeInfo, text: String): AccessibilityNodeInfo? {
+    fun findNodeByTextRecursive(node: AccessibilityNodeInfo, text: String, matchType: MatchType): AccessibilityNodeInfo? {
         // Check current node
         val lowerCaseSearchText = text.lowercase()
         val nodeText = node.text?.toString()?.lowercase()
         val nodeContentDescription = node.contentDescription?.toString()?.lowercase()
         val nodeHintText = node.hintText?.toString()?.lowercase()
 
-        if (nodeText?.contains(lowerCaseSearchText) == true ||
-            nodeContentDescription?.contains(lowerCaseSearchText) == true ||
-            nodeHintText?.contains(lowerCaseSearchText) == true) {
+        val matches = when (matchType) {
+            MatchType.EXACT ->
+                nodeText == lowerCaseSearchText ||
+                nodeContentDescription == lowerCaseSearchText ||
+                nodeHintText == lowerCaseSearchText
+            MatchType.STARTS_WITH ->
+                nodeText?.startsWith(lowerCaseSearchText) == true ||
+                nodeContentDescription?.startsWith(lowerCaseSearchText) == true ||
+                nodeHintText?.startsWith(lowerCaseSearchText) == true
+            MatchType.ENDS_WITH ->
+                nodeText?.endsWith(lowerCaseSearchText) == true ||
+                nodeContentDescription?.endsWith(lowerCaseSearchText) == true ||
+                nodeHintText?.endsWith(lowerCaseSearchText) == true
+            MatchType.CONTAINS -> // Fallback for CONTAINS, though system method is preferred
+                nodeText?.contains(lowerCaseSearchText) == true ||
+                nodeContentDescription?.contains(lowerCaseSearchText) == true ||
+                nodeHintText?.contains(lowerCaseSearchText) == true
+        }
+
+        if (matches) {
             return node
         }
 
@@ -132,7 +158,7 @@ object AccessibilityNodeUtils {
         for (i in 0 until node.childCount) {
             val child = node.getChild(i)
             if (child != null) {
-                val found = findNodeByTextRecursive(child, text)
+                val found = findNodeByTextRecursive(child, text, matchType)
                 if (found != null) {
                     child.recycle() // Recycle child before returning from recursive call
                     return found
@@ -141,6 +167,52 @@ object AccessibilityNodeUtils {
             }
         }
         return null
+    }
+
+    /**
+     * 递归搜索AccessibilityNodeInfo，在其text、contentDescription或hintText属性中查找所有匹配指定文本的节点（不区分大小写）。
+     * 此方法执行深度优先搜索。
+     *
+     * @param node 开始搜索的当前节点。
+     * @param text 要搜索的文本。
+     * @param matchType 文本匹配类型。
+     * @param results 存储匹配到的AccessibilityNodeInfo的列表。
+     */
+    fun findNodesByTextRecursive(node: AccessibilityNodeInfo, text: String, matchType: MatchType, results: MutableList<AccessibilityNodeInfo>) {
+        val lowerCaseSearchText = text.lowercase()
+        val nodeText = node.text?.toString()?.lowercase()
+        val nodeContentDescription = node.contentDescription?.toString()?.lowercase()
+        val nodeHintText = node.hintText?.toString()?.lowercase()
+
+        val matches = when (matchType) {
+            MatchType.EXACT ->
+                nodeText == lowerCaseSearchText ||
+                nodeContentDescription == lowerCaseSearchText ||
+                nodeHintText == lowerCaseSearchText
+            MatchType.STARTS_WITH ->
+                nodeText?.startsWith(lowerCaseSearchText) == true ||
+                nodeContentDescription?.startsWith(lowerCaseSearchText) == true ||
+                nodeHintText?.startsWith(lowerCaseSearchText) == true
+            MatchType.ENDS_WITH ->
+                nodeText?.endsWith(lowerCaseSearchText) == true ||
+                nodeContentDescription?.endsWith(lowerCaseSearchText) == true ||
+                nodeHintText?.endsWith(lowerCaseSearchText) == true
+            MatchType.CONTAINS -> // Fallback for CONTAINS, though system method is preferred
+                nodeText?.contains(lowerCaseSearchText) == true ||
+                nodeContentDescription?.contains(lowerCaseSearchText) == true ||
+                nodeHintText?.contains(lowerCaseSearchText) == true
+        }
+
+        if (matches) {
+            results.add(node)
+        }
+
+        for (i in 0 until node.childCount) {
+            node.getChild(i)?.let { child ->
+                findNodesByTextRecursive(child, text, matchType, results)
+                child.recycle()
+            }
+        }
     }
 
     fun findNodeByDescription(root: AccessibilityNodeInfo, description: String): AccessibilityNodeInfo? {

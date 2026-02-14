@@ -59,7 +59,7 @@ object AccessibilityWorkflowExamples {
                 x = 100f,
                 y = 500f,
                 config = mutableMapOf(
-                    "selector" to "text=每日签到",
+                    "selector" to "text_exact=每日签到",
                     "timeout" to 5000L
                 )
             ),
@@ -70,8 +70,8 @@ object AccessibilityWorkflowExamples {
                 x = 100f,
                 y = 600f,
                 config = mutableMapOf(
-                    "selector" to "text=签到",
-                    "multiple" to false
+                    "selector" to "text_exact=签到",
+                    "multiple" to true
                 )
             ),
             WorkflowNode(
@@ -91,8 +91,9 @@ object AccessibilityWorkflowExamples {
                 x = 50f,
                 y = 800f,
                 config = mutableMapOf(
-                    "selector" to "text=签到",
-                    "clickType" to "SINGLE"
+                    "selector" to "text_exact=签到",
+                    "clickType" to "SINGLE",
+                    "clickStrategy" to ClickStrategy.FIND_CLICKABLE_PARENT.name
                 )
             ),
             WorkflowNode(

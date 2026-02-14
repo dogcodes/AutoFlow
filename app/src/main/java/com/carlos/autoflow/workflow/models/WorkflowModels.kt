@@ -2,10 +2,17 @@ package com.carlos.autoflow.workflow.models
 
 import java.util.*
 
+enum class MatchType {
+    EXACT,          // 精确匹配
+    STARTS_WITH,    // 以...开头
+    ENDS_WITH,      // 以...结尾
+    CONTAINS        // 包含（默认）
+}
+
 // 元素选择器系统
 sealed class ElementSelector {
     data class ById(val resourceId: String) : ElementSelector()
-    data class ByText(val text: String, val exact: Boolean = false) : ElementSelector()
+    data class ByText(val text: String, val matchType: MatchType = MatchType.CONTAINS) : ElementSelector()
     data class ByDescription(val description: String) : ElementSelector()
     data class ByClassName(val className: String) : ElementSelector()
     data class ByCoordinate(val x: Float, val y: Float) : ElementSelector()
@@ -14,14 +21,17 @@ sealed class ElementSelector {
         fun parse(selector: String): ElementSelector {
             return when {
                 selector.startsWith("id=") -> ById(selector.substring(3))
-                selector.startsWith("text=") -> ByText(selector.substring(5))
+                selector.startsWith("text_exact=") -> ByText(selector.substring("text_exact=".length), MatchType.EXACT)
+                selector.startsWith("text_starts=") -> ByText(selector.substring("text_starts=".length), MatchType.STARTS_WITH)
+                selector.startsWith("text_ends=") -> ByText(selector.substring("text_ends=".length), MatchType.ENDS_WITH)
+                selector.startsWith("text=") -> ByText(selector.substring(5), MatchType.CONTAINS) // Default to CONTAINS
                 selector.startsWith("desc=") -> ByDescription(selector.substring(5))
                 selector.startsWith("class=") -> ByClassName(selector.substring(6))
                 selector.contains(",") -> {
                     val coords = selector.split(",")
                     ByCoordinate(coords[0].toFloat(), coords[1].toFloat())
                 }
-                else -> ByText(selector) // 默认按文本查找
+                else -> ByText(selector, MatchType.CONTAINS) // 默认按文本查找，现在也默认为 CONTAINS
             }
         }
     }
