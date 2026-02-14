@@ -190,6 +190,7 @@ private fun getExampleIcon(workflowId: String): Pair<ImageVector, androidx.compo
         "demo_app_login" -> Icons.Default.Person to androidx.compose.ui.graphics.Color(0xFF1976D2)
         "demo_app_form" -> Icons.Default.Edit to androidx.compose.ui.graphics.Color(0xFF2196F3)
         "app_auto_checkin" -> Icons.Default.CheckCircle to androidx.compose.ui.graphics.Color(0xFF4CAF50)
+        "demo_app_search" -> Icons.Default.Search to androidx.compose.ui.graphics.Color(0xFF673AB7) // Search icon with purple color
         else -> Icons.Default.Android to androidx.compose.ui.graphics.Color.Gray
     }
 }
