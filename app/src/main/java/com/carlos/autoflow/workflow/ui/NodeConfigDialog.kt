@@ -213,13 +213,21 @@ private fun LoopConfig(
     config: MutableMap<String, Any>,
     onUpdate: (MutableMap<String, Any>) -> Unit
 ) {
-    var count by remember { mutableStateOf(config["count"] as? String ?: "1") }
+    var count by remember { 
+        mutableStateOf(
+            when (val value = config["count"]) {
+                is Int -> value.toString()
+                is String -> value
+                else -> "1"
+            }
+        )
+    }
     
     OutlinedTextField(
         value = count,
         onValueChange = { 
             count = it
-            config["count"] = it
+            config["count"] = it.toIntOrNull() ?: 1
             onUpdate(config)
         },
         label = { Text("循环次数") },

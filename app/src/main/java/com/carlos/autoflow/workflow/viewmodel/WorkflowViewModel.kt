@@ -878,8 +878,37 @@ class WorkflowViewModel : ViewModel() {
                 // TODO: 实现条件逻辑
             }
             NodeType.LOOP -> {
-                result.appendLine("   🔄 循环节点")
-                // TODO: 实现循环逻辑
+                val loopType = node.config["loopType"] as? String ?: "count"
+                val count = (node.config["count"] as? Number)?.toInt() ?: 1
+                
+                result.appendLine("   🔄 循环节点: $loopType")
+                result.appendLine("   🔢 循环次数: $count")
+                
+                // 找到循环体的起始节点（loop的output连接的节点）
+                val loopBodyConnection = _workflow.value.connections.find { 
+                    it.sourceNodeId == node.id && it.sourceOutputId == "output"
+                }
+                
+                if (loopBodyConnection != null) {
+                    val loopBodyNode = _workflow.value.nodes.find { it.id == loopBodyConnection.targetNodeId }
+                    
+                    if (loopBodyNode != null) {
+                        // 执行循环
+                        for (i in 1..count) {
+                            if (isExecutionStopped) {
+                                result.appendLine("   ⏹️ 循环被停止")
+                                break
+                            }
+                            
+                            result.appendLine("   🔁 第 $i/$count 次循环")
+                            
+                            // 临时移除executed限制，允许重复执行
+                            val tempExecuted = mutableSetOf<String>()
+                            executeLoopBody(loopBodyNode, node.id, result, tempExecuted, i)
+                        }
+                        result.appendLine("   ✅ 循环完成")
+                    }
+                }
             }
             NodeType.DELAY -> {
                 val delayTime = node.config["delay"] as? Number ?: 1000
@@ -963,6 +992,83 @@ class WorkflowViewModel : ViewModel() {
             val nextNode = _workflow.value.nodes.find { it.id == connection.targetNodeId }
             if (nextNode != null) {
                 executeNode(nextNode, result, executed)
+            }
+        }
+    }
+    
+    private suspend fun executeLoopBody(
+        startNode: WorkflowNode,
+        loopNodeId: String,
+        result: StringBuilder,
+        executed: MutableSet<String>,
+        loopIndex: Int
+    ) {
+        var currentNode: WorkflowNode? = startNode
+        
+        while (currentNode != null && !isExecutionStopped) {
+            // 如果回到循环节点，停止
+            if (currentNode.id == loopNodeId) {
+                break
+            }
+            
+            // 执行当前节点（不加入executed，允许重复执行）
+            result.appendLine("      📍 ${currentNode.title}")
+            
+            when (currentNode.type) {
+                NodeType.UI_INPUT -> {
+                    val selector = currentNode.config["selector"] as? String ?: ""
+                    var text = currentNode.config["text"] as? String ?: ""
+                    val clearFirst = currentNode.config["clearFirst"] as? Boolean ?: true
+                    
+                    // 如果文本包含"收到"，添加循环索引
+                    if (text.contains("收到")) {
+                        text = "收到$loopIndex"
+                    }
+                    
+                    if (com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
+                        try {
+                            val elementSelector = com.carlos.autoflow.workflow.models.ElementSelector.parse(selector)
+                            val operation = com.carlos.autoflow.accessibility.InputOperation(elementSelector, text, clearFirst)
+                            com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.getInstance()?.executeOperation(operation)
+                        } catch (e: Exception) {
+                            // 忽略错误继续
+                        }
+                    }
+                }
+                NodeType.UI_CLICK -> {
+                    val selector = currentNode.config["selector"] as? String ?: ""
+                    val clickType = currentNode.config["clickType"] as? String ?: "SINGLE"
+                    val clickStrategy = currentNode.config["clickStrategy"] as? String ?: "DEFAULT"
+                    
+                    if (com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
+                        try {
+                            val elementSelector = com.carlos.autoflow.workflow.models.ElementSelector.parse(selector)
+                            val operation = com.carlos.autoflow.accessibility.ClickOperation(
+                                elementSelector,
+                                com.carlos.autoflow.accessibility.ClickType.valueOf(clickType),
+                                com.carlos.autoflow.workflow.models.ClickStrategy.valueOf(clickStrategy)
+                            )
+                            com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.getInstance()?.executeOperation(operation)
+                        } catch (e: Exception) {
+                            // 忽略错误继续
+                        }
+                    }
+                }
+                NodeType.DELAY -> {
+                    val delayTime = currentNode.config["duration"] as? Number ?: 1000
+                    delay(delayTime.toLong())
+                }
+                else -> {}
+            }
+            
+            // 找到下一个节点
+            val nextConnection = _workflow.value.connections.find { 
+                it.sourceNodeId == currentNode!!.id 
+            }
+            currentNode = if (nextConnection != null) {
+                _workflow.value.nodes.find { it.id == nextConnection.targetNodeId }
+            } else {
+                null
             }
         }
     }

@@ -521,6 +521,139 @@ object AccessibilityWorkflowExamples {
         )
     }
 
+    // 示例7: 智能聊天自动回复（持续监听）
+    fun createDemoAppChatWorkflow(): Workflow {
+        AutoFlowLogger.d(TAG, "正在创建演示应用聊天工作流")
+        val nodes = listOf(
+            WorkflowNode(
+                id = "start_7",
+                type = NodeType.START,
+                title = "开始",
+                x = 100f,
+                y = 100f
+            ),
+            WorkflowNode(
+                id = "launch_demo_app_7",
+                type = NodeType.LAUNCH_ACTIVITY,
+                title = "启动示例应用",
+                x = 100f,
+                y = 200f,
+                config = mutableMapOf(
+                    "packageName" to "com.carlos.autoflow",
+                    "className" to "com.carlos.autoflow.demo.DemoAppActivity"
+                )
+            ),
+            WorkflowNode(
+                id = "wait_demo_app_7",
+                type = NodeType.UI_WAIT,
+                title = "等待示例应用加载",
+                x = 100f,
+                y = 300f,
+                config = mutableMapOf(
+                    "selector" to "text=AutoFlow 示例应用",
+                    "timeout" to 5000L
+                )
+            ),
+            WorkflowNode(
+                id = "click_chat_card",
+                type = NodeType.UI_CLICK,
+                title = "点击智能聊天卡片",
+                x = 100f,
+                y = 400f,
+                config = mutableMapOf(
+                    "selector" to "text=智能聊天",
+                    "clickType" to "SINGLE",
+                    "clickStrategy" to ClickStrategy.FIND_CLICKABLE_PARENT.name
+                )
+            ),
+            WorkflowNode(
+                id = "wait_chat_page",
+                type = NodeType.UI_WAIT,
+                title = "等待聊天页面",
+                x = 100f,
+                y = 500f,
+                config = mutableMapOf(
+                    "selector" to "text=输入消息",
+                    "timeout" to 3000L
+                )
+            ),
+            WorkflowNode(
+                id = "loop_start",
+                type = NodeType.LOOP,
+                title = "循环50次",
+                x = 100f,
+                y = 600f,
+                config = mutableMapOf(
+                    "loopType" to "count",
+                    "count" to 50
+                )
+            ),
+            WorkflowNode(
+                id = "delay_check",
+                type = NodeType.DELAY,
+                title = "等待机器人回复",
+                x = 100f,
+                y = 700f,
+                config = mutableMapOf(
+                    "duration" to 1500L
+                )
+            ),
+            WorkflowNode(
+                id = "input_reply",
+                type = NodeType.UI_INPUT,
+                title = "输入收到数字",
+                x = 100f,
+                y = 800f,
+                config = mutableMapOf(
+                    "selector" to "text=输入消息",
+                    "text" to "收到",
+                    "clearFirst" to true,
+                    "inputStrategy" to InputStrategy.FIND_INPUTTABLE_PARENT.name
+                )
+            ),
+            WorkflowNode(
+                id = "click_send",
+                type = NodeType.UI_CLICK,
+                title = "点击发送按钮",
+                x = 100f,
+                y = 900f,
+                config = mutableMapOf(
+                    "selector" to "text=发送",
+                    "clickType" to "SINGLE",
+                    "clickStrategy" to ClickStrategy.FIND_CLICKABLE_PARENT.name
+                )
+            ),
+            WorkflowNode(
+                id = "end_7",
+                type = NodeType.END,
+                title = "结束",
+                x = 100f,
+                y = 1000f
+            )
+        )
+        
+        val connections = listOf(
+            WorkflowConnection(sourceNodeId = "start_7", sourceOutputId = "output", targetNodeId = "launch_demo_app_7", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "launch_demo_app_7", sourceOutputId = "output", targetNodeId = "wait_demo_app_7", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "wait_demo_app_7", sourceOutputId = "output", targetNodeId = "click_chat_card", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "click_chat_card", sourceOutputId = "output", targetNodeId = "wait_chat_page", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "wait_chat_page", sourceOutputId = "output", targetNodeId = "loop_start", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "loop_start", sourceOutputId = "output", targetNodeId = "delay_check", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "delay_check", sourceOutputId = "output", targetNodeId = "input_reply", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "input_reply", sourceOutputId = "output", targetNodeId = "click_send", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "click_send", sourceOutputId = "output", targetNodeId = "loop_start", targetInputId = "input"),
+            WorkflowConnection(sourceNodeId = "loop_start", sourceOutputId = "complete", targetNodeId = "end_7", targetInputId = "input")
+        )
+        
+        return Workflow(
+            id = "demo_app_chat",
+            name = "示例应用智能聊天",
+            description = "持续监听并自动回复消息（手动停止）",
+            nodes = nodes,
+            connections = connections
+        )
+    }
+
     // 获取所有无障碍示例
     fun getAllAccessibilityExamples(): List<Workflow> {
         AutoFlowLogger.d(TAG, "正在获取所有无障碍示例")
@@ -528,7 +661,8 @@ object AccessibilityWorkflowExamples {
             createDemoAppLoginWorkflow(),
             createDemoAppFormWorkflow(),
             createAppAutoCheckInWorkflow(),
-            createDemoAppSearchWorkflow()
+            createDemoAppSearchWorkflow(),
+            createDemoAppChatWorkflow()
         )
     }
 }

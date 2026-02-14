@@ -15,6 +15,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,6 +30,7 @@ fun DemoAppScreen() {
         "form" -> DemoFormPage(onNavigate = { currentPage = it })
         "checkin" -> DemoCheckInPage(onNavigate = { currentPage = it })
         "search" -> DemoSearchPage(onNavigate = { currentPage = it })
+        "chat" -> DemoChatPage(onNavigate = { currentPage = it })
     }
 }
 
@@ -116,6 +120,16 @@ private fun DemoHomePage(onNavigate: (String) -> Unit) {
             icon = Icons.Default.Search,
             color = Color(0xFF9C27B0),
             onClick = { onNavigate("search") }
+        )
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        DemoCard(
+            title = "智能聊天",
+            description = "测试持续监听和自动回复",
+            icon = Icons.Default.Chat,
+            color = Color(0xFF00BCD4),
+            onClick = { onNavigate("chat") }
         )
     }
 }
@@ -666,3 +680,142 @@ private fun DemoSearchPage(onNavigate: (String) -> Unit) {
         }
     }
 }
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DemoChatPage(onNavigate: (String) -> Unit) {
+    var messageText by remember { mutableStateOf("") }
+    var messages by remember { mutableStateOf<List<ChatMessage>>(emptyList()) }
+    var botCounter by remember { mutableStateOf(1) }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF5F5F5))
+    ) {
+        // 顶部导航
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { onNavigate("home") }) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                }
+                Text(
+                    "智能聊天",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+        
+        // 聊天消息列表
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+        ) {
+            if (messages.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            Icons.Default.Chat,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = Color.Gray
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            "开始聊天吧",
+                            color = Color.Gray,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            } else {
+                messages.forEach { message ->
+                    ChatBubble(message)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        }
+        
+        // 输入框
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.White)
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = messageText,
+                onValueChange = { messageText = it },
+                placeholder = { Text("输入消息") },
+                modifier = Modifier.weight(1f),
+                maxLines = 3
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(
+                onClick = {
+                    if (messageText.isNotBlank()) {
+                        // 添加用户消息
+                        messages = messages + ChatMessage(messageText, true)
+                        messageText = ""
+                        // 1秒后机器人自动回复数字
+                        GlobalScope.launch {
+                            delay(1000)
+                            messages = messages + ChatMessage(botCounter.toString(), false)
+                            botCounter++
+                        }
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00BCD4))
+            ) {
+                Text("发送")
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChatBubble(message: ChatMessage) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = if (message.isUser) Arrangement.End else Arrangement.Start
+    ) {
+        Card(
+            modifier = Modifier.widthIn(max = 280.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = if (message.isUser) Color(0xFF00BCD4) else Color.White
+            ),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text(
+                text = message.text,
+                modifier = Modifier.padding(12.dp),
+                color = if (message.isUser) Color.White else Color.Black,
+                fontSize = 14.sp
+            )
+        }
+    }
+}
+
+data class ChatMessage(
+    val text: String,
+    val isUser: Boolean
+)
