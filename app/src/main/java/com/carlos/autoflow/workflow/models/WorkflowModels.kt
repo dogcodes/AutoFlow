@@ -126,3 +126,8 @@ enum class ClickStrategy(val displayName: String) {
     FIND_CLICKABLE_PARENT("查找可点击父级"),
     FIND_CLICKABLE_CHILD("查找可点击子级")
 }
+
+enum class InputStrategy(val displayName: String) {
+    DEFAULT("默认"),
+    FIND_INPUTTABLE_PARENT("查找可输入父级")
+}

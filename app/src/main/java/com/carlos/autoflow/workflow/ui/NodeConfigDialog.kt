@@ -14,6 +14,7 @@ import com.carlos.autoflow.workflow.models.NodeType
 import com.carlos.autoflow.workflow.models.WorkflowNode
 import com.carlos.autoflow.accessibility.ElementPickerDialog
 import com.carlos.autoflow.workflow.models.ClickStrategy
+import com.carlos.autoflow.workflow.models.InputStrategy
 
 @Composable
 fun NodeConfigDialog(
@@ -360,10 +361,11 @@ private fun UIInputConfig(
     var selector by remember { mutableStateOf(config["selector"] as? String ?: "") }
     var text by remember { mutableStateOf(config["text"] as? String ?: "") }
     var clearFirst by remember { mutableStateOf(config["clearFirst"] as? Boolean ?: true) }
-    
+    var inputStrategy by remember { mutableStateOf(config["inputStrategy"] as? String ?: InputStrategy.DEFAULT.name) }
+
     OutlinedTextField(
         value = selector,
-        onValueChange = { 
+        onValueChange = {
             selector = it
             config["selector"] = it
             onUpdate(config)
@@ -372,12 +374,12 @@ private fun UIInputConfig(
         placeholder = { Text("id=editText1 或 text=输入框") },
         modifier = Modifier.fillMaxWidth()
     )
-    
+
     Spacer(modifier = Modifier.height(8.dp))
-    
+
     OutlinedTextField(
         value = text,
-        onValueChange = { 
+        onValueChange = {
             text = it
             config["text"] = it
             onUpdate(config)
@@ -385,16 +387,50 @@ private fun UIInputConfig(
         label = { Text("输入文本") },
         modifier = Modifier.fillMaxWidth()
     )
-    
+
     Spacer(modifier = Modifier.height(8.dp))
-    
+
+    // Input Strategy Dropdown
+    var strategyExpanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = strategyExpanded,
+        onExpandedChange = { strategyExpanded = !strategyExpanded }
+    ) {
+        OutlinedTextField(
+            value = InputStrategy.valueOf(inputStrategy).displayName,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("输入策略") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = strategyExpanded) },
+            modifier = Modifier.menuAnchor().fillMaxWidth()
+        )
+        ExposedDropdownMenu(
+            expanded = strategyExpanded,
+            onDismissRequest = { strategyExpanded = false }
+        ) {
+            InputStrategy.values().forEach { strategy ->
+                DropdownMenuItem(
+                    text = { Text(strategy.displayName) },
+                    onClick = {
+                        inputStrategy = strategy.name
+                        config["inputStrategy"] = strategy.name
+                        onUpdate(config)
+                        strategyExpanded = false
+                    }
+                )
+            }
+        }
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Checkbox(
             checked = clearFirst,
-            onCheckedChange = { 
+            onCheckedChange = {
                 clearFirst = it
                 config["clearFirst"] = it
                 onUpdate(config)

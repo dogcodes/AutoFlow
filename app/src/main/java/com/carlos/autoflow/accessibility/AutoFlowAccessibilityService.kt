@@ -147,8 +147,6 @@ class AutoFlowAccessibilityService : AccessibilityService() {
             }
         }
         
-        nodeToClick.recycle() // 回收节点信息
-        
         return if (success) {
             AutoFlowLogger.d(TAG, "点击操作成功，选择器: ${operation.selector}")
             OperationResult.Success(mapOf("clicked" to true))
@@ -164,9 +162,7 @@ class AutoFlowAccessibilityService : AccessibilityService() {
             if (parent.isClickable) {
                 return parent
             }
-            val grandParent = parent.parent
-            parent.recycle() // 回收当前父节点
-            parent = grandParent
+            parent = parent.parent
         }
         return null
     }
@@ -180,37 +176,77 @@ class AutoFlowAccessibilityService : AccessibilityService() {
                 }
                 val clickableChild = findClickableChild(child) // 递归查找
                 if (clickableChild != null) {
-                    child.recycle() // 回收当前子节点
                     return clickableChild
                 }
-                child.recycle() // 回收当前子节点
             }
+        }
+        return null
+    }
+
+    private fun findInputtableParent(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        var parent = node.parent
+        while (parent != null) {
+            if (parent.isEditable) {
+                return parent
+            }
+            parent = parent.parent
         }
         return null
     }
 
     private fun performInput(operation: InputOperation): OperationResult {
         AutoFlowLogger.d(TAG, "尝试对选择器执行输入操作: ${operation.selector}，文本: ${operation.text}")
-        val node = AccessibilityNodeUtils.findElement(rootInActiveWindow, operation.selector)
-        if (node == null) {
-            AutoFlowLogger.e(TAG, "输入操作失败: 未找到选择器对应的输入框: ${operation.selector}")
-            return OperationResult.Error("输入框未找到")
+        var nodeToInput = AccessibilityNodeUtils.findElement(rootInActiveWindow, operation.selector)
+        if (nodeToInput == null) {
+            AutoFlowLogger.e(TAG, "输入操作失败: 未找到选择器对应的元素: ${operation.selector}")
+            return OperationResult.Error("元素未找到")
         }
-        AutoFlowLogger.d(TAG, "已找到输入框: ${node.viewIdResourceName ?: node.className}")
+        AutoFlowLogger.d(TAG, "已找到初始元素: ${nodeToInput.viewIdResourceName ?: nodeToInput.className}")
+
+        // Apply input strategy
+        when (operation.inputStrategy) {
+            com.carlos.autoflow.workflow.models.InputStrategy.FIND_INPUTTABLE_PARENT -> {
+                if (!nodeToInput.isEditable) {
+                    val originalNode = nodeToInput
+                    nodeToInput = AccessibilityNodeUtils.findEditableNode(nodeToInput) ?: nodeToInput
+                    if (originalNode != nodeToInput) {
+                        AutoFlowLogger.d(TAG, "InputStrategy: 智能查找可编辑节点，最终输入节点: ${nodeToInput.viewIdResourceName ?: nodeToInput.className}")
+                    } else {
+                        AutoFlowLogger.d(TAG, "InputStrategy: 未找到可编辑节点，使用原始节点")
+                    }
+                }
+            }
+            com.carlos.autoflow.workflow.models.InputStrategy.DEFAULT -> {
+                // 默认策略也尝试智能查找
+                if (!nodeToInput.isEditable) {
+                    AutoFlowLogger.d(TAG, "默认策略: 节点不可编辑，尝试智能查找")
+                    val originalNode = nodeToInput
+                    nodeToInput = AccessibilityNodeUtils.findEditableNode(nodeToInput) ?: nodeToInput
+                    if (originalNode != nodeToInput) {
+                        AutoFlowLogger.d(TAG, "默认策略: 找到可编辑节点: ${nodeToInput.viewIdResourceName ?: nodeToInput.className}")
+                    }
+                }
+            }
+        }
+
+        if (!nodeToInput.isEditable) {
+             AutoFlowLogger.e(TAG, "输入操作失败: 最终目标节点不可编辑: ${nodeToInput.viewIdResourceName ?: nodeToInput.className}")
+             return OperationResult.Error("目标不可编辑")
+        }
 
         if (operation.clearFirst) {
             AutoFlowLogger.d(TAG, "正在清空输入框文本。")
             val selectAllArgs = Bundle().apply {
                 putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0)
-                putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, node.text?.length ?: 0)
+                putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, nodeToInput.text?.length ?: 0)
             }
-            node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selectAllArgs)
+            nodeToInput.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selectAllArgs)
         }
         
         val arguments = Bundle().apply {
             putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, operation.text)
         }
-        val success = node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
+        val success = nodeToInput.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
         
         return if (success) {
             AutoFlowLogger.d(TAG, "输入操作成功，选择器: ${operation.selector}")
@@ -362,6 +398,7 @@ data class InputOperation(
     override val selector: ElementSelector,
     val text: String,
     val clearFirst: Boolean = true,
+    val inputStrategy: com.carlos.autoflow.workflow.models.InputStrategy = com.carlos.autoflow.workflow.models.InputStrategy.DEFAULT,
     override val timeout: Long = 5000,
     override val retryCount: Int = 3
 ) : AccessibilityOperation()

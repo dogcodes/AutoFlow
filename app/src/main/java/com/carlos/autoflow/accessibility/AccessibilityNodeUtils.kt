@@ -41,6 +41,49 @@ object AccessibilityNodeUtils {
         return null
     }
 
+    fun findEditableNode(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        // 1. 检查当前节点
+        if (node.isEditable) {
+            return node
+        }
+
+        // 2. 检查父节点
+        var parent = node.parent
+        while (parent != null) {
+            if (parent.isEditable) {
+                return parent
+            }
+            parent = parent.parent
+        }
+
+        // 3. 检查兄弟节点
+        val nodeParent = node.parent
+        if (nodeParent != null) {
+            for (i in 0 until nodeParent.childCount) {
+                val sibling = nodeParent.getChild(i)
+                if (sibling != null && sibling != node && sibling.isEditable) {
+                    return sibling
+                }
+            }
+        }
+
+        // 4. 检查子节点（递归）
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i)
+            if (child != null) {
+                if (child.isEditable) {
+                    return child
+                }
+                val editableDescendant = findEditableNode(child)
+                if (editableDescendant != null) {
+                    return editableDescendant
+                }
+            }
+        }
+
+        return null
+    }
+
     fun findElement(rootInActiveWindow: AccessibilityNodeInfo?, selector: ElementSelector): AccessibilityNodeInfo? {
         AutoFlowLogger.d(TAG, "尝试查找单个元素，选择器: $selector")
         val root = rootInActiveWindow ?: run {
@@ -271,6 +314,7 @@ object AccessibilityNodeUtils {
         node.contentDescription?.let { parts.add("ContentDesc: \"$it\"") }
         node.hintText?.let { parts.add("HintText: \"$it\"") }
         parts.add("Clickable: ${node.isClickable}")
+        parts.add("Editable: ${node.isEditable}") // 添加可编辑信息
 
         val bounds = Rect()
         node.getBoundsInScreen(bounds)
@@ -281,7 +325,7 @@ object AccessibilityNodeUtils {
         for (i in 0 until node.childCount) {
             val child = node.getChild(i)
             printAccessibilityNodeTree(child, "$indent  ")
-            child?.recycle() // 回收子节点
+            // child?.recycle() // 移除不正确的回收子节点调用
         }
     }
 }
