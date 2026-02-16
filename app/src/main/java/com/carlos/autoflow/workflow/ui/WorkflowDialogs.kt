@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.carlos.autoflow.workflow.examples.WechatRedEnvelopeWorkflowExample
 
 @Composable
 fun ImportDialog(
@@ -22,7 +23,7 @@ fun ImportDialog(
     onImportFromUrl: (String) -> Unit,
     errorMessage: String? = null
 ) {
-    var jsonText by remember { mutableStateOf("") }
+    var jsonText by remember { mutableStateOf(WechatRedEnvelopeWorkflowExample.WECHAT_RED_ENVELOPE_JSON) }
     var urlText by remember { mutableStateOf("") }
     var selectedTab by remember { mutableStateOf(0) }
     
