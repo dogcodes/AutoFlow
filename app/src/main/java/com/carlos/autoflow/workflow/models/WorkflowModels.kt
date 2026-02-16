@@ -107,6 +107,7 @@ enum class NodeType(val displayName: String, val category: NodeCategory, val des
     LAUNCH_ACTIVITY("启动应用Activity", NodeCategory.SYSTEM_EVENT, "启动指定的Android Activity"),
     NOTIFICATION("通知处理", NodeCategory.SYSTEM_EVENT, "处理系统通知"),
     SCREEN_STATE("屏幕状态", NodeCategory.SYSTEM_EVENT, "检测屏幕开关"),
+    SYSTEM_GLOBAL_ACTION("全局系统动作", NodeCategory.SYSTEM_EVENT, "执行全局系统动作，如返回"),
     
     // 网络节点
     HTTP_REQUEST("HTTP请求", NodeCategory.NETWORK, "发送网络请求"),

@@ -2,6 +2,7 @@ package com.carlos.autoflow.workflow.viewmodel
 
 import android.content.Intent
 import android.net.Uri
+import android.accessibilityservice.AccessibilityService
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlos.autoflow.workflow.models.*
@@ -238,6 +239,9 @@ class WorkflowViewModel : ViewModel() {
             NodeInput("data", "Data URI", "string"),
             NodeInput("extras", "额外参数 (JSON)", "string")
         )
+        NodeType.SYSTEM_GLOBAL_ACTION -> listOf(
+            NodeInput("eventType", "事件类型", "string", true)
+        )
     }
 
     private fun getDefaultOutputs(type: NodeType): List<NodeOutput> = when (type) {
@@ -307,6 +311,9 @@ class WorkflowViewModel : ViewModel() {
         )
         NodeType.LAUNCH_ACTIVITY -> listOf(
             NodeOutput("success", "启动成功", "boolean")
+        )
+        NodeType.SYSTEM_GLOBAL_ACTION -> listOf(
+            NodeOutput("success", "执行成功", "boolean")
         )
     }
     
@@ -977,6 +984,34 @@ class WorkflowViewModel : ViewModel() {
                 } catch (e: Exception) {
                     result.appendLine("   ❌ 启动Activity失败: ${e.javaClass.simpleName} - ${e.message}")
                     e.printStackTrace()
+                }
+            }
+            NodeType.SYSTEM_GLOBAL_ACTION -> {
+                result.appendLine("   🔙 执行全局系统动作")
+                val eventType = node.config["eventType"] as? String
+                if (currentContext == null) {
+                    result.appendLine("   ❌ 错误：Context未初始化，无法执行全局系统动作。")
+                    return
+                }
+                if (!com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
+                    result.appendLine("   ❌ 无障碍服务未启用")
+                } else {
+                    try {
+                        when (eventType) {
+                            "GLOBAL_ACTION_BACK" -> {
+                                val success = com.carlos.autoflow.accessibility.AutoFlowAccessibilityService
+                                    .getInstance()?.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK) ?: false
+                                if (success) {
+                                    result.appendLine("   ✅ 执行返回操作成功")
+                                } else {
+                                    result.appendLine("   ❌ 执行返回操作失败")
+                                }
+                            }
+                            else -> result.appendLine("   ⚠️ 不支持的全局系统动作类型: $eventType")
+                        }
+                    } catch (e: Exception) {
+                        result.appendLine("   ❌ 执行全局系统动作异常: ${e.message}")
+                    }
                 }
             }
             else -> {

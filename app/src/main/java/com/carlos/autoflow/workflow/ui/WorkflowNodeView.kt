@@ -207,4 +207,5 @@ private fun getNodeIcon(type: NodeType): ImageVector = when (type) {
     NodeType.LAUNCH_ACTIVITY -> Icons.Default.OpenInNew
     NodeType.NOTIFICATION -> Icons.Default.Notifications
     NodeType.SCREEN_STATE -> Icons.Default.ScreenLockPortrait
+    NodeType.SYSTEM_GLOBAL_ACTION -> Icons.Default.SettingsApplications
 }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.SettingsApplications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -59,7 +60,8 @@ fun NodeSelectionPanel(
             NodeTemplate(NodeType.APP_LAUNCH, "应用启动", "检测应用启动", Icons.Default.Launch),
             NodeTemplate(NodeType.LAUNCH_ACTIVITY, "启动Activity", "启动指定Android Activity", Icons.Default.OpenInNew),
             NodeTemplate(NodeType.NOTIFICATION, "通知处理", "处理系统通知", Icons.Default.Notifications),
-            NodeTemplate(NodeType.SCREEN_STATE, "屏幕状态", "检测屏幕开关", Icons.Default.ScreenLockPortrait)
+            NodeTemplate(NodeType.SCREEN_STATE, "屏幕状态", "检测屏幕开关", Icons.Default.ScreenLockPortrait),
+            NodeTemplate(NodeType.SYSTEM_GLOBAL_ACTION, "全局系统动作", "执行全局系统动作", Icons.Default.SettingsApplications)
         ),
         NodeCategory.NETWORK to listOf(
             NodeTemplate(NodeType.HTTP_REQUEST, "HTTP请求", "发送网络请求", Icons.Default.Send),

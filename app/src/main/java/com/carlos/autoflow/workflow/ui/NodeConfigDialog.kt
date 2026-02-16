@@ -56,6 +56,7 @@ fun NodeConfigDialog(
                     NodeType.UI_GET_TEXT -> UIGetTextConfig(config) { config = it }
                     NodeType.UI_CHECK -> UICheckConfig(config) { config = it }
                     NodeType.LAUNCH_ACTIVITY -> LaunchActivityConfig(config) { config = it }
+                    NodeType.SYSTEM_GLOBAL_ACTION -> SystemGlobalActionConfig(config) { config = it }
                     else -> {
                         Text("此节点暂无配置项", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -858,3 +859,46 @@ private fun LaunchActivityConfig(
         modifier = Modifier.fillMaxWidth()
     )
 }
+
+@Composable
+private fun SystemGlobalActionConfig(
+    config: MutableMap<String, Any>,
+    onUpdate: (MutableMap<String, Any>) -> Unit
+) {
+    var eventType by remember { mutableStateOf(config["eventType"] as? String ?: "") }
+
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = when (eventType) {
+                "GLOBAL_ACTION_BACK" -> "返回"
+                else -> "选择全局动作"
+            },
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("全局动作类型") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.menuAnchor().fillMaxWidth()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            listOf("GLOBAL_ACTION_BACK" to "返回").forEach { (value, label) ->
+                DropdownMenuItem(
+                    text = { Text(label) },
+                    onClick = {
+                        eventType = value
+                        config["eventType"] = value
+                        onUpdate(config)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
