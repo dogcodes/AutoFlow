@@ -1,4 +1,4 @@
-package com.carlos.autoflow.workflow.examples
+package com.carlos.autoflow.workflow.examples.json
 
 object EventListenerWorkflowExample {
     const val EVENT_LISTENER_WORKFLOW_JSON = """

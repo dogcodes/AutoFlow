@@ -1,5 +1,8 @@
 package com.carlos.autoflow.workflow.examples
 
+import com.carlos.autoflow.workflow.examples.json.EventListenerWorkflowExample
+import com.carlos.autoflow.workflow.examples.json.WechatRedEnvelopeWorkflowExample
+
 object JsonWorkflowExamples {
     fun getAllExamples(): List<JsonWorkflowExample> {
         return listOf(

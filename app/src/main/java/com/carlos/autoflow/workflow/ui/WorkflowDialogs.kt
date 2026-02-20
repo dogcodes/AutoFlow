@@ -14,7 +14,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.carlos.autoflow.workflow.examples.WechatRedEnvelopeWorkflowExample
+import com.carlos.autoflow.workflow.examples.json.WechatRedEnvelopeWorkflowExample
 
 @Composable
 fun ImportDialog(

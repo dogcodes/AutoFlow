@@ -1,4 +1,4 @@
-package com.carlos.autoflow.workflow.examples
+package com.carlos.autoflow.workflow.examples.json
 
 object WechatRedEnvelopeWorkflowExample {
     const val WECHAT_RED_ENVELOPE_JSON = """
