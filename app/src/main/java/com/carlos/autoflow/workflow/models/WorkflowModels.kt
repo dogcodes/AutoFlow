@@ -73,6 +73,7 @@ data class Workflow(
     val id: String = UUID.randomUUID().toString(),
     val name: String,
     val description: String = "",
+    val targetPackage: String? = null,
     val nodes: List<WorkflowNode>,
     val connections: List<WorkflowConnection>,
     val version: String = "1.0",

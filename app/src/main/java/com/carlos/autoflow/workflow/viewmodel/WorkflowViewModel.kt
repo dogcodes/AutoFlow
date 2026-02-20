@@ -5,12 +5,16 @@ import android.net.Uri
 import android.accessibilityservice.AccessibilityService
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.carlos.autoflow.utils.AutoFlowLogger
 import com.carlos.autoflow.workflow.models.*
 import com.carlos.autoflow.workflow.repository.ExecutionHistoryRepository
 import com.carlos.autoflow.workflow.ui.ExecutionStatusManager
 import com.carlos.autoflow.workflow.ui.NodeExecutionState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -330,6 +334,7 @@ class WorkflowViewModel : ViewModel() {
             _workflow.value = workflow.copy(updatedAt = System.currentTimeMillis())
             true
         } catch (e: Exception) {
+            android.util.Log.e("WorkflowViewModel", "JSON导入失败: ${e.message}", e)
             false
         }
     }
@@ -517,12 +522,25 @@ class WorkflowViewModel : ViewModel() {
         }
     }
     
-    fun stopWorkflowExecution() {
+    private fun stopWorkflowExecution() {
         isExecutionStopped = true
         com.carlos.autoflow.ui.FloatingControlService.updateExecutionState(false)
     }
-    
-    fun getExecutionHistory() = historyRepository?.executions
+
+    private fun executeNodeActions(actions: List<Map<String, Any>>?, event: android.view.accessibility.AccessibilityEvent?, result: StringBuilder) {
+        if (actions == null) return
+        
+        actions.forEach { action ->
+            val type = action["type"] as? String
+            when (type) {
+                "LOG" -> {
+                    val finalLog = event?.toString() ?: (action["message"] as? String ?: "")
+                    result.appendLine("   📝 日志: $finalLog")
+                    com.carlos.autoflow.utils.AutoFlowLogger.d("WorkflowAction", finalLog)
+                }
+            }
+        }
+    }
 
     private suspend fun executeNode(
         node: WorkflowNode, 
@@ -542,7 +560,49 @@ class WorkflowViewModel : ViewModel() {
         
         when (node.type) {
             NodeType.START -> {
-                result.appendLine("   ▶️ 工作流启动")
+                val config = node.config
+                val conditions = config["conditions"] as? List<Map<String, Any>>
+                
+                if (conditions != null && conditions.isNotEmpty()) {
+                    result.appendLine("   📡 进入持续监听模式...")
+                    
+                    val service = com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.getInstance()
+                    if (service == null) {
+                        result.appendLine("   ❌ 无法启动监听：无障碍服务未启用")
+                    } else {
+                        // 订阅事件流
+                        service.accessibilityEvents
+                            .takeWhile { !isExecutionStopped }
+                            .collect { event ->
+                                // 检查目标包名过滤
+                                val targetPackage = _workflow.value.targetPackage
+                                if (!targetPackage.isNullOrBlank() && event.packageName?.toString() != targetPackage) {
+                                    return@collect
+                                }
+
+                                if (com.carlos.autoflow.workflow.engine.WorkflowConditionMatcher.isMatch(event, conditions)) {
+                                    result.appendLine("   🎯 匹配到事件: ${android.view.accessibility.AccessibilityEvent.eventTypeToString(event.eventType)}")
+                                    
+                                    // 执行节点内部动作
+                                    val actions = config["actions"] as? List<Map<String, Any>>
+                                    executeNodeActions(actions, event, result)
+                                    
+                                    // 继续执行连接的后续节点
+                                    val connections = _workflow.value.connections.filter { it.sourceNodeId == node.id }
+                                    connections.forEach { connection ->
+                                        val nextNode = _workflow.value.nodes.find { it.id == connection.targetNodeId }
+                                        if (nextNode != null) {
+                                            // 每次触发都允许重新开始执行后续链条，使用独立的executed集
+                                            executeNode(nextNode, result, mutableSetOf(node.id))
+                                        }
+                                    }
+                                }
+                            }
+                        result.appendLine("   ⏹️ 监听模式已结束")
+                    }
+                } else {
+                    result.appendLine("   ▶️ 工作流启动")
+                }
             }
             NodeType.HTTP_REQUEST -> {
                 val url = node.config["url"] as? String ?: "未配置URL"

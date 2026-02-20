@@ -10,6 +10,8 @@ import com.carlos.autoflow.utils.AutoFlowLogger // Added
 import com.carlos.autoflow.workflow.models.ElementSelector
 import com.carlos.autoflow.recorder.OperationRecorder
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 class AutoFlowAccessibilityService : AccessibilityService() {
     
@@ -22,6 +24,9 @@ class AutoFlowAccessibilityService : AccessibilityService() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val operationRecorder = OperationRecorder()
+
+    private val _accessibilityEvents = MutableSharedFlow<AccessibilityEvent>(extraBufferCapacity = 64)
+    val accessibilityEvents = _accessibilityEvents.asSharedFlow()
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -39,6 +44,10 @@ class AutoFlowAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         event?.let { 
             handleAccessibilityEvent(it)
+            // 将事件拷贝一份发送到流中，防止事件被系统回收
+            serviceScope.launch {
+                _accessibilityEvents.emit(AccessibilityEvent.obtain(it))
+            }
             // 将事件传递给录制器
             operationRecorder.handleAccessibilityEvent(it, rootInActiveWindow)
             //打印所有节点

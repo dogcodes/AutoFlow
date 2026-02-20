@@ -3,9 +3,12 @@ package com.carlos.autoflow.workflow.examples
 object EventListenerWorkflowExample {
     const val EVENT_LISTENER_WORKFLOW_JSON = """
 {
+  "id": "workflow-event-listener-example",
   "name": "事件监听器工作流",
   "description": "一个监听来自目标应用程序的特定无障碍事件并记录它们的日志的工作流。",
-  "targetPackage": "com.example.app",
+//  "targetPackage": "com.tencent.mm",
+  "targetPackage": "com.carlos.autoflow",
+  "version": "1.0",
   "nodes": [
     {
       "id": "listenerNode",
