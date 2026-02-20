@@ -16,11 +16,13 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 import java.util.*
 import com.google.gson.Gson
+import kotlinx.coroutines.flow.filter
 import okhttp3.*
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
@@ -542,6 +544,40 @@ class WorkflowViewModel : ViewModel() {
         }
     }
 
+    /**
+     * 统一处理匹配成功的事件：执行动作并触发后续节点
+     */
+    private suspend fun handleTriggeredEvent(
+        node: WorkflowNode,
+        event: android.view.accessibility.AccessibilityEvent,
+        conditions: List<Map<String, Any>>?,
+        result: StringBuilder
+    ) {
+        // 检查目标包名过滤
+        val targetPackage = _workflow.value.targetPackage
+        if (!targetPackage.isNullOrBlank() && event.packageName?.toString() != targetPackage) {
+            return
+        }
+
+        if (com.carlos.autoflow.workflow.engine.WorkflowConditionMatcher.isMatch(event, conditions)) {
+            result.appendLine("   🎯 匹配到事件: ${android.view.accessibility.AccessibilityEvent.eventTypeToString(event.eventType)}")
+            
+            // 执行节点内部动作
+            val actions = node.config["actions"] as? List<Map<String, Any>>
+            executeNodeActions(actions, event, result)
+            
+            // 继续执行连接的后续节点
+            val connections = _workflow.value.connections.filter { it.sourceNodeId == node.id }
+            connections.forEach { connection ->
+                val nextNode = _workflow.value.nodes.find { it.id == connection.targetNodeId }
+                if (nextNode != null) {
+                    // 每次触发都允许重新开始执行后续链条
+                    executeNode(nextNode, result, mutableSetOf(node.id))
+                }
+            }
+        }
+    }
+
     private suspend fun executeNode(
         node: WorkflowNode, 
         result: StringBuilder, 
@@ -570,34 +606,15 @@ class WorkflowViewModel : ViewModel() {
                     if (service == null) {
                         result.appendLine("   ❌ 无法启动监听：无障碍服务未启用")
                     } else {
-                        // 订阅事件流
-                        service.accessibilityEvents
-                            .takeWhile { !isExecutionStopped }
-                            .collect { event ->
-                                // 检查目标包名过滤
-                                val targetPackage = _workflow.value.targetPackage
-                                if (!targetPackage.isNullOrBlank() && event.packageName?.toString() != targetPackage) {
-                                    return@collect
-                                }
-
-                                if (com.carlos.autoflow.workflow.engine.WorkflowConditionMatcher.isMatch(event, conditions)) {
-                                    result.appendLine("   🎯 匹配到事件: ${android.view.accessibility.AccessibilityEvent.eventTypeToString(event.eventType)}")
-                                    
-                                    // 执行节点内部动作
-                                    val actions = config["actions"] as? List<Map<String, Any>>
-                                    executeNodeActions(actions, event, result)
-                                    
-                                    // 继续执行连接的后续节点
-                                    val connections = _workflow.value.connections.filter { it.sourceNodeId == node.id }
-                                    connections.forEach { connection ->
-                                        val nextNode = _workflow.value.nodes.find { it.id == connection.targetNodeId }
-                                        if (nextNode != null) {
-                                            // 每次触发都允许重新开始执行后续链条，使用独立的executed集
-                                            executeNode(nextNode, result, mutableSetOf(node.id))
-                                        }
-                                    }
-                                }
-                            }
+                        // 使用专门的事件管理器
+                        val eventManager = com.carlos.autoflow.workflow.engine.AccessibilityEventManager(service) { !isExecutionStopped }
+                        
+                        coroutineScope {
+                            // 并发启动专项监听器
+                            launch { eventManager.monitorNotification { handleTriggeredEvent(node, it, conditions, result) } }
+                            launch { eventManager.monitorWindow { handleTriggeredEvent(node, it, conditions, result) } }
+                            launch { eventManager.monitorContent { handleTriggeredEvent(node, it, conditions, result) } }
+                        }
                         result.appendLine("   ⏹️ 监听模式已结束")
                     }
                 } else {
