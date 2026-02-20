@@ -64,6 +64,7 @@ import kotlinx.coroutines.delay
 import kotlin.math.floor
 import kotlin.math.pow
 import com.carlos.autoflow.monitor.NodeMonitorDemo
+import com.carlos.autoflow.BuildConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,6 +92,7 @@ fun WorkflowEditor(
     var executeResult by remember { mutableStateOf("") }
     var importError by remember { mutableStateOf<String?>(null) }
     var configNode by remember { mutableStateOf<WorkflowNode?>(null) }
+    var showJsonExamplesDialog by remember { mutableStateOf(false) } // 新增状态变量
 
     Box(modifier = Modifier.fillMaxSize()) {
         when (currentScreen) {
@@ -148,15 +150,17 @@ fun WorkflowEditor(
                     canvasViewModel = canvasViewModel,
                     onShowImportDialog = { showImportDialog = true },
                     onShowExportDialog = { showExportDialog = true },
-                    onShowExecuteDialog = { 
+                    onShowExecuteDialog = {
                         showExecuteDialog = true
                         workflowViewModel.executeWorkflow(context) { result ->
                             executeResult = result
                         }
                     },
                     onShowAccessibilityExamples = { showAccessibilityExamples = true },
+                    onShowJsonExamplesDialog = { showJsonExamplesDialog = true }, // 传递新的lambda
                     onShowLicenseDialog = { showLicenseDialog = true },
-                    onShowSideDrawer = { showSideDrawer = true }
+                    onShowSideDrawer = { showSideDrawer = true },
+                    isDebug = BuildConfig.DEBUG
                 )
 
                 WorkflowStatusMessages(
@@ -382,6 +386,14 @@ fun WorkflowEditor(
                 workflowViewModel.loadWorkflow(example)
                 showAccessibilityExamples = false
             }
+        )
+    }
+
+    // 无障碍JSON示例对话框
+    if (showJsonExamplesDialog) { // 新增的对话框调用
+        JsonExamplesDialog(
+            workflowViewModel = workflowViewModel,
+            onDismiss = { showJsonExamplesDialog = false }
         )
     }
     

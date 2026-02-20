@@ -5,22 +5,16 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
@@ -28,11 +22,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,6 +36,10 @@ import com.carlos.autoflow.ui.theme.Dimens
 import com.carlos.autoflow.workflow.viewmodel.CanvasViewModel
 import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
 
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.lazy.LazyColumn
+import com.carlos.autoflow.workflow.examples.JsonWorkflowExamples
+
 @Composable
 fun WorkflowControls(
     workflowViewModel: WorkflowViewModel = viewModel(),
@@ -50,8 +48,10 @@ fun WorkflowControls(
     onShowExportDialog: () -> Unit = {},
     onShowExecuteDialog: () -> Unit = {},
     onShowAccessibilityExamples: () -> Unit = {},
+    onShowJsonExamplesDialog: () -> Unit = {}, // 新增参数
     onShowLicenseDialog: () -> Unit = {},
-    onShowSideDrawer: () -> Unit = {}
+    onShowSideDrawer: () -> Unit = {},
+    isDebug: Boolean
 ) {
     val canvasState by canvasViewModel.canvasState.collectAsState()
     var isPanelVisible by remember { mutableStateOf(false) }
@@ -184,6 +184,15 @@ fun WorkflowControls(
                         onShowAccessibilityExamples()
                     }
                 )
+                if (isDebug) {
+                    DropdownMenuItem(
+                        text = { Text("📄 无障碍JSON示例") },
+                        onClick = {
+                            showMenu = false
+                            onShowJsonExamplesDialog() // 调用新的lambda
+                        }
+                    )
+                }
             }
         }
 
