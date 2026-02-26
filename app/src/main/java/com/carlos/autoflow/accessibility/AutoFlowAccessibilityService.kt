@@ -104,7 +104,18 @@ class AutoFlowAccessibilityService : AccessibilityService() {
 
     private fun performClick(operation: ClickOperation): OperationResult {
         AutoFlowLogger.d(TAG, "尝试对选择器执行点击操作: ${operation.selector}")
-        var nodeToClick = AccessibilityNodeUtils.findElement(rootInActiveWindow, operation.selector)
+        
+        var nodeToClick = if (operation.childConditions.isNotEmpty()) {
+            // 如果存在子约束，使用高级查找
+            AccessibilityNodeUtils.findNodeWithConstraints(
+                rootInActiveWindow, 
+                operation.selector, 
+                operation.childConditions
+            )
+        } else {
+            // 否则使用普通查找
+            AccessibilityNodeUtils.findElement(rootInActiveWindow, operation.selector)
+        }
         
         if (nodeToClick == null) {
             AutoFlowLogger.e(TAG, "点击操作失败: 未找到选择器对应的元素: ${operation.selector}")
@@ -399,6 +410,7 @@ data class ClickOperation(
     override val selector: ElementSelector,
     val clickType: ClickType = ClickType.SINGLE,
     val clickStrategy: com.carlos.autoflow.workflow.models.ClickStrategy = com.carlos.autoflow.workflow.models.ClickStrategy.DEFAULT,
+    val childConditions: List<ElementSelector> = emptyList(), // 新增子约束
     override val timeout: Long = 5000,
     override val retryCount: Int = 3
 ) : AccessibilityOperation()

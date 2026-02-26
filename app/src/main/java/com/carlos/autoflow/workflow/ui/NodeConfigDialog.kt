@@ -360,6 +360,37 @@ private fun UIClickConfig(
             }
         }
     }
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    var childConditionsStr by remember { 
+        mutableStateOf(
+            when (val value = config["childConditions"]) {
+                is List<*> -> value.toString() // 如果是列表，转为字符串显示
+                is String -> value
+                else -> ""
+            }
+        )
+    }
+
+    OutlinedTextField(
+        value = childConditionsStr,
+        onValueChange = { 
+            childConditionsStr = it
+            config["childConditions"] = it
+            onUpdate(config)
+        },
+        label = { Text("子节点约束 (JSON或逗号分隔)") },
+        placeholder = { Text("例: id=ht5, text=[微信红包]") },
+        modifier = Modifier.fillMaxWidth(),
+        supportingText = {
+            Text(
+                "当主元素包含这些子元素时才执行点击。格式: id=xxx, text=yyy",
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    )
 }
 
 @Composable

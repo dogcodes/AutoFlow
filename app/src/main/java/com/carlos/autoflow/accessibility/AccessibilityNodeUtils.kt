@@ -107,6 +107,52 @@ object AccessibilityNodeUtils {
         return foundNode
     }
 
+    /**
+     * 带子节点约束的查找：
+     * 1. 先根据主选择器找到候选节点列表
+     * 2. 检查候选节点的子树中是否【同时包含】满足所有子约束的节点
+     */
+    fun findNodeWithConstraints(
+        rootInActiveWindow: AccessibilityNodeInfo?,
+        mainSelector: ElementSelector,
+        childSelectors: List<ElementSelector>
+    ): AccessibilityNodeInfo? {
+        val root = rootInActiveWindow ?: return null
+        
+        // 1. 找到所有匹配主选择器的候选者
+        val candidates = mutableListOf<AccessibilityNodeInfo>()
+        when (mainSelector) {
+            is ElementSelector.ById -> {
+                candidates.addAll(root.findAccessibilityNodeInfosByViewId(mainSelector.resourceId))
+            }
+            is ElementSelector.ByText -> {
+                findNodesByTextRecursive(root, mainSelector.text, mainSelector.matchType, candidates)
+            }
+            else -> {
+                findElement(root, mainSelector)?.let { candidates.add(it) }
+            }
+        }
+
+        if (candidates.isEmpty()) return null
+
+        // 2. 遍历候选者，验证子节点约束
+        for (candidate in candidates) {
+            val allMatch = childSelectors.all { childSelector ->
+                // 在候选者的子树中查找是否存在满足该子约束的节点
+                findElement(candidate, childSelector) != null
+            }
+
+            if (allMatch) {
+                // 找到满足所有条件的第一个候选者，回收其他候选者并返回
+                candidates.filter { it != candidate }.forEach { it.recycle() }
+                return candidate
+            }
+            candidate.recycle()
+        }
+        
+        return null
+    }
+
     fun findElements(rootInActiveWindow: AccessibilityNodeInfo?, selector: ElementSelector): List<AccessibilityNodeInfo> {
         AutoFlowLogger.d(TAG, "尝试查找多个元素，选择器: $selector")
         val root = rootInActiveWindow ?: run {

@@ -192,7 +192,9 @@ class WorkflowViewModel : ViewModel() {
         // UI交互节点
         NodeType.UI_CLICK -> listOf(
             NodeInput("selector", "元素选择器", "string", true),
-            NodeInput("clickType", "点击类型", "string")
+            NodeInput("clickType", "点击类型", "string"),
+            NodeInput("clickStrategy", "点击策略", "string"),
+            NodeInput("childConditions", "子节点约束 (JSON)", "string")
         )
         NodeType.UI_LONG_CLICK -> listOf(
             NodeInput("selector", "元素选择器", "string", true)
@@ -674,6 +676,7 @@ class WorkflowViewModel : ViewModel() {
                 val selector = node.config["selector"] as? String ?: ""
                 val clickType = node.config["clickType"] as? String ?: "SINGLE"
                 val clickStrategy = node.config["clickStrategy"] as? String ?: ClickStrategy.DEFAULT.name
+                val rawChildConditions = node.config["childConditions"]
                 
                 result.appendLine("   👆 点击操作: $selector")
                 result.appendLine("   🔧 点击类型: $clickType")
@@ -684,10 +687,40 @@ class WorkflowViewModel : ViewModel() {
                 } else {
                     try {
                         val elementSelector = com.carlos.autoflow.workflow.models.ElementSelector.parse(selector)
+                        
+                        // 解析子约束 (兼容 List 和 String 格式)
+                        val childSelectors = mutableListOf<com.carlos.autoflow.workflow.models.ElementSelector>()
+                        when (rawChildConditions) {
+                            is List<*> -> {
+                                rawChildConditions.forEach { item ->
+                                    if (item is Map<*, *>) {
+                                        (item["selector"] as? String)?.let {
+                                            childSelectors.add(com.carlos.autoflow.workflow.models.ElementSelector.parse(it))
+                                        }
+                                    }
+                                }
+                            }
+                            is String -> {
+                                if (rawChildConditions.isNotBlank()) {
+                                    rawChildConditions.split(",").forEach {
+                                        val trimmed = it.trim()
+                                        if (trimmed.isNotEmpty()) {
+                                            childSelectors.add(com.carlos.autoflow.workflow.models.ElementSelector.parse(trimmed))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (childSelectors.isNotEmpty()) {
+                            result.appendLine("   子节点约束: ${childSelectors.size}个")
+                        }
+
                         val operation = com.carlos.autoflow.accessibility.ClickOperation(
                             elementSelector, 
                             com.carlos.autoflow.accessibility.ClickType.valueOf(clickType),
-                            ClickStrategy.valueOf(clickStrategy)
+                            ClickStrategy.valueOf(clickStrategy),
+                            childSelectors // 传入子约束
                         )
                         
                         val operationResult = com.carlos.autoflow.accessibility.AutoFlowAccessibilityService
