@@ -84,6 +84,7 @@ data class Workflow(
 enum class NodeType(val displayName: String, val category: NodeCategory, val description: String) {
     // 控制流节点
     START("开始", NodeCategory.CONTROL_FLOW, "工作流起点"),
+    EVENT_TRIGGER("事件触发", NodeCategory.CONTROL_FLOW, "监听系统事件触发执行"),
     END("结束", NodeCategory.CONTROL_FLOW, "工作流终点"),
     CONDITION("条件判断", NodeCategory.CONTROL_FLOW, "分支逻辑控制"),
     LOOP("循环", NodeCategory.CONTROL_FLOW, "重复执行操作"),

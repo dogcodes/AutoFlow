@@ -37,6 +37,7 @@ fun WorkflowStatusMessages(
                 Text(
                     text = when (connectingNode?.type) {
                         NodeType.START -> "🔗 从【开始】连接：点击其他节点完成连接"
+                        NodeType.EVENT_TRIGGER -> "🔗 从【事件触发】连接：当事件发生时将执行后续节点"
                         else -> "🔗 连接模式：点击目标节点完成连接"
                     },
                     modifier = Modifier.padding(Dimens.WorkflowEditor.CardPadding),

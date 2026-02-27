@@ -10,11 +10,19 @@ object WechatPreciseRedEnvelopeWorkflowExample {
   "description": "监控聊天界面内容变化。仅当找到ID为cj1且其子节点包含特定ID(ht5)和文本([微信红包])的容器时才触发点击。极高命中率，防误触。",
   "nodes": [
     {
-      "id": "node-start",
+      "id": "node-manual-start",
       "type": "START",
+      "title": "手动启动入口",
+      "x": 100,
+      "y": 0,
+      "config": {}
+    },
+    {
+      "id": "node-event-trigger",
+      "type": "EVENT_TRIGGER",
       "title": "内容变更监控",
       "x": 100,
-      "y": 100,
+      "y": 150,
       "config": {
         "conditions": [
           {
@@ -34,8 +42,8 @@ object WechatPreciseRedEnvelopeWorkflowExample {
       "id": "node-click-target",
       "type": "UI_CLICK",
       "title": "精准点击红包",
-      "x": 400,
-      "y": 100,
+      "x": 100,
+      "y": 300,
       "config": {
         "selector": "id=com.tencent.mm:id/cj1",
         "childConditions": [
@@ -48,8 +56,15 @@ object WechatPreciseRedEnvelopeWorkflowExample {
   ],
   "connections": [
     {
+      "id": "c0",
+      "sourceNodeId": "node-manual-start",
+      "sourceOutputId": "output",
+      "targetNodeId": "node-event-trigger",
+      "targetInputId": "input"
+    },
+    {
       "id": "c1",
-      "sourceNodeId": "node-start",
+      "sourceNodeId": "node-event-trigger",
       "sourceOutputId": "output",
       "targetNodeId": "node-click-target",
       "targetInputId": "input"

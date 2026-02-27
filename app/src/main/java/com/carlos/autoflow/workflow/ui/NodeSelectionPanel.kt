@@ -37,6 +37,7 @@ fun NodeSelectionPanel(
     val nodeTemplates = mapOf(
         NodeCategory.CONTROL_FLOW to listOf(
             NodeTemplate(NodeType.START, "开始", "工作流起点", Icons.Default.PlayArrow),
+            NodeTemplate(NodeType.EVENT_TRIGGER, "事件触发", "监听触发执行", Icons.Default.Notifications),
             NodeTemplate(NodeType.END, "结束", "工作流终点", Icons.Default.Stop),
             NodeTemplate(NodeType.CONDITION, "条件判断", "分支逻辑", Icons.Default.Info),
             NodeTemplate(NodeType.LOOP, "循环", "重复执行", Icons.Default.Refresh),

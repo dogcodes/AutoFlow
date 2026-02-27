@@ -179,6 +179,9 @@ class WorkflowViewModel : ViewModel() {
 
     private fun getDefaultInputs(type: NodeType): List<NodeInput> = when (type) {
         NodeType.START -> emptyList()
+        NodeType.EVENT_TRIGGER -> listOf(
+            NodeInput("conditions", "触发条件 (JSON)", "string", true)
+        )
         NodeType.END -> listOf(NodeInput("input", "输入", "any"))
         NodeType.HTTP_REQUEST -> listOf(
             NodeInput("url", "URL", "string", true),
@@ -254,6 +257,7 @@ class WorkflowViewModel : ViewModel() {
 
     private fun getDefaultOutputs(type: NodeType): List<NodeOutput> = when (type) {
         NodeType.START -> listOf(NodeOutput("output", "输出", "any"))
+        NodeType.EVENT_TRIGGER -> listOf(NodeOutput("output", "输出", "any"))
         NodeType.END -> emptyList()
         NodeType.HTTP_REQUEST -> listOf(
             NodeOutput("response", "响应", "object"),
@@ -598,11 +602,14 @@ class WorkflowViewModel : ViewModel() {
         
         when (node.type) {
             NodeType.START -> {
+                result.appendLine("   ▶️ 工作流手动启动")
+            }
+            NodeType.EVENT_TRIGGER -> {
                 val config = node.config
                 val conditions = config["conditions"] as? List<Map<String, Any>>
                 
                 if (conditions != null && conditions.isNotEmpty()) {
-                    result.appendLine("   📡 进入持续监听模式...")
+                    result.appendLine("   📡 开启事件触发监听...")
                     
                     val service = com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.getInstance()
                     if (service == null) {
@@ -620,7 +627,7 @@ class WorkflowViewModel : ViewModel() {
                         result.appendLine("   ⏹️ 监听模式已结束")
                     }
                 } else {
-                    result.appendLine("   ▶️ 工作流启动")
+                    result.appendLine("   ⚠️ 警告：事件触发器未配置有效条件")
                 }
             }
             NodeType.HTTP_REQUEST -> {
