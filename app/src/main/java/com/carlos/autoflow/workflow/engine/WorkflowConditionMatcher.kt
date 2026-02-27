@@ -39,6 +39,12 @@ object WorkflowConditionMatcher {
                 val actualValue = event.packageName?.toString()
                 expectedValue == actualValue
             }
+            "CLASS_NAME" -> {
+                val expectedValue = condition["value"] as? String
+                val actualValue = event.className?.toString()
+                AutoFlowLogger.d(TAG, "CLASS_NAME 匹配: 期望 $expectedValue, 实际 $actualValue")
+                expectedValue == actualValue
+            }
             "TEXT_CONTAINS" -> {
                 val expectedValue = condition["value"] as? String ?: return false
                 val allText = event.text.joinToString(" ")

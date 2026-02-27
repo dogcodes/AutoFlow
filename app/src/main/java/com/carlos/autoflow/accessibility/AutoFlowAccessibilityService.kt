@@ -51,7 +51,7 @@ class AutoFlowAccessibilityService : AccessibilityService() {
             // 将事件传递给录制器
             operationRecorder.handleAccessibilityEvent(it, rootInActiveWindow)
             //打印所有节点
-            AccessibilityNodeUtils.printAccessibilityNodeTree(rootInActiveWindow)
+//            AccessibilityNodeUtils.printAccessibilityNodeTree(rootInActiveWindow)
         }
     }
 
@@ -107,7 +107,7 @@ class AutoFlowAccessibilityService : AccessibilityService() {
         
         var nodeToClick = if (operation.childConditions.isNotEmpty()) {
             // 如果存在子约束，使用高级查找
-            AccessibilityNodeUtils.findNodeWithConstraints(
+            com.carlos.autoflow.accessibility.AccessibilityNodeUtils.findNodeWithConstraints(
                 rootInActiveWindow, 
                 operation.selector, 
                 operation.childConditions
@@ -410,10 +410,15 @@ data class ClickOperation(
     override val selector: ElementSelector,
     val clickType: ClickType = ClickType.SINGLE,
     val clickStrategy: com.carlos.autoflow.workflow.models.ClickStrategy = com.carlos.autoflow.workflow.models.ClickStrategy.DEFAULT,
-    val childConditions: List<ElementSelector> = emptyList(), // 新增子约束
+    val childConditions: List<ConstraintSelector> = emptyList(), // 改为 ConstraintSelector
     override val timeout: Long = 5000,
     override val retryCount: Int = 3
 ) : AccessibilityOperation()
+
+data class ConstraintSelector(
+    val selector: ElementSelector,
+    val isExclude: Boolean = false
+)
 
 data class InputOperation(
     override val selector: ElementSelector,

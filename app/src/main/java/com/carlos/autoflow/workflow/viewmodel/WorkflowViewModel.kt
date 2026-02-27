@@ -695,14 +695,21 @@ class WorkflowViewModel : ViewModel() {
                     try {
                         val elementSelector = com.carlos.autoflow.workflow.models.ElementSelector.parse(selector)
                         
-                        // 解析子约束 (兼容 List 和 String 格式)
-                        val childSelectors = mutableListOf<com.carlos.autoflow.workflow.models.ElementSelector>()
+                        // 解析子约束 (支持 exclude 标志)
+                        val childConstraints = mutableListOf<com.carlos.autoflow.accessibility.ConstraintSelector>()
                         when (rawChildConditions) {
                             is List<*> -> {
                                 rawChildConditions.forEach { item ->
                                     if (item is Map<*, *>) {
-                                        (item["selector"] as? String)?.let {
-                                            childSelectors.add(com.carlos.autoflow.workflow.models.ElementSelector.parse(it))
+                                        val subSelectorStr = item["selector"] as? String
+                                        val isExclude = item["exclude"] as? Boolean ?: false
+                                        if (subSelectorStr != null) {
+                                            childConstraints.add(
+                                                com.carlos.autoflow.accessibility.ConstraintSelector(
+                                                    com.carlos.autoflow.workflow.models.ElementSelector.parse(subSelectorStr),
+                                                    isExclude
+                                                )
+                                            )
                                         }
                                     }
                                 }
@@ -712,22 +719,26 @@ class WorkflowViewModel : ViewModel() {
                                     rawChildConditions.split(",").forEach {
                                         val trimmed = it.trim()
                                         if (trimmed.isNotEmpty()) {
-                                            childSelectors.add(com.carlos.autoflow.workflow.models.ElementSelector.parse(trimmed))
+                                            childConstraints.add(
+                                                com.carlos.autoflow.accessibility.ConstraintSelector(
+                                                    com.carlos.autoflow.workflow.models.ElementSelector.parse(trimmed)
+                                                )
+                                            )
                                         }
                                     }
                                 }
                             }
                         }
 
-                        if (childSelectors.isNotEmpty()) {
-                            result.appendLine("   子节点约束: ${childSelectors.size}个")
+                        if (childConstraints.isNotEmpty()) {
+                            result.appendLine("   子节点约束: ${childConstraints.size}个")
                         }
 
                         val operation = com.carlos.autoflow.accessibility.ClickOperation(
                             elementSelector, 
                             com.carlos.autoflow.accessibility.ClickType.valueOf(clickType),
                             ClickStrategy.valueOf(clickStrategy),
-                            childSelectors // 传入子约束
+                            childConstraints // 传入增强后的子约束
                         )
                         
                         val operationResult = com.carlos.autoflow.accessibility.AutoFlowAccessibilityService

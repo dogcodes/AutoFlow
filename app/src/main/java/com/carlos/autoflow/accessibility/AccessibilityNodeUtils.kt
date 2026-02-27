@@ -110,12 +110,13 @@ object AccessibilityNodeUtils {
     /**
      * 带子节点约束的查找：
      * 1. 先根据主选择器找到候选节点列表
-     * 2. 检查候选节点的子树中是否【同时包含】满足所有子约束的节点
+     * 2. 检查候选节点的子树中是否满足所有子约束的节点
+     * 3. 支持 exclude 逻辑：如果 isExclude 为 true，则该子树中必须不存在满足条件的节点
      */
     fun findNodeWithConstraints(
         rootInActiveWindow: AccessibilityNodeInfo?,
         mainSelector: ElementSelector,
-        childSelectors: List<ElementSelector>
+        childSelectors: List<ConstraintSelector>
     ): AccessibilityNodeInfo? {
         val root = rootInActiveWindow ?: return null
         
@@ -137,9 +138,13 @@ object AccessibilityNodeUtils {
 
         // 2. 遍历候选者，验证子节点约束
         for (candidate in candidates) {
-            val allMatch = childSelectors.all { childSelector ->
-                // 在候选者的子树中查找是否存在满足该子约束的节点
-                findElement(candidate, childSelector) != null
+            val allMatch = childSelectors.all { constraint ->
+                val found = findElement(candidate, constraint.selector) != null
+                if (constraint.isExclude) {
+                    !found // 如果是排除模式，找不到才算匹配
+                } else {
+                    found  // 否则，找到才算匹配
+                }
             }
 
             if (allMatch) {

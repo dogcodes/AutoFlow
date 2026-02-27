@@ -131,7 +131,8 @@ fun WorkflowNodeView(
                     )
                     
                     // 显示操作提示
-                    if (node.config.isNotEmpty()) {
+                    val config = node.config
+                    if (config != null && config.isNotEmpty()) {
                         Text(
                             text = "已配置",
                             fontSize = 10.sp,
