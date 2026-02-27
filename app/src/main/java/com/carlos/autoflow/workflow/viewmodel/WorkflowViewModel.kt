@@ -73,9 +73,13 @@ class WorkflowViewModel : ViewModel() {
         val currentWorkflow = _workflow.value
         val updatedNodes = currentWorkflow.nodes.map { node ->
             if (node.id == nodeId) {
+                // 确保 copy 时 inputs/outputs 不为 null，防止反序列化导致的 NPE
                 node.copy(
                     x = node.x + deltaX,
-                    y = node.y + deltaY
+                    y = node.y + deltaY,
+                    inputs = node.inputs ?: emptyList(),
+                    outputs = node.outputs ?: emptyList(),
+                    config = node.config ?: emptyMap()
                 )
             } else {
                 node

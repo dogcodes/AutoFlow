@@ -15,6 +15,10 @@ object WechatRedEnvelopeV8069WorkflowExample {
       "title": "启动红包助手",
       "x": 50,
       "y": 50,
+      "inputs": [],
+      "outputs": [
+        { "id": "out-1", "name": "输出", "type": "any" }
+      ],
       "config": {}
     },
     {
@@ -23,6 +27,12 @@ object WechatRedEnvelopeV8069WorkflowExample {
       "title": "全场景监控",
       "x": 50,
       "y": 180,
+      "inputs": [
+        { "id": "in-1", "name": "输入", "type": "any" }
+      ],
+      "outputs": [
+        { "id": "out-1", "name": "输出", "type": "any" }
+      ],
       "config": {
         "conditions": [
           {
@@ -44,6 +54,12 @@ object WechatRedEnvelopeV8069WorkflowExample {
       "title": "从列表进入聊天",
       "x": 300,
       "y": 50,
+      "inputs": [
+        { "id": "in-1", "name": "输入", "type": "any" }
+      ],
+      "outputs": [
+        { "id": "out-1", "name": "输出", "type": "any" }
+      ],
       "config": {
         "selector": "id=com.tencent.mm:id/cj1",
         "childConditions": [
@@ -59,6 +75,12 @@ object WechatRedEnvelopeV8069WorkflowExample {
       "title": "抢未领取的红包",
       "x": 300,
       "y": 180,
+      "inputs": [
+        { "id": "in-1", "name": "输入", "type": "any" }
+      ],
+      "outputs": [
+        { "id": "out-1", "name": "输出", "type": "any" }
+      ],
       "config": {
         "selector": "id=com.tencent.mm:id/bkg",
         "childConditions": [
@@ -74,6 +96,12 @@ object WechatRedEnvelopeV8069WorkflowExample {
       "title": "等待拆红包弹窗",
       "x": 300,
       "y": 310,
+      "inputs": [
+        { "id": "in-1", "name": "输入", "type": "any" }
+      ],
+      "outputs": [
+        { "id": "out-1", "name": "找到", "type": "boolean" }
+      ],
       "config": {
         "selector": "id=com.tencent.mm:id/j6g",
         "timeout": 3000
@@ -85,6 +113,12 @@ object WechatRedEnvelopeV8069WorkflowExample {
       "title": "点击“开”字拆解",
       "x": 550,
       "y": 180,
+      "inputs": [
+        { "id": "in-1", "name": "输入", "type": "any" }
+      ],
+      "outputs": [
+        { "id": "out-1", "name": "成功", "type": "boolean" }
+      ],
       "config": {
         "selector": "id=com.tencent.mm:id/j6g",
         "clickStrategy": "FIND_CLICKABLE_CHILD"
@@ -96,6 +130,10 @@ object WechatRedEnvelopeV8069WorkflowExample {
       "title": "自动返回聊天页",
       "x": 550,
       "y": 310,
+      "inputs": [
+        { "id": "in-1", "name": "输入", "type": "any" }
+      ],
+      "outputs": [],
       "config": {
         "eventType": "GLOBAL_ACTION_BACK"
       }
