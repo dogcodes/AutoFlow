@@ -582,7 +582,7 @@ class WorkflowViewModel : ViewModel() {
                 val nextNode = _workflow.value.nodes.find { it.id == connection.targetNodeId }
                 if (nextNode != null) {
                     // 每次触发都允许重新开始执行后续链条
-                    executeNode(nextNode, result, mutableSetOf(node.id))
+                    executeNode(nextNode, result, mutableSetOf(node.id), event)
                 }
             }
         }
@@ -591,7 +591,8 @@ class WorkflowViewModel : ViewModel() {
     private suspend fun executeNode(
         node: WorkflowNode, 
         result: StringBuilder, 
-        executed: MutableSet<String>
+        executed: MutableSet<String>,
+        triggerEvent: android.view.accessibility.AccessibilityEvent? = null
     ) {
         if (node.id in executed || isExecutionStopped) return
         executed.add(node.id)
@@ -604,6 +605,7 @@ class WorkflowViewModel : ViewModel() {
             return
         }
         
+        var routedOutputIds: Set<String>? = null
         when (node.type) {
             NodeType.START -> {
                 result.appendLine("   ▶️ 工作流手动启动")
@@ -1014,7 +1016,73 @@ class WorkflowViewModel : ViewModel() {
             // 控制流节点
             NodeType.CONDITION -> {
                 result.appendLine("   🔀 条件判断节点")
-                // TODO: 实现条件逻辑
+
+                val config = node.config
+                val checkType = config["checkType"] as? String ?: ""
+                val currentActivity = triggerEvent?.className?.toString() ?: ""
+
+                val trueOutput = node.outputs.find {
+                    it.id.equals("true", true) || it.id.equals("out-cond-true", true)
+                }?.id ?: "true"
+                val falseOutput = node.outputs.find {
+                    it.id.equals("false", true) || it.id.equals("out-cond-false", true)
+                }?.id ?: "false"
+
+                routedOutputIds = when (checkType) {
+                    "activity_name_matches" -> {
+                        val cases = config["cases"] as? List<Map<String, Any>>
+                        if (!cases.isNullOrEmpty()) {
+                            val matchedCase = cases.firstOrNull { it["value"]?.toString() == currentActivity }
+                            if (matchedCase != null) {
+                                val outputId = matchedCase["outputId"]?.toString()
+                                result.appendLine("   ✅ Activity命中: $currentActivity -> ${outputId ?: "空分支"}")
+                                if (outputId.isNullOrBlank()) emptySet() else setOf(outputId)
+                            } else {
+                                result.appendLine("   ⚠️ Activity未命中: $currentActivity")
+                                emptySet()
+                            }
+                        } else {
+                            val target = config["value"]?.toString() ?: ""
+                            val matched = currentActivity == target
+                            result.appendLine("   ${if (matched) "✅" else "⚠️"} Activity判断: $currentActivity == $target -> $matched")
+                            setOf(if (matched) trueOutput else falseOutput)
+                        }
+                    }
+                    "activity_name_matches_any" -> {
+                        val values = (config["values"] as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList()
+                        val matched = values.contains(currentActivity)
+                        result.appendLine("   ${if (matched) "✅" else "⚠️"} Activity集合判断: $currentActivity in $values -> $matched")
+                        setOf(if (matched) trueOutput else falseOutput)
+                    }
+                    "element_exists" -> {
+                        val selector = config["selector"] as? String ?: ""
+                        if (selector.isBlank() || !com.carlos.autoflow.accessibility.AutoFlowAccessibilityService.isServiceEnabled()) {
+                            result.appendLine("   ⚠️ 元素判断失败: 选择器为空或无障碍未启用")
+                            setOf(falseOutput)
+                        } else {
+                            try {
+                                val elementSelector = com.carlos.autoflow.workflow.models.ElementSelector.parse(selector)
+                                val op = com.carlos.autoflow.accessibility.FindOperation(elementSelector)
+                                val opResult = com.carlos.autoflow.accessibility.AutoFlowAccessibilityService
+                                    .getInstance()?.executeOperation(op)
+                                val exists = (opResult as? com.carlos.autoflow.accessibility.OperationResult.Success)
+                                    ?.data?.get("count") as? Int ?: 0 > 0
+
+                                val hasOpenOutput = node.outputs.find { it.id.equals("has_open", true) }?.id ?: trueOutput
+                                val noOpenOutput = node.outputs.find { it.id.equals("no_open", true) }?.id ?: falseOutput
+                                result.appendLine("   ${if (exists) "✅" else "⚠️"} 元素存在判断: $selector -> $exists")
+                                setOf(if (exists) hasOpenOutput else noOpenOutput)
+                            } catch (e: Exception) {
+                                result.appendLine("   ❌ 元素判断异常: ${e.message}")
+                                setOf(falseOutput)
+                            }
+                        }
+                    }
+                    else -> {
+                        result.appendLine("   ⚠️ 未实现的checkType: $checkType，默认走false分支")
+                        setOf(falseOutput)
+                    }
+                }
             }
             NodeType.LOOP -> {
                 val loopType = node.config["loopType"] as? String ?: "count"
@@ -1154,11 +1222,13 @@ class WorkflowViewModel : ViewModel() {
         result.appendLine()
         
         // 执行下一个连接的节点
-        val connections = _workflow.value.connections.filter { it.sourceNodeId == node.id }
+        val connections = _workflow.value.connections.filter {
+            it.sourceNodeId == node.id && (routedOutputIds == null || routedOutputIds!!.contains(it.sourceOutputId))
+        }
         connections.forEach { connection ->
             val nextNode = _workflow.value.nodes.find { it.id == connection.targetNodeId }
             if (nextNode != null) {
-                executeNode(nextNode, result, executed)
+                executeNode(nextNode, result, executed, triggerEvent)
             }
         }
     }
