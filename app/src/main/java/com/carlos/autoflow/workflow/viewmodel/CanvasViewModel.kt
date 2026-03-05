@@ -14,27 +14,34 @@ data class CanvasState(
     val viewportHeight: Float = 0f,
     val isAdaptiveGridEnabled: Boolean = false, // 是否启用自适应网格密度（用于控制网格在缩放时是否自动调整密度）
     val showFlowAnimation: Boolean = true // 是否显示连接线流动动画
-)
+) {
+    fun viewportCenterX(): Float = viewportWidth / 2f
+
+    fun viewportCenterY(): Float = viewportHeight / 2f
+
+    fun worldToScreenX(worldX: Float): Float = worldX * scale + offsetX
+
+    fun worldToScreenY(worldY: Float): Float = worldY * scale + offsetY
+
+    fun screenToWorldX(screenX: Float): Float = (screenX - offsetX) / scale
+
+    fun screenToWorldY(screenY: Float): Float = (screenY - offsetY) / scale
+
+    fun applyTransform(anchorX: Float, anchorY: Float, panX: Float, panY: Float, zoomFactor: Float): CanvasState {
+        val newScale = (scale * zoomFactor).coerceIn(minScale, maxScale)
+        val effectiveZoom = newScale / scale
+
+        return copy(
+            scale = newScale,
+            offsetX = offsetX * effectiveZoom + (1 - effectiveZoom) * anchorX + panX,
+            offsetY = offsetY * effectiveZoom + (1 - effectiveZoom) * anchorY + panY
+        )
+    }
+}
 
 class CanvasViewModel : ViewModel() {
     private val _canvasState = MutableStateFlow(CanvasState())
     val canvasState: StateFlow<CanvasState> = _canvasState
-
-    fun updateScale(scale: Float) {
-        _canvasState.value = _canvasState.value.copy(
-            scale = scale.coerceIn(
-                _canvasState.value.minScale,
-                _canvasState.value.maxScale
-            )
-        )
-    }
-    
-    fun updateOffset(offsetX: Float, offsetY: Float) {
-        _canvasState.value = _canvasState.value.copy(
-            offsetX = offsetX,
-            offsetY = offsetY
-        )
-    }
 
     fun updateViewportSize(width: Float, height: Float) {
         if (width <= 0f || height <= 0f) return
@@ -45,21 +52,12 @@ class CanvasViewModel : ViewModel() {
     }
 
     fun applyTransform(anchorX: Float, anchorY: Float, panX: Float, panY: Float, zoomFactor: Float) {
-        val state = _canvasState.value
-        val oldScale = state.scale
-        val newScale = (oldScale * zoomFactor).coerceIn(state.minScale, state.maxScale)
-        val effectiveZoom = newScale / oldScale
-
-        // Top-left origin camera model:
-        // screen = world * scale + offset
-        // Incremental gesture transform: x' = zoom * (x - anchor) + anchor + pan
-        val newOffsetX = state.offsetX * effectiveZoom + (1 - effectiveZoom) * anchorX + panX
-        val newOffsetY = state.offsetY * effectiveZoom + (1 - effectiveZoom) * anchorY + panY
-
-        _canvasState.value = state.copy(
-            scale = newScale,
-            offsetX = newOffsetX,
-            offsetY = newOffsetY
+        _canvasState.value = _canvasState.value.applyTransform(
+            anchorX = anchorX,
+            anchorY = anchorY,
+            panX = panX,
+            panY = panY,
+            zoomFactor = zoomFactor
         )
     }
 
@@ -72,10 +70,9 @@ class CanvasViewModel : ViewModel() {
     }
 
     fun zoomIn() {
-        val state = _canvasState.value
         applyTransform(
-            anchorX = state.viewportWidth / 2f,
-            anchorY = state.viewportHeight / 2f,
+            anchorX = _canvasState.value.viewportCenterX(),
+            anchorY = _canvasState.value.viewportCenterY(),
             panX = 0f,
             panY = 0f,
             zoomFactor = 1.2f
@@ -83,10 +80,9 @@ class CanvasViewModel : ViewModel() {
     }
 
     fun zoomOut() {
-        val state = _canvasState.value
         applyTransform(
-            anchorX = state.viewportWidth / 2f,
-            anchorY = state.viewportHeight / 2f,
+            anchorX = _canvasState.value.viewportCenterX(),
+            anchorY = _canvasState.value.viewportCenterY(),
             panX = 0f,
             panY = 0f,
             zoomFactor = 1f / 1.2f

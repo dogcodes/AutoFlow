@@ -29,7 +29,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.TransformOrigin
@@ -81,7 +80,6 @@ fun WorkflowEditor(
     val connectingNodeId by workflowViewModel.connectingNodeId.collectAsState()
     val selectedNodeId by workflowViewModel.selectedNodeId.collectAsState()
     val executingNodes by workflowViewModel.executingNodes.collectAsState()
-    val density = LocalDensity.current
 
     // 对话框状态
     var showImportDialog by remember { mutableStateOf(false) }

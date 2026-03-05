@@ -2,9 +2,11 @@ package com.carlos.autoflow.workflow.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.carlos.autoflow.ui.theme.Dimens
 import com.carlos.autoflow.workflow.viewmodel.CanvasState
@@ -18,48 +20,52 @@ fun CanvasBackground(
     canvasState: CanvasState
 ) {
     val density = LocalDensity.current
-    Canvas(modifier = modifier) {
-        val worldGridStepPx = Dimens.WorkflowEditor.GridSize.toPx()
-        val scaledGridStepPx = worldGridStepPx * canvasState.scale
-        val minGridLinePx = with(density) { 20.dp.toPx() }
-        val skipFactor = if (canvasState.isAdaptiveGridEnabled) {
-            if (scaledGridStepPx < minGridLinePx) {
-                ceil(minGridLinePx / scaledGridStepPx).toInt()
+    val worldGridStepPx = with(density) { Dimens.WorkflowEditor.GridSize.toPx() }
+    val minGridLinePx = with(density) { 20.dp.toPx() }
+    val gridStepWorld by remember(canvasState.scale, canvasState.isAdaptiveGridEnabled, worldGridStepPx, minGridLinePx) {
+        derivedStateOf {
+            if (!canvasState.isAdaptiveGridEnabled) return@derivedStateOf worldGridStepPx
+            val scaledGridStepPx = worldGridStepPx * canvasState.scale
+            val skipFactor = if (scaledGridStepPx < minGridLinePx) {
+                ceil(minGridLinePx / scaledGridStepPx).toInt().coerceAtLeast(1)
             } else {
                 1
             }
-        } else {
-            1
+            worldGridStepPx * skipFactor
         }
-        val stepPx = scaledGridStepPx * skipFactor
-        if (stepPx <= 0f || !stepPx.isFinite()) return@Canvas
+    }
+
+    Canvas(modifier = modifier) {
+        if (gridStepWorld <= 0f || !gridStepWorld.isFinite()) return@Canvas
 
         val screenWidth = size.width
         val screenHeight = size.height
         val strokeWidth = 1.dp.toPx()
 
-        val firstX = floor((-canvasState.offsetX) / stepPx) * stepPx + canvasState.offsetX
-        var x = firstX
-        while (x <= screenWidth) {
+        var worldX = floor(canvasState.screenToWorldX(0f) / gridStepWorld) * gridStepWorld
+        while (true) {
+            val x = canvasState.worldToScreenX(worldX)
+            if (x > screenWidth) break
             drawLine(
                 color = Dimens.WorkflowEditorColors.GridLine,
                 start = Offset(x, 0f),
                 end = Offset(x, screenHeight),
                 strokeWidth = strokeWidth
             )
-            x += stepPx
+            worldX += gridStepWorld
         }
 
-        val firstY = floor((-canvasState.offsetY) / stepPx) * stepPx + canvasState.offsetY
-        var y = firstY
-        while (y <= screenHeight) {
+        var worldY = floor(canvasState.screenToWorldY(0f) / gridStepWorld) * gridStepWorld
+        while (true) {
+            val y = canvasState.worldToScreenY(worldY)
+            if (y > screenHeight) break
             drawLine(
                 color = Dimens.WorkflowEditorColors.GridLine,
                 start = Offset(0f, y),
                 end = Offset(screenWidth, y),
                 strokeWidth = strokeWidth
             )
-            y += stepPx
+            worldY += gridStepWorld
         }
     }
 }
