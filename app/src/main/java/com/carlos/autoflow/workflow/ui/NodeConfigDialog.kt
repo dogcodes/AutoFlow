@@ -173,13 +173,18 @@ private fun DelayConfig(
     config: MutableMap<String, Any>,
     onUpdate: (MutableMap<String, Any>) -> Unit
 ) {
-    var delay by remember { mutableStateOf(config["delay"] as? String ?: "1000") }
+    val initialDelay = when (val value = config["delay"]) {
+        is Number -> value.toLong().toString()
+        is String -> value
+        else -> "1000"
+    }
+    var delay by remember { mutableStateOf(initialDelay) }
     
     OutlinedTextField(
         value = delay,
         onValueChange = { 
             delay = it
-            config["delay"] = it
+            config["delay"] = it.toLongOrNull() ?: 0L
             onUpdate(config)
         },
         label = { Text("延时时间 (毫秒)") },
@@ -932,4 +937,3 @@ private fun SystemGlobalActionConfig(
         }
     }
 }
-

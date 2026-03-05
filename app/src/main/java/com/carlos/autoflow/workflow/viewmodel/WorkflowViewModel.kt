@@ -52,6 +52,10 @@ class WorkflowViewModel : ViewModel() {
     private val gson = Gson()
     private val httpClient = OkHttpClient()
 
+    fun setNodeExecutionLogEnabled(enabled: Boolean) {
+        AutoFlowLogger.isNodeExecutionLogEnabled = enabled
+    }
+
     fun addNode(type: NodeType, x: Float, y: Float) {
         val newNode = WorkflowNode(
             id = UUID.randomUUID().toString(),
@@ -598,6 +602,10 @@ class WorkflowViewModel : ViewModel() {
         executed.add(node.id)
         
         result.appendLine("📍 执行节点: ${node.title} (${node.type.displayName})")
+        AutoFlowLogger.node(
+            "WorkflowNode",
+            "执行节点: id=${node.id}, title=${node.title}, type=${node.type.name}"
+        )
         
         // 检查是否被停止
         if (isExecutionStopped) {
