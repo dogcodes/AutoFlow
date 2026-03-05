@@ -70,7 +70,7 @@ object WechatRedEnvelopeV8069AccessibilityNewExample {
         "cases": [
           { "value": "com.tencent.mm.ui.LauncherUI", "outputId": "launcher" },
           { "value": "com.tencent.mm.ui.chatting.ChattingUI", "outputId": "chatting" },
-          { "value": "com.tencent.mm.plugin.luckymoney.ui.LuckyMoneyNotHookReceiveUI", "outputId": "popup" },
+          { "value": "com.tencent.mm.plugin.luckymoney.ui.LuckyMoneyNewReceiveUI", "outputId": "popup" },
           { "value": "com.tencent.mm.plugin.luckymoney.ui.LuckyMoneyBeforeDetailUI", "outputId": "detail" }
         ]
       }
