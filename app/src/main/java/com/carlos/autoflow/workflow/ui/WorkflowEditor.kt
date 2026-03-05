@@ -28,9 +28,11 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.carlos.autoflow.ui.theme.Dimens
@@ -105,20 +107,25 @@ fun WorkflowEditor(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .onSizeChanged { size ->
+                            canvasViewModel.updateViewportSize(
+                                width = size.width.toFloat(),
+                                height = size.height.toFloat()
+                            )
+                        }
                         .pointerInput(Unit) {
                             detectTransformGestures { centroid, pan, zoom, _ ->
-                                val oldScale = canvasState.scale
-                                val newScale = (oldScale * zoom).coerceIn(canvasState.minScale, canvasState.maxScale)
-                                val effectiveZoom = newScale / oldScale
-
-                                val newOffsetX = canvasState.offsetX + pan.x + (centroid.x - canvasState.offsetX) * (1 - effectiveZoom)
-                                val newOffsetY = canvasState.offsetY + pan.y + (centroid.y - canvasState.offsetY) * (1 - effectiveZoom)
-
-                                canvasViewModel.updateScale(newScale)
-                                canvasViewModel.updateOffset(newOffsetX, newOffsetY)
+                                canvasViewModel.applyTransform(
+                                    anchorX = centroid.x,
+                                    anchorY = centroid.y,
+                                    panX = pan.x,
+                                    panY = pan.y,
+                                    zoomFactor = zoom
+                                )
                             }
                         }
                         .graphicsLayer(
+                            transformOrigin = TransformOrigin(0f, 0f),
                             scaleX = canvasState.scale,
                             scaleY = canvasState.scale,
                             translationX = canvasState.offsetX,
@@ -135,6 +142,7 @@ fun WorkflowEditor(
                         workflow = workflow,
                         selectedNodeId = selectedNodeId,
                         connectingNodeId = connectingNodeId,
+                        canvasScale = canvasState.scale,
                         workflowViewModel = workflowViewModel,
                         onShowNodeConfig = { node -> configNode = node }
                     )

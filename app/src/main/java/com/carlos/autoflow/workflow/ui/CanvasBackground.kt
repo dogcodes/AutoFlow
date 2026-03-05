@@ -10,7 +10,7 @@ import com.carlos.autoflow.ui.theme.Dimens
 import com.carlos.autoflow.workflow.viewmodel.CanvasState
 import androidx.compose.ui.platform.LocalDensity
 import kotlin.math.ceil
-import kotlin.math.roundToInt
+import kotlin.math.floor
 
 @Composable
 fun CanvasBackground(
@@ -19,87 +19,47 @@ fun CanvasBackground(
 ) {
     val density = LocalDensity.current
     Canvas(modifier = modifier) {
-        val gridSizePx = Dimens.WorkflowEditor.GridSize.toPx()
-
-        // Calculate the effective grid size on screen
-        val effectiveGridSizeScreen = gridSizePx * canvasState.scale
-
-        // Determine the visible screen area
-        val screenWidth = size.width
-        val screenHeight = size.height
-
-        // Minimum pixel distance between grid lines to prevent overcrowding
-        val minGridLinePx = with(density) { 20.dp.toPx() } // Example: 20dp minimum distance
-
-        // Calculate skip factor to ensure lines are not too close
+        val worldGridStepPx = Dimens.WorkflowEditor.GridSize.toPx()
+        val scaledGridStepPx = worldGridStepPx * canvasState.scale
+        val minGridLinePx = with(density) { 20.dp.toPx() }
         val skipFactor = if (canvasState.isAdaptiveGridEnabled) {
-            if (effectiveGridSizeScreen < minGridLinePx) {
-                ceil(minGridLinePx / effectiveGridSizeScreen).toInt()
+            if (scaledGridStepPx < minGridLinePx) {
+                ceil(minGridLinePx / scaledGridStepPx).toInt()
             } else {
                 1
             }
         } else {
-            1 // If adaptive grid is disabled, always draw every grid line
+            1
         }
-        val actualGridStep = effectiveGridSizeScreen * skipFactor
+        val stepPx = scaledGridStepPx * skipFactor
+        if (stepPx <= 0f || !stepPx.isFinite()) return@Canvas
 
-        // Calculate the offset for the grid lines based on canvasState.offsetX/Y
-        // This makes the grid appear to move with the canvas.
-        val gridOffsetX = canvasState.offsetX % actualGridStep
-        val gridOffsetY = canvasState.offsetY % actualGridStep
+        val screenWidth = size.width
+        val screenHeight = size.height
+        val strokeWidth = 1.dp.toPx()
 
-
-        // Draw vertical lines
-        var currentXScreen = gridOffsetX
-        while (currentXScreen < screenWidth) {
-            if (currentXScreen >= 0f) { // Only draw if line is within screen bounds
-                drawLine(
-                    color = Dimens.WorkflowEditorColors.GridLine,
-                    start = Offset(currentXScreen, 0f),
-                    end = Offset(currentXScreen, screenHeight),
-                    strokeWidth = (1.dp.toPx())
-                )
-            }
-            currentXScreen += actualGridStep
-        }
-
-        // Draw vertical lines for negative offset
-        currentXScreen = gridOffsetX - actualGridStep
-        while (currentXScreen >= -actualGridStep) { // Draw one extra line off-screen to handle edge cases
+        val firstX = floor((-canvasState.offsetX) / stepPx) * stepPx + canvasState.offsetX
+        var x = firstX
+        while (x <= screenWidth) {
             drawLine(
                 color = Dimens.WorkflowEditorColors.GridLine,
-                start = Offset(currentXScreen, 0f),
-                end = Offset(currentXScreen, screenHeight),
-                strokeWidth = (1.dp.toPx())
+                start = Offset(x, 0f),
+                end = Offset(x, screenHeight),
+                strokeWidth = strokeWidth
             )
-            currentXScreen -= actualGridStep
+            x += stepPx
         }
 
-
-        // Draw horizontal lines
-        var currentYScreen = gridOffsetY
-        while (currentYScreen < screenHeight) {
-            if (currentYScreen >= 0f) { // Only draw if line is within screen bounds
-                drawLine(
-                    color = Dimens.WorkflowEditorColors.GridLine,
-                    start = Offset(0f, currentYScreen),
-                    end = Offset(screenWidth, currentYScreen),
-                    strokeWidth = (1.dp.toPx())
-                )
-            }
-            currentYScreen += actualGridStep
-        }
-
-        // Draw horizontal lines for negative offset
-        currentYScreen = gridOffsetY - actualGridStep
-        while (currentYScreen >= -actualGridStep) { // Draw one extra line off-screen to handle edge cases
+        val firstY = floor((-canvasState.offsetY) / stepPx) * stepPx + canvasState.offsetY
+        var y = firstY
+        while (y <= screenHeight) {
             drawLine(
                 color = Dimens.WorkflowEditorColors.GridLine,
-                start = Offset(0f, currentYScreen),
-                end = Offset(screenWidth, currentYScreen),
-                strokeWidth = (1.dp.toPx())
+                start = Offset(0f, y),
+                end = Offset(screenWidth, y),
+                strokeWidth = strokeWidth
             )
-            currentYScreen -= actualGridStep
+            y += stepPx
         }
     }
 }

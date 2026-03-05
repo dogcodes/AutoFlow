@@ -15,6 +15,7 @@ fun WorkflowNodes(
     workflow: Workflow,
     selectedNodeId: String?,
     connectingNodeId: String?,
+    canvasScale: Float,
     workflowViewModel: WorkflowViewModel,
     onShowNodeConfig: (WorkflowNode) -> Unit = {}
 ) {
@@ -27,6 +28,7 @@ fun WorkflowNodes(
                     node = node,
                     isSelected = selectedNodeId == node.id,
                     isConnecting = connectingNodeId == node.id,
+                    canvasScale = canvasScale,
                     onMove = { deltaX, deltaY ->
                         workflowViewModel.moveNode(node.id, deltaX, deltaY)
                     },

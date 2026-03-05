@@ -27,6 +27,7 @@ fun WorkflowNodeView(
     node: WorkflowNode,
     isSelected: Boolean,
     isConnecting: Boolean = false,
+    canvasScale: Float = 1f,
     onMove: (Float, Float) -> Unit,
     onSelect: () -> Unit,
     onDelete: () -> Unit,
@@ -46,10 +47,12 @@ fun WorkflowNodeView(
                     detectDragGestures(
                         onDragStart = { isDragging = true },
                         onDragEnd = { isDragging = false }
-                    ) { _, dragAmount ->
+                    ) { change, dragAmount ->
+                        change.consume()
                         val deltaXDp = with(density) { dragAmount.x.toDp().value }
                         val deltaYDp = with(density) { dragAmount.y.toDp().value }
-                        onMove(deltaXDp, deltaYDp)
+                        val safeScale = canvasScale.coerceAtLeast(0.01f)
+                        onMove(deltaXDp / safeScale, deltaYDp / safeScale)
                     }
                 }
                 .combinedClickable(
