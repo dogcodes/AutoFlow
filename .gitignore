@@ -66,3 +66,4 @@ google-services.json
 firebase.json
 .firebaserc
 firebase.crashlytics.unity_editor.json
+/local
