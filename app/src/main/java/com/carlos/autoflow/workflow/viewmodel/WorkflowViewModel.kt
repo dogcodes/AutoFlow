@@ -29,6 +29,13 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 
 class WorkflowViewModel : ViewModel() {
+    private enum class RedEnvelopeFlowState {
+        WAIT_NEW,
+        HAS_RECEIVED,
+        HAS_CLICKED,
+        HAS_OPENED
+    }
+
     private val _workflow = MutableStateFlow(createEmptyWorkflow())
     val workflow: StateFlow<Workflow> = _workflow
     
@@ -47,6 +54,8 @@ class WorkflowViewModel : ViewModel() {
     private var currentContext: android.content.Context? = null
     private var currentExecution: WorkflowExecution? = null
     private var historyRepository: ExecutionHistoryRepository? = null
+    private val redEnvelopeStateLock = Any()
+    private var redEnvelopeState: RedEnvelopeFlowState = RedEnvelopeFlowState.WAIT_NEW
     
     // 第二阶段新增：JSON和HTTP支持
     private val gson = Gson()
@@ -454,6 +463,7 @@ class WorkflowViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 isExecutionStopped = false
+                resetRedEnvelopeState()
                 
                 // 创建执行记录
                 currentExecution = WorkflowExecution(
@@ -540,7 +550,67 @@ class WorkflowViewModel : ViewModel() {
     
     private fun stopWorkflowExecution() {
         isExecutionStopped = true
+        resetRedEnvelopeState()
         com.carlos.autoflow.ui.FloatingControlService.updateExecutionState(false)
+    }
+
+    private fun resetRedEnvelopeState() {
+        synchronized(redEnvelopeStateLock) {
+            redEnvelopeState = RedEnvelopeFlowState.WAIT_NEW
+        }
+    }
+
+    private fun getRedEnvelopeState(): RedEnvelopeFlowState {
+        synchronized(redEnvelopeStateLock) {
+            return redEnvelopeState
+        }
+    }
+
+    private fun setRedEnvelopeState(newState: RedEnvelopeFlowState, reason: String) {
+        synchronized(redEnvelopeStateLock) {
+            if (redEnvelopeState != newState) {
+                AutoFlowLogger.d("RedEnvelopeState", "状态迁移: $redEnvelopeState -> $newState, 原因: $reason")
+                redEnvelopeState = newState
+            }
+        }
+    }
+
+    private fun getSelector(node: WorkflowNode): String {
+        return node.config["selector"] as? String ?: ""
+    }
+
+    private fun shouldExecuteWithRedEnvelopeState(node: WorkflowNode): Boolean {
+        val state = getRedEnvelopeState()
+        if (node.type == NodeType.UI_CLICK) {
+            return when (getSelector(node)) {
+                "id=com.tencent.mm:id/bkg" -> state == RedEnvelopeFlowState.WAIT_NEW || state == RedEnvelopeFlowState.HAS_RECEIVED
+                "id=com.tencent.mm:id/j6g" -> state == RedEnvelopeFlowState.HAS_CLICKED
+                else -> true
+            }
+        }
+        if (node.type == NodeType.SYSTEM_GLOBAL_ACTION) {
+            val eventType = node.config["eventType"] as? String
+            if (eventType == "GLOBAL_ACTION_BACK") {
+                return state == RedEnvelopeFlowState.HAS_OPENED
+            }
+        }
+        return true
+    }
+
+    private fun updateRedEnvelopeStateAfterSuccess(node: WorkflowNode) {
+        if (node.type == NodeType.UI_CLICK) {
+            when (getSelector(node)) {
+                "id=com.tencent.mm:id/cj1" -> setRedEnvelopeState(RedEnvelopeFlowState.HAS_RECEIVED, "列表命中红包会话并进入")
+                "id=com.tencent.mm:id/bkg" -> setRedEnvelopeState(RedEnvelopeFlowState.HAS_CLICKED, "聊天页点击红包气泡")
+                "id=com.tencent.mm:id/j6g" -> setRedEnvelopeState(RedEnvelopeFlowState.HAS_OPENED, "点击开按钮")
+                "id=com.tencent.mm:id/j6f" -> setRedEnvelopeState(RedEnvelopeFlowState.HAS_RECEIVED, "弹窗关闭后回到会话继续检测红包")
+            }
+        } else if (node.type == NodeType.SYSTEM_GLOBAL_ACTION) {
+            val eventType = node.config["eventType"] as? String
+            if (eventType == "GLOBAL_ACTION_BACK") {
+                setRedEnvelopeState(RedEnvelopeFlowState.WAIT_NEW, "红包流程返回聊天页")
+            }
+        }
     }
 
     private fun executeNodeActions(actions: List<Map<String, Any>>?, event: android.view.accessibility.AccessibilityEvent?, result: StringBuilder) {
@@ -606,6 +676,12 @@ class WorkflowViewModel : ViewModel() {
             "WorkflowNode",
             "执行节点: id=${node.id}, title=${node.title}, type=${node.type.name}"
         )
+
+        if (!shouldExecuteWithRedEnvelopeState(node)) {
+            result.appendLine("   ⏭️ 状态机跳过: 当前状态=${getRedEnvelopeState()}")
+            result.appendLine()
+            return
+        }
         
         // 检查是否被停止
         if (isExecutionStopped) {
@@ -759,8 +835,10 @@ class WorkflowViewModel : ViewModel() {
                             .getInstance()?.executeOperation(operation)
                         
                         when (operationResult) {
-                            is com.carlos.autoflow.accessibility.OperationResult.Success -> 
+                            is com.carlos.autoflow.accessibility.OperationResult.Success -> {
                                 result.appendLine("   ✅ 点击成功")
+                                updateRedEnvelopeStateAfterSuccess(node)
+                            }
                             is com.carlos.autoflow.accessibility.OperationResult.Error -> 
                                 result.appendLine("   ❌ 点击失败: ${operationResult.message}")
                             null -> result.appendLine("   ❌ 服务不可用")
@@ -1211,6 +1289,7 @@ class WorkflowViewModel : ViewModel() {
                                     .getInstance()?.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK) ?: false
                                 if (success) {
                                     result.appendLine("   ✅ 执行返回操作成功")
+                                    updateRedEnvelopeStateAfterSuccess(node)
                                 } else {
                                     result.appendLine("   ❌ 执行返回操作失败")
                                 }
