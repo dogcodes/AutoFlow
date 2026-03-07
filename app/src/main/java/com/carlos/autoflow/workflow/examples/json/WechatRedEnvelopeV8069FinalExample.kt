@@ -67,7 +67,9 @@ object WechatRedEnvelopeV8069FinalExample {
           { "selector": "id=com.tencent.mm:id/ht5" },
           { "selector": "text=[微信红包]" }
         ],
-        "clickStrategy": "FIND_CLICKABLE_PARENT"
+        "clickStrategy": "FIND_CLICKABLE_PARENT",
+        "stateTransition": "HAS_RECEIVED",
+        "stateTransitionReason": "列表命中红包会话并进入"
       }
     },
     {
@@ -82,7 +84,10 @@ object WechatRedEnvelopeV8069FinalExample {
           { "selector": "id=com.tencent.mm:id/a3y" },
           { "selector": "id=com.tencent.mm:id/a3m", "exclude": true }
         ],
-        "delay": 500
+        "delay": 500,
+        "stateGuard": "WAIT_NEW|HAS_RECEIVED",
+        "stateTransition": "HAS_CLICKED",
+        "stateTransitionReason": "聊天页点击红包气泡"
       }
     },
     {
@@ -108,7 +113,10 @@ object WechatRedEnvelopeV8069FinalExample {
       "inputs": [{ "id": "in", "name": "输入", "type": "any" }],
       "config": {
         "selector": "id=com.tencent.mm:id/j6g",
-        "delay": 500
+        "delay": 500,
+        "stateGuard": "HAS_CLICKED",
+        "stateTransition": "HAS_OPENED",
+        "stateTransitionReason": "点击开按钮"
       }
     },
     {
@@ -118,7 +126,10 @@ object WechatRedEnvelopeV8069FinalExample {
       "x": 750, "y": 300,
       "inputs": [{ "id": "in", "name": "输入", "type": "any" }],
       "config": {
-        "selector": "id=com.tencent.mm:id/j6f"
+        "selector": "id=com.tencent.mm:id/j6f",
+        "stateGuard": "HAS_CLICKED",
+        "stateTransition": "HAS_RECEIVED",
+        "stateTransitionReason": "弹窗关闭后回到会话继续检测红包"
       }
     },
     {
@@ -128,8 +139,11 @@ object WechatRedEnvelopeV8069FinalExample {
       "x": 500, "y": 400,
       "inputs": [{ "id": "in", "name": "输入", "type": "any" }],
       "config": {
-        "action": "BACK",
-        "delay": 1500
+        "eventType": "GLOBAL_ACTION_BACK",
+        "delay": 1500,
+        "stateGuard": "HAS_OPENED",
+        "stateTransition": "WAIT_NEW",
+        "stateTransitionReason": "红包流程返回聊天页"
       }
     }
   ],

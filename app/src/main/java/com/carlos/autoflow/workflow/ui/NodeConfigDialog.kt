@@ -396,6 +396,9 @@ private fun UIClickConfig(
             )
         }
     )
+
+    Spacer(modifier = Modifier.height(8.dp))
+    StateMachineConfigSection(config, onUpdate)
 }
 
 @Composable
@@ -936,4 +939,71 @@ private fun SystemGlobalActionConfig(
             }
         }
     }
+
+    Spacer(modifier = Modifier.height(8.dp))
+    StateMachineConfigSection(config, onUpdate)
+}
+
+@Composable
+private fun StateMachineConfigSection(
+    config: MutableMap<String, Any>,
+    onUpdate: (MutableMap<String, Any>) -> Unit
+) {
+    var stateGuard by remember { mutableStateOf(config["stateGuard"] as? String ?: "") }
+    var stateTransition by remember { mutableStateOf(config["stateTransition"] as? String ?: "") }
+    var stateTransitionReason by remember { mutableStateOf(config["stateTransitionReason"] as? String ?: "") }
+
+    OutlinedTextField(
+        value = stateGuard,
+        onValueChange = {
+            stateGuard = it
+            if (it.isBlank()) config.remove("stateGuard") else config["stateGuard"] = it
+            onUpdate(config)
+        },
+        label = { Text("执行条件（状态）") },
+        placeholder = { Text("WAIT_NEW|HAS_RECEIVED") },
+        modifier = Modifier.fillMaxWidth(),
+        supportingText = {
+            Text(
+                "为空表示不限制；可用 | 或 , 分隔多个状态值",
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    OutlinedTextField(
+        value = stateTransition,
+        onValueChange = {
+            stateTransition = it
+            if (it.isBlank()) config.remove("stateTransition") else config["stateTransition"] = it
+            onUpdate(config)
+        },
+        label = { Text("执行后更新状态") },
+        placeholder = { Text("HAS_CLICKED") },
+        modifier = Modifier.fillMaxWidth(),
+        supportingText = {
+            Text(
+                "节点执行成功后写入目标状态；为空表示不更新",
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    OutlinedTextField(
+        value = stateTransitionReason,
+        onValueChange = {
+            stateTransitionReason = it
+            if (it.isBlank()) config.remove("stateTransitionReason") else config["stateTransitionReason"] = it
+            onUpdate(config)
+        },
+        label = { Text("更新原因（可选）") },
+        placeholder = { Text("聊天页点击目标气泡") },
+        modifier = Modifier.fillMaxWidth()
+    )
 }
