@@ -110,8 +110,9 @@ object AccessibilityNodeUtils {
     /**
      * 带子节点约束的查找：
      * 1. 先根据主选择器找到候选节点列表
-     * 2. 检查候选节点的子树中是否满足所有子约束的节点
-     * 3. 支持 exclude 逻辑：如果 isExclude 为 true，则该子树中必须不存在满足条件的节点
+     * 2. 若子约束中包含非排除 ById，则其作为锚点；ByText 约束会优先在锚点节点上做文本匹配
+     * 3. 若锚点匹配失败，再回退到原有 findElement(candidate, selector) 的子树查找
+     * 4. 支持 exclude 逻辑：如果 isExclude 为 true，则该子树中必须不存在满足条件的节点
      */
     fun findNodeWithConstraints(
         rootInActiveWindow: AccessibilityNodeInfo?,
@@ -136,10 +137,14 @@ object AccessibilityNodeUtils {
 
         if (candidates.isEmpty()) return null
 
+        val includeIdAnchors = childSelectors
+            .filter { !it.isExclude }
+            .mapNotNull { it.selector as? ElementSelector.ById }
+
         // 2. 遍历候选者，验证子节点约束
         for (candidate in candidates) {
             val allMatch = childSelectors.all { constraint ->
-                val found = findElement(candidate, constraint.selector) != null
+                val found = hasConstraintMatch(candidate, constraint.selector, includeIdAnchors)
                 if (constraint.isExclude) {
                     !found // 如果是排除模式，找不到才算匹配
                 } else {
@@ -156,6 +161,50 @@ object AccessibilityNodeUtils {
         }
         
         return null
+    }
+
+    private fun hasConstraintMatch(
+        candidate: AccessibilityNodeInfo,
+        selector: ElementSelector,
+        idAnchors: List<ElementSelector.ById>
+    ): Boolean {
+        // 优先复用 GrabRedEnvelope 的语义：先按 childId 锁定，再看该子节点文本是否包含目标值。
+        if (selector is ElementSelector.ByText && idAnchors.isNotEmpty()) {
+            for (idAnchor in idAnchors) {
+                val anchoredNodes = candidate.findAccessibilityNodeInfosByViewId(idAnchor.resourceId)
+                try {
+                    if (anchoredNodes.any { nodeMatchesText(it, selector.text, selector.matchType) }) {
+                        return true
+                    }
+                } finally {
+                    anchoredNodes.forEach { it.recycle() }
+                }
+            }
+        }
+        return findElement(candidate, selector) != null
+    }
+
+    private fun nodeMatchesText(
+        node: AccessibilityNodeInfo,
+        queryText: String,
+        matchType: MatchType
+    ): Boolean {
+        val needle = queryText.lowercase()
+        val text = node.text?.toString()?.lowercase()
+        val description = node.contentDescription?.toString()?.lowercase()
+        val hint = node.hintText?.toString()?.lowercase()
+
+        fun match(value: String?): Boolean {
+            if (value == null) return false
+            return when (matchType) {
+                MatchType.EXACT -> value == needle
+                MatchType.STARTS_WITH -> value.startsWith(needle)
+                MatchType.ENDS_WITH -> value.endsWith(needle)
+                MatchType.CONTAINS -> value.contains(needle)
+            }
+        }
+
+        return match(text) || match(description) || match(hint)
     }
 
     fun findElements(rootInActiveWindow: AccessibilityNodeInfo?, selector: ElementSelector): List<AccessibilityNodeInfo> {
