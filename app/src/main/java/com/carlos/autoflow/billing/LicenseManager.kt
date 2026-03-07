@@ -2,6 +2,7 @@ package com.carlos.autoflow.billing
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.carlos.autoflow.BuildConfig
 import java.security.MessageDigest
 import java.util.*
 
@@ -47,6 +48,10 @@ class LicenseManager(private val context: Context) {
      * 检查许可证状态
      */
     fun getLicenseStatus(): Int {
+        if (BuildConfig.FORCE_PREMIUM) {
+            return STATUS_PREMIUM
+        }
+
         val status = prefs.getInt(KEY_LICENSE_STATUS, STATUS_FREE)
         val activationTime = prefs.getLong(KEY_ACTIVATION_TIME, 0)
         
