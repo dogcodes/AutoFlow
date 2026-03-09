@@ -22,6 +22,8 @@
 # -> Add this file to your project and replace with your specific configurations.
 #    This file should not be checked into version control.
 local.properties
+buildsystem/default.properties
+buildsystem/keystore.properties
 
 # Log files
 *.log

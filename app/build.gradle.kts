@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,6 +7,19 @@ plugins {
 }
 
 android {
+    val signingProperties = Properties()
+    val defaultPropertiesFile = rootProject.file("buildsystem/default.properties")
+    if (defaultPropertiesFile.exists()) {
+        defaultPropertiesFile.inputStream().use { signingProperties.load(it) }
+    }
+    val keystorePropertiesFile = rootProject.file("buildsystem/keystore.properties")
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.inputStream().use { signingProperties.load(it) }
+    }
+
+    val hasSigningProperties = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+        .all { signingProperties.getProperty(it)?.isNotBlank() == true }
+
     namespace = "com.carlos.autoflow"
     compileSdk {
         version = release(36)
@@ -20,11 +35,28 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (hasSigningProperties) {
+            create("release") {
+                storeFile = rootProject.file(signingProperties["storeFile"] as String)
+                storePassword = signingProperties["storePassword"] as String
+                keyAlias = signingProperties["keyAlias"] as String
+                keyPassword = signingProperties["keyPassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         debug {
+            if (hasSigningProperties) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             buildConfigField("boolean", "FORCE_PREMIUM", "true")
         }
         release {
+            if (hasSigningProperties) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             buildConfigField("boolean", "FORCE_PREMIUM", "false")
             isMinifyEnabled = false
             proguardFiles(
