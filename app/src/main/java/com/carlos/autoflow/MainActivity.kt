@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import com.carlos.autoflow.ui.screens.MainHomeScreen
 import com.carlos.autoflow.ui.theme.AutoFlowTheme
-import com.carlos.autoflow.workflow.ui.WorkflowEditor
 import com.carlos.autoflow.utils.PerformanceMonitor
 
 class MainActivity : ComponentActivity() {
@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    WorkflowEditor()
+                    MainHomeScreen()
                 }
             }
         }

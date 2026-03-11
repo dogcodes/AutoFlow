@@ -41,6 +41,10 @@ class WorkflowViewModel : ViewModel() {
 
     private val _selectedNodeId = MutableStateFlow<String?>(null)
     val selectedNodeId: StateFlow<String?> = _selectedNodeId
+    private val _isExecuting = MutableStateFlow(false)
+    val isExecuting: StateFlow<Boolean> = _isExecuting
+    private val _executingWorkflowId = MutableStateFlow<String?>(null)
+    val executingWorkflowId: StateFlow<String?> = _executingWorkflowId
     
     // 执行控制
     private var isExecutionStopped = false
@@ -457,6 +461,8 @@ class WorkflowViewModel : ViewModel() {
             try {
                 isExecutionStopped = false
                 resetWorkflowState()
+                _isExecuting.value = true
+                _executingWorkflowId.value = _workflow.value.id
                 
                 // 创建执行记录
                 currentExecution = WorkflowExecution(
@@ -497,6 +503,8 @@ class WorkflowViewModel : ViewModel() {
                 withContext(Dispatchers.Main) {
                     com.carlos.autoflow.ui.FloatingControlService.updateExecutionState(false)
                 }
+                _isExecuting.value = false
+                _executingWorkflowId.value = null
                 
                 val finalStatus = if (isExecutionStopped) ExecutionStatus.STOPPED else ExecutionStatus.SUCCESS
                 val finalResult = if (isExecutionStopped) {
@@ -524,6 +532,8 @@ class WorkflowViewModel : ViewModel() {
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     com.carlos.autoflow.ui.FloatingControlService.updateExecutionState(false)
+                    _isExecuting.value = false
+                    _executingWorkflowId.value = null
                     
                     // 更新执行记录为失败
                     currentExecution?.let { execution ->
@@ -541,9 +551,11 @@ class WorkflowViewModel : ViewModel() {
         }
     }
     
-    private fun stopWorkflowExecution() {
+    fun stopWorkflowExecution() {
         isExecutionStopped = true
         resetWorkflowState()
+        _isExecuting.value = false
+        _executingWorkflowId.value = null
         com.carlos.autoflow.ui.FloatingControlService.updateExecutionState(false)
     }
 

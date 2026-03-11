@@ -49,8 +49,10 @@ fun WorkflowControls(
     onShowExecuteDialog: () -> Unit = {},
     onShowAccessibilityExamples: () -> Unit = {},
     onShowJsonExamplesDialog: () -> Unit = {}, // 新增参数
+    onSaveWorkflow: () -> Unit = {},
     onShowLicenseDialog: () -> Unit = {},
     onShowSideDrawer: () -> Unit = {},
+    showSideDrawerButton: Boolean = true,
     isDebug: Boolean
 ) {
     val canvasState by canvasViewModel.canvasState.collectAsState()
@@ -79,19 +81,21 @@ fun WorkflowControls(
                 .padding(Dimens.WorkflowEditor.DefaultPadding)
         ) {
             // 侧滑栏按钮
-            FloatingActionButton(
-                onClick = onShowSideDrawer,
-                modifier = Modifier.size(48.dp),
-                containerColor = MaterialTheme.colorScheme.secondary
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Menu,
-                    contentDescription = "打开侧滑栏",
-                    tint = Color.White
-                )
+            if (showSideDrawerButton) {
+                FloatingActionButton(
+                    onClick = onShowSideDrawer,
+                    modifier = Modifier.size(48.dp),
+                    containerColor = MaterialTheme.colorScheme.secondary
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Menu,
+                        contentDescription = "打开侧滑栏",
+                        tint = Color.White
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
             }
-            
-            Spacer(modifier = Modifier.height(8.dp))
             
             // 节点面板按钮
             AnimatedVisibility(
@@ -145,6 +149,13 @@ fun WorkflowControls(
                     onClick = {
                         showMenu = false
                         workflowViewModel.loadSampleWorkflow()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("💾 保存当前任务") },
+                    onClick = {
+                        showMenu = false
+                        onSaveWorkflow()
                     }
                 )
                 DropdownMenuItem(

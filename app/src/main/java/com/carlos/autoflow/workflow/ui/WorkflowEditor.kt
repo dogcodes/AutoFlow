@@ -71,7 +71,10 @@ import com.carlos.autoflow.BuildConfig
 @Composable
 fun WorkflowEditor(
     workflowViewModel: WorkflowViewModel = viewModel(),
-    canvasViewModel: CanvasViewModel = viewModel()
+    canvasViewModel: CanvasViewModel = viewModel(),
+    showSideDrawerButton: Boolean = true,
+    onSaveWorkflow: () -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val featureManager = remember { FeatureManager(context) }
@@ -94,7 +97,7 @@ fun WorkflowEditor(
     var configNode by remember { mutableStateOf<WorkflowNode?>(null) }
     var showJsonExamplesDialog by remember { mutableStateOf(false) } // 新增状态变量
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
         when (currentScreen) {
             "workflow" -> {
                 CanvasBackground(
@@ -164,8 +167,10 @@ fun WorkflowEditor(
                     },
                     onShowAccessibilityExamples = { showAccessibilityExamples = true },
                     onShowJsonExamplesDialog = { showJsonExamplesDialog = true }, // 传递新的lambda
+                    onSaveWorkflow = onSaveWorkflow,
                     onShowLicenseDialog = { showLicenseDialog = true },
                     onShowSideDrawer = { showSideDrawer = true },
+                    showSideDrawerButton = showSideDrawerButton,
                     isDebug = BuildConfig.DEBUG
                 )
 
