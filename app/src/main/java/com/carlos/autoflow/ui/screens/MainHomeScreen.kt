@@ -105,9 +105,6 @@ fun MainHomeScreen(
                         workflowViewModel.loadWorkflow(newWorkflow)
                         currentTab = HomeTab.ARRANGE
                     },
-                    onShowSchedule = {
-                        currentTab = HomeTab.MORE
-                    },
                     contentPadding = innerPadding
                 )
             }

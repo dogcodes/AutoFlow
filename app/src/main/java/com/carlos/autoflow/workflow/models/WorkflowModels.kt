@@ -74,11 +74,19 @@ data class Workflow(
     val name: String,
     val description: String = "",
     val targetPackage: String? = null,
+    val scheduleConfig: WorkflowScheduleConfig? = null,
     val nodes: List<WorkflowNode>,
     val connections: List<WorkflowConnection>,
     val version: String = "1.0",
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
+)
+
+data class WorkflowScheduleConfig(
+    val enabled: Boolean = false,
+    val hour: Int = 9,
+    val minute: Int = 0,
+    val daysOfWeek: Set<Int> = emptySet()
 )
 
 enum class NodeType(val displayName: String, val category: NodeCategory, val description: String) {
