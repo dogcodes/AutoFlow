@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.provider.Settings
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import java.security.MessageDigest
 import java.util.Calendar
 
@@ -12,10 +14,10 @@ class LicenseManager(
     private val forcePremium: Boolean = false
 ) {
 
-    private val prefs: SharedPreferences =
-        context.getSharedPreferences("license", Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = createSecurePrefs(context)
 
     companion object {
+        private const val PREF_NAME = "license"
         private const val KEY_ACTIVATED_KEYS = "activated_keys"
         private const val KEY_TRIAL_START = "trial_start"
         private const val KEY_TOTAL_DAYS = "total_days"
@@ -25,6 +27,20 @@ class LicenseManager(
         const val STATUS_FREE = 0
         const val STATUS_PREMIUM = 1
         const val STATUS_EXPIRED = 2
+
+        private fun createSecurePrefs(context: Context): SharedPreferences {
+            val masterKey = MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+
+            return EncryptedSharedPreferences.create(
+                context,
+                PREF_NAME,
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        }
     }
 
     fun activateLicense(activationCode: String): Boolean {
