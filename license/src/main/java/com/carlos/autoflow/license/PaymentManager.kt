@@ -26,14 +26,14 @@ class PaymentManager(private val context: Context) {
         return listOf(
             Product(
                 id = PRODUCT_PREMIUM_YEAR,
-                name = "专业版年费",
-                description = "无限录制 + 无广告 + 全功能",
+                name = "365天使用时长",
+                description = "365天内可使用全部功能",
                 price = "¥88",
                 originalPrice = "¥128"
             ),
             Product(
                 id = PRODUCT_PREMIUM_MONTH,
-                name = "专业版月费",
+                name = "30天使用时长",
                 description = "无限录制 + 无广告 + 全功能",
                 price = "¥12"
             ),
@@ -81,8 +81,8 @@ class PaymentManager(private val context: Context) {
             PRODUCT_PREMIUM_YEAR,
             PRODUCT_PREMIUM_MONTH -> {
                 val licenseManager = LicenseManager(context, forcePremium)
-                val deviceCode = licenseManager.getDeviceActivationCode()
-                licenseManager.activateLicense(deviceCode)
+                val days = if (productId == PRODUCT_PREMIUM_YEAR) 365 else 30
+                licenseManager.grantDays(days)
             }
 
             PRODUCT_EXTRA_RECORDINGS -> {

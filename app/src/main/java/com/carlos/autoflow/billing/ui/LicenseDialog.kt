@@ -78,9 +78,9 @@ fun LicenseDialog(
                         
                         Text(
                             text = when (licenseStatus) {
-                                LicenseManager.STATUS_PREMIUM -> "专业版"
+                                LicenseManager.STATUS_PREMIUM -> "已激活"
                                 LicenseManager.STATUS_EXPIRED -> "已过期"
-                                else -> "免费版"
+                                else -> "未激活"
                             },
                             color = Color.White,
                             fontSize = 16.sp,
@@ -128,7 +128,7 @@ fun LicenseDialog(
                                     containerColor = Color(0xFF1976D2)
                                 )
                             ) {
-                                Text("立即购买专业版")
+                                Text("购买使用时长")
                             }
                             
                             Spacer(modifier = Modifier.height(8.dp))
@@ -146,7 +146,7 @@ fun LicenseDialog(
                                 value = activationCode,
                                 onValueChange = { activationCode = it.uppercase() },
                                 label = { Text("激活码") },
-                                placeholder = { Text("XXXX-XXXX") },
+                                placeholder = { Text("请输入20位激活码") },
                                 modifier = Modifier.fillMaxWidth()
                             )
                             
@@ -174,7 +174,7 @@ fun LicenseDialog(
                                         }
                                     },
                                     modifier = Modifier.weight(1f),
-                                    enabled = activationCode.length >= 8
+                                    enabled = activationCode.length == 20
                                 ) {
                                     Text("激活")
                                 }
@@ -197,7 +197,7 @@ fun LicenseDialog(
                 // 设备信息 (调试用)
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "设备激活码: ${licenseManager.getDeviceActivationCode()}",
+                    text = "设备ID: ${licenseManager.getDeviceId()}",
                     fontSize = 10.sp,
                     color = Color.Gray,
                     textAlign = TextAlign.Center
@@ -212,16 +212,16 @@ fun LicenseDialog(
     )
     
     // 支付对话框
-    if (showPayment) {
-        PaymentDialog(
-            onDismiss = { showPayment = false },
-            onPaymentSuccess = {
-                licenseStatus = LicenseManager.STATUS_PREMIUM
-                message = "购买成功，专业版已激活！"
-                showPayment = false
-            }
-        )
-    }
+        if (showPayment) {
+            PaymentDialog(
+                onDismiss = { showPayment = false },
+                onPaymentSuccess = {
+                    licenseStatus = LicenseManager.STATUS_PREMIUM
+                    message = "购买成功，使用时长已生效！"
+                    showPayment = false
+                }
+            )
+        }
 }
 
 @Composable

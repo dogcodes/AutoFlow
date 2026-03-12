@@ -51,7 +51,7 @@ android {
             if (hasSigningProperties) {
                 signingConfig = signingConfigs.getByName("release")
             }
-            buildConfigField("boolean", "FORCE_PREMIUM", "true")
+            buildConfigField("boolean", "FORCE_PREMIUM", "false")
         }
         release {
             if (hasSigningProperties) {

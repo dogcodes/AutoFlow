@@ -56,7 +56,7 @@ fun PaymentDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                "升级专业版",
+                "购买使用时长",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -64,7 +64,7 @@ fun PaymentDialog(
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    "选择套餐，解锁全部功能",
+                    "选择时长套餐，激活全部功能",
                     fontSize = 14.sp,
                     color = Color.Gray
                 )
@@ -151,7 +151,7 @@ fun PaymentDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    "• 支持支付宝、微信支付\n• 购买后立即生效\n• 7天无理由退款",
+                    "• 支持支付宝、微信支付\n• 购买后立即生效\n• 时长按设备绑定",
                     fontSize = 11.sp,
                     color = Color.Gray
                 )

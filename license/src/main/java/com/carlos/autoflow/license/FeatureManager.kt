@@ -82,9 +82,9 @@ class FeatureManager(
 
     fun getUpgradeMessage(): String {
         return when {
-            !canStartRecording() -> "今日录制次数已用完，升级专业版享受无限录制"
-            shouldShowAds() -> "升级专业版，移除广告并解锁全部功能"
-            else -> "升级专业版，解锁更多高级功能"
+            !canStartRecording() -> "今日录制次数已用完，购买使用时长后可继续录制"
+            shouldShowAds() -> "激活使用时长后可移除广告并解锁全部功能"
+            else -> "激活使用时长后可解锁更多高级功能"
         }
     }
 
