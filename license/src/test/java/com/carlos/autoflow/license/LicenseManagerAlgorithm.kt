@@ -15,10 +15,12 @@ open class LicenseManagerAlgorithm {
     }
 
     fun verifyLicenseKey(key: String, deviceId: String): Boolean {
-        if (key.length != 20 || deviceId.isEmpty()) return false
-        val data = key.substring(0, 16)
-        val checksum = key.substring(16)
-        return generateChecksum(data, deviceId) == checksum
+        val normalizedKey = key.trim().lowercase()
+        val normalizedDeviceId = deviceId.trim()
+        if (normalizedKey.length != 20 || normalizedDeviceId.isEmpty()) return false
+        val data = normalizedKey.substring(0, 16)
+        val checksum = normalizedKey.substring(16)
+        return generateChecksum(data, normalizedDeviceId) == checksum
     }
 
     private fun generateChecksum(data: String, deviceId: String): String {
