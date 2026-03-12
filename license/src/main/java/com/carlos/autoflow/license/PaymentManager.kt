@@ -1,0 +1,97 @@
+package com.carlos.autoflow.license
+
+import android.app.Activity
+import android.content.Context
+import android.util.Log
+
+class PaymentManager(private val context: Context) {
+
+    companion object {
+        private const val TAG = "PaymentManager"
+
+        const val PRODUCT_PREMIUM_YEAR = "autoflow_premium_year"
+        const val PRODUCT_PREMIUM_MONTH = "autoflow_premium_month"
+        const val PRODUCT_EXTRA_RECORDINGS = "autoflow_extra_recordings"
+    }
+
+    data class Product(
+        val id: String,
+        val name: String,
+        val description: String,
+        val price: String,
+        val originalPrice: String? = null
+    )
+
+    fun getProducts(): List<Product> {
+        return listOf(
+            Product(
+                id = PRODUCT_PREMIUM_YEAR,
+                name = "专业版年费",
+                description = "无限录制 + 无广告 + 全功能",
+                price = "¥88",
+                originalPrice = "¥128"
+            ),
+            Product(
+                id = PRODUCT_PREMIUM_MONTH,
+                name = "专业版月费",
+                description = "无限录制 + 无广告 + 全功能",
+                price = "¥12"
+            ),
+            Product(
+                id = PRODUCT_EXTRA_RECORDINGS,
+                name = "额外录制次数",
+                description = "10次额外录制机会",
+                price = "¥6"
+            )
+        )
+    }
+
+    fun startPayment(
+        activity: Activity,
+        productId: String,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit,
+        onCancel: () -> Unit
+    ) {
+        try {
+            Log.d(TAG, "发起支付: $productId")
+
+            when (productId) {
+                PRODUCT_PREMIUM_YEAR,
+                PRODUCT_PREMIUM_MONTH,
+                PRODUCT_EXTRA_RECORDINGS -> {
+                    val orderId = "ORDER_${System.currentTimeMillis()}"
+                    onSuccess(orderId)
+                }
+                else -> onError("未知商品")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "支付失败", e)
+            onError(e.message ?: "支付异常")
+        }
+    }
+
+    fun verifyPayment(orderId: String): Boolean {
+        Log.d(TAG, "验证支付: $orderId")
+        return true
+    }
+
+    fun applyPurchase(productId: String, forcePremium: Boolean = false): Boolean {
+        return when (productId) {
+            PRODUCT_PREMIUM_YEAR,
+            PRODUCT_PREMIUM_MONTH -> {
+                val licenseManager = LicenseManager(context, forcePremium)
+                val deviceCode = licenseManager.getDeviceActivationCode()
+                licenseManager.activateLicense(deviceCode)
+            }
+
+            PRODUCT_EXTRA_RECORDINGS -> {
+                val featureManager = FeatureManager(context, forcePremium)
+                repeat(10) { featureManager.earnExtraRecording() }
+                true
+            }
+
+            else -> false
+        }
+    }
+}

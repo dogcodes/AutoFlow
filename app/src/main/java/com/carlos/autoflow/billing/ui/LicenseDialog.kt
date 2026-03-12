@@ -14,8 +14,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.carlos.autoflow.billing.LicenseManager
+import com.carlos.autoflow.BuildConfig
 import com.carlos.autoflow.billing.PaymentDialog
+import com.carlos.autoflow.license.LicenseManager
 
 @Composable
 fun LicenseDialog(
@@ -23,7 +24,7 @@ fun LicenseDialog(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val licenseManager = remember { LicenseManager(context) }
+    val licenseManager = remember { LicenseManager(context, BuildConfig.FORCE_PREMIUM) }
     
     var licenseStatus by remember { mutableStateOf(licenseManager.getLicenseStatus()) }
     var activationCode by remember { mutableStateOf("") }

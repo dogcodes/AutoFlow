@@ -51,9 +51,10 @@ import com.carlos.autoflow.workflow.viewmodel.CanvasViewModel
 import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
 import com.carlos.autoflow.accessibility.AccessibilityPermissionCard
 import com.carlos.autoflow.workflow.ui.ExecutionStatusOverlay
+import com.carlos.autoflow.BuildConfig
 import com.carlos.autoflow.billing.ui.LicenseDialog
 import com.carlos.autoflow.billing.BannerAdView
-import com.carlos.autoflow.billing.FeatureManager
+import com.carlos.autoflow.license.FeatureManager
 import com.carlos.autoflow.demo.DemoAppActivity
 import com.carlos.autoflow.ui.SideDrawer
 import com.carlos.autoflow.ui.screens.HistoryScreen
@@ -65,7 +66,6 @@ import kotlinx.coroutines.delay
 import kotlin.math.floor
 import kotlin.math.pow
 import com.carlos.autoflow.monitor.NodeMonitorDemo
-import com.carlos.autoflow.BuildConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,7 +77,7 @@ fun WorkflowEditor(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val featureManager = remember { FeatureManager(context) }
+    val featureManager = remember { FeatureManager(context, BuildConfig.FORCE_PREMIUM) }
     val workflow by workflowViewModel.workflow.collectAsState()
     val canvasState by canvasViewModel.canvasState.collectAsState()
     val connectingNodeId by workflowViewModel.connectingNodeId.collectAsState()

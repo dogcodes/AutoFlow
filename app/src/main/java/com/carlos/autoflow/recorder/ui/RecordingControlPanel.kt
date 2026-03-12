@@ -15,12 +15,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carlos.autoflow.accessibility.AutoFlowAccessibilityService
+import com.carlos.autoflow.BuildConfig
 import com.carlos.autoflow.recorder.ConfigurationGenerator
 import com.carlos.autoflow.recorder.RecordedOperation
-import com.carlos.autoflow.billing.FeatureManager
 import com.carlos.autoflow.billing.BannerAdView
 import com.carlos.autoflow.billing.RewardedAdButton
 import com.carlos.autoflow.billing.PaymentDialog
+import com.carlos.autoflow.license.FeatureManager
 
 @Composable
 fun RecordingControlPanel(
@@ -28,7 +29,7 @@ fun RecordingControlPanel(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val featureManager = remember { FeatureManager(context) }
+    val featureManager = remember { FeatureManager(context, BuildConfig.FORCE_PREMIUM) }
     
     var isRecording by remember { mutableStateOf(false) }
     var recordedCount by remember { mutableStateOf(0) }
