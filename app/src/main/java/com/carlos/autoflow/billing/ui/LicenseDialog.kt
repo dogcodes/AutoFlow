@@ -1,5 +1,6 @@
 package com.carlos.autoflow.billing.ui
 
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -9,15 +10,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carlos.autoflow.BuildConfig
 import com.carlos.autoflow.billing.PaymentDialog
-import com.carlos.autoflow.license.LicenseDebugDialog
-import com.carlos.autoflow.license.LicenseDebugTool
 import com.carlos.autoflow.license.LicenseManager
 
 @Composable
@@ -26,15 +27,14 @@ fun LicenseDialog(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     val licenseManager = remember { LicenseManager(context, BuildConfig.FORCE_PREMIUM) }
-    val licenseDebugTool = remember { LicenseDebugTool(licenseManager) }
 
     var licenseStatus by remember { mutableStateOf(licenseManager.getLicenseStatus()) }
     var activationCode by remember { mutableStateOf("") }
     var showActivation by remember { mutableStateOf(false) }
     var showPayment by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
-    var showDebugGenerator by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -207,7 +207,22 @@ fun LicenseDialog(
                     textAlign = TextAlign.Center,
                     modifier = if (BuildConfig.DEBUG) {
                         Modifier.clickable {
-                            showDebugGenerator = true
+                            val deviceId = licenseManager.getDeviceId()
+                            clipboardManager.setText(AnnotatedString(deviceId))
+                            message = "设备ID已复制"
+                            runCatching {
+                                context.startActivity(
+                                    Intent()
+                                        .setClassName(
+                                            context,
+                                            "com.carlos.autoflow.license.LicenseDebugActivity"
+                                        )
+                                        .putExtra("device_id", deviceId)
+                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                )
+                            }.onFailure {
+                                message = "设备ID已复制，调试页不可用"
+                            }
                         }
                     } else {
                         Modifier
@@ -230,14 +245,6 @@ fun LicenseDialog(
                 message = "购买成功，使用时长已生效！"
                 showPayment = false
             }
-        )
-    }
-
-    if (BuildConfig.DEBUG && showDebugGenerator) {
-        LicenseDebugDialog(
-            licenseDebugTool = licenseDebugTool,
-            initialDeviceId = licenseManager.getDeviceId(),
-            onDismiss = { showDebugGenerator = false }
         )
     }
 }
