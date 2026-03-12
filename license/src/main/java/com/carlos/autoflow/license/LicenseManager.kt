@@ -47,7 +47,6 @@ class LicenseManager(
         if (!validateLicenseKey(activationCode)) {
             return false
         }
-
         val currentActivatedKeys = getActivatedKeys().toMutableSet()
         if (currentActivatedKeys.contains(activationCode)) {
             return false
@@ -148,6 +147,14 @@ class LicenseManager(
         return data + checksum
     }
 
+    fun verifyLicenseKey(key: String, deviceId: String): Boolean {
+        if (key.length != 20 || deviceId.isEmpty()) return false
+
+        val data = key.substring(0, 16)
+        val checksum = key.substring(16)
+        return generateChecksum(data, deviceId) == checksum
+    }
+
     private fun getActivatedKeys(): Set<String> {
         return prefs.getStringSet(KEY_ACTIVATED_KEYS, emptySet()) ?: emptySet()
     }
@@ -160,7 +167,7 @@ class LicenseManager(
         val deviceId = getDeviceId()
         if (deviceId.isEmpty()) return false
 
-        return generateChecksum(data, deviceId) == checksum
+        return verifyLicenseKey(key, deviceId)
     }
 
     private fun parseDaysFromKey(key: String): Int? {

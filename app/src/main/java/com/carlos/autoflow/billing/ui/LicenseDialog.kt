@@ -1,7 +1,7 @@
 package com.carlos.autoflow.billing.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carlos.autoflow.BuildConfig
 import com.carlos.autoflow.billing.PaymentDialog
+import com.carlos.autoflow.license.LicenseDebugDialog
+import com.carlos.autoflow.license.LicenseDebugTool
 import com.carlos.autoflow.license.LicenseManager
 
 @Composable
@@ -25,21 +27,23 @@ fun LicenseDialog(
 ) {
     val context = LocalContext.current
     val licenseManager = remember { LicenseManager(context, BuildConfig.FORCE_PREMIUM) }
-    
+    val licenseDebugTool = remember { LicenseDebugTool(licenseManager) }
+
     var licenseStatus by remember { mutableStateOf(licenseManager.getLicenseStatus()) }
     var activationCode by remember { mutableStateOf("") }
     var showActivation by remember { mutableStateOf(false) }
     var showPayment by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
-    
+    var showDebugGenerator by remember { mutableStateOf(false) }
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { 
+        title = {
             Text(
-                "许可证管理", 
+                "许可证管理",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
-            ) 
+            )
         },
         text = {
             Column(
@@ -73,9 +77,9 @@ fun LicenseDialog(
                             tint = Color.White,
                             modifier = Modifier.size(32.dp)
                         )
-                        
+
                         Spacer(modifier = Modifier.height(8.dp))
-                        
+
                         Text(
                             text = when (licenseStatus) {
                                 LicenseManager.STATUS_PREMIUM -> "已激活"
@@ -86,7 +90,7 @@ fun LicenseDialog(
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
-                        
+
                         if (licenseStatus == LicenseManager.STATUS_PREMIUM) {
                             Text(
                                 text = "剩余 ${licenseManager.getRemainingDays()} 天",
@@ -96,9 +100,9 @@ fun LicenseDialog(
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // 功能对比
                 Column {
                     Text(
@@ -106,17 +110,17 @@ fun LicenseDialog(
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    
+
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     FeatureRow("每日录制次数", "3次", "无限制")
                     FeatureRow("广告显示", "有", "无")
                     FeatureRow("高级节点", "部分", "全部")
                     FeatureRow("技术支持", "社区", "优先")
                 }
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // 激活区域
                 if (licenseStatus != LicenseManager.STATUS_PREMIUM) {
                     if (!showActivation) {
@@ -130,9 +134,9 @@ fun LicenseDialog(
                             ) {
                                 Text("购买使用时长")
                             }
-                            
+
                             Spacer(modifier = Modifier.height(8.dp))
-                            
+
                             OutlinedButton(
                                 onClick = { showActivation = true },
                                 modifier = Modifier.fillMaxWidth()
@@ -144,14 +148,14 @@ fun LicenseDialog(
                         Column {
                             OutlinedTextField(
                                 value = activationCode,
-                                onValueChange = { activationCode = it.uppercase() },
+                                onValueChange = { activationCode = it },
                                 label = { Text("激活码") },
                                 placeholder = { Text("请输入20位激活码") },
                                 modifier = Modifier.fillMaxWidth()
                             )
-                            
+
                             Spacer(modifier = Modifier.height(8.dp))
-                            
+
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -162,7 +166,7 @@ fun LicenseDialog(
                                 ) {
                                     Text("取消")
                                 }
-                                
+
                                 Button(
                                     onClick = {
                                         if (licenseManager.activateLicense(activationCode)) {
@@ -182,7 +186,7 @@ fun LicenseDialog(
                         }
                     }
                 }
-                
+
                 // 消息显示
                 if (message.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(8.dp))
@@ -193,14 +197,21 @@ fun LicenseDialog(
                         textAlign = TextAlign.Center
                     )
                 }
-                
+
                 // 设备信息 (调试用)
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = "设备ID: ${licenseManager.getDeviceId()}",
                     fontSize = 10.sp,
                     color = Color.Gray,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    modifier = if (BuildConfig.DEBUG) {
+                        Modifier.clickable {
+                            showDebugGenerator = true
+                        }
+                    } else {
+                        Modifier
+                    }
                 )
             }
         },
@@ -211,17 +222,24 @@ fun LicenseDialog(
         }
     )
     
-    // 支付对话框
-        if (showPayment) {
-            PaymentDialog(
-                onDismiss = { showPayment = false },
-                onPaymentSuccess = {
-                    licenseStatus = LicenseManager.STATUS_PREMIUM
-                    message = "购买成功，使用时长已生效！"
-                    showPayment = false
-                }
-            )
-        }
+    if (showPayment) {
+        PaymentDialog(
+            onDismiss = { showPayment = false },
+            onPaymentSuccess = {
+                licenseStatus = LicenseManager.STATUS_PREMIUM
+                message = "购买成功，使用时长已生效！"
+                showPayment = false
+            }
+        )
+    }
+
+    if (BuildConfig.DEBUG && showDebugGenerator) {
+        LicenseDebugDialog(
+            licenseDebugTool = licenseDebugTool,
+            initialDeviceId = licenseManager.getDeviceId(),
+            onDismiss = { showDebugGenerator = false }
+        )
+    }
 }
 
 @Composable
