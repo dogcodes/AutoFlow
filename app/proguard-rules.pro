@@ -19,3 +19,40 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Keep Android entry points that may be resolved by the framework.
+-keep class com.carlos.autoflow.** extends android.app.Service { *; }
+-keep class com.carlos.autoflow.** extends android.content.BroadcastReceiver { *; }
+-keep class com.carlos.autoflow.** extends android.accessibilityservice.AccessibilityService { *; }
+
+# Keep Compose runtime stability for app composables.
+-keep class androidx.compose.** { *; }
+-dontwarn androidx.compose.**
+
+# License logic should remain functional but can still be obfuscated.
+-keepclassmembers class com.carlos.autoflow.license.LicenseManager {
+    public <init>(...);
+    public int getLicenseStatus();
+    public boolean activateLicense(java.lang.String);
+    public boolean isPremium();
+    public int getRemainingDays();
+    public java.lang.String getDeviceId();
+}
+
+-keepclassmembers class com.carlos.autoflow.license.FeatureManager {
+    public <init>(...);
+    public boolean canRecord();
+    public void consumeRecording();
+    public int getRemainingRecordings();
+    public boolean shouldShowAds();
+    public boolean hasPremiumFeatures();
+    public java.lang.String getUpgradeMessage();
+}
+
+-keepclassmembers class com.carlos.autoflow.license.PaymentManager {
+    public <init>(...);
+    public java.util.List getProducts();
+    public java.lang.Object startPayment(...);
+    public java.lang.Object verifyPayment(...);
+    public boolean applyPurchase(...);
+}

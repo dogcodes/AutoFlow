@@ -58,7 +58,7 @@ android {
                 signingConfig = signingConfigs.getByName("release")
             }
             buildConfigField("boolean", "FORCE_PREMIUM", "false")
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
