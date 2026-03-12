@@ -245,30 +245,32 @@ private fun TaskCard(
                     }
                 }
 
-                IconButton(onClick = { showMenu = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "更多操作")
-                }
+                Box {
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "更多操作")
+                    }
 
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("定时") },
-                        leadingIcon = { Icon(Icons.Default.Schedule, contentDescription = null) },
-                        onClick = {
-                            showMenu = false
-                            onSchedule()
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("删除") },
-                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
-                        onClick = {
-                            showMenu = false
-                            onDelete()
-                        }
-                    )
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("定时") },
+                            leadingIcon = { Icon(Icons.Default.Schedule, contentDescription = null) },
+                            onClick = {
+                                showMenu = false
+                                onSchedule()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("删除") },
+                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
+                            onClick = {
+                                showMenu = false
+                                onDelete()
+                            }
+                        )
+                    }
                 }
             }
 
