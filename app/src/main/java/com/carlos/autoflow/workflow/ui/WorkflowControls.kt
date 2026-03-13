@@ -49,6 +49,7 @@ fun WorkflowControls(
     onShowExecuteDialog: () -> Unit = {},
     onShowAccessibilityExamples: () -> Unit = {},
     onShowJsonExamplesDialog: () -> Unit = {}, // 新增参数
+    onShowAdDebug: () -> Unit = {},
     onSaveWorkflow: () -> Unit = {},
     onShowLicenseDialog: () -> Unit = {},
     onShowSideDrawer: () -> Unit = {},
@@ -201,6 +202,13 @@ fun WorkflowControls(
                         onClick = {
                             showMenu = false
                             onShowJsonExamplesDialog() // 调用新的lambda
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("📢 广告测试") },
+                        onClick = {
+                            showMenu = false
+                            onShowAdDebug()
                         }
                     )
                 }

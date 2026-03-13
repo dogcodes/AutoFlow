@@ -2,6 +2,7 @@ package com.carlos.autoflow.platform
 
 import android.app.Application
 import android.util.Log
+import com.carlos.autoflow.platform.ad.AdService
 import com.carlos.autoflow.platform.analytics.AnalyticsTracker
 import com.carlos.autoflow.platform.analytics.UmengAnalyticsTracker
 import com.carlos.autoflow.platform.push.JPushService
@@ -26,6 +27,7 @@ object PlatformInitializer {
 
         analyticsTracker.initialize(application)
         pushService.initialize(application)
+        AdService.initialize(application)
 
         initialized = true
 

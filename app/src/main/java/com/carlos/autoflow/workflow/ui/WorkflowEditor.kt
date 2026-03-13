@@ -167,6 +167,18 @@ fun WorkflowEditor(
                     },
                     onShowAccessibilityExamples = { showAccessibilityExamples = true },
                     onShowJsonExamplesDialog = { showJsonExamplesDialog = true }, // 传递新的lambda
+                    onShowAdDebug = {
+                        runCatching {
+                            context.startActivity(
+                                Intent().setClassName(
+                                    context,
+                                    "com.carlos.autoflow.platform.ad.AdDebugActivity"
+                                )
+                            )
+                        }.onFailure { throwable ->
+                            Log.w("WorkflowEditor", "广告测试页面不可用", throwable)
+                        }
+                    },
                     onSaveWorkflow = onSaveWorkflow,
                     onShowLicenseDialog = { showLicenseDialog = true },
                     onShowSideDrawer = { showSideDrawer = true },
