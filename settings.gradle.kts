@@ -22,4 +22,5 @@ dependencyResolutionManagement {
 rootProject.name = "AutoFlow"
 include(":app")
 include(":license")
+include(":platform")
  
