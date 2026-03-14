@@ -3,6 +3,7 @@ package com.carlos.autoflow.platform.ad
 import android.app.Application
 import android.app.Activity
 import android.util.Log
+import com.umeng.commonsdk.UMConfigure
 import com.umeng.union.UMFloatingIconAD
 import com.umeng.union.UMNativeAD
 import com.umeng.union.UMRewardAD
@@ -115,18 +116,7 @@ class UmengAdManager(private val application: Application) : AdManager {
     }
 
     override fun showSplashAd(activity: Activity) {
-        if (splashAd == null) {
-            Log.w(TAG, "Splash ad is not loaded.")
-            return
-        }
-
-        val adContainer = activity.findViewById<FrameLayout>(android.R.id.content)
-        if (adContainer == null) {
-            Log.e(TAG, "Splash ad container (android.R.id.content) not found in Activity layout.")
-            return
-        }
-
-        splashAd?.show(adContainer) ?: Log.e(TAG, "Failed to show splash ad, ad object is null or invalid.")
+        splashAd?.show(activity) ?: Log.w(TAG, "Splash ad is not ready")
     }
 
     override fun showInterstitialAd(activity: Activity) {
