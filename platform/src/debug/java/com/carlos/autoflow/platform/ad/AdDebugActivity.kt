@@ -99,10 +99,10 @@ class AdDebugActivity : Activity() {
         root.addView(button("加载悬浮球广告") {
             val slotId = floatingBallIdInput.input.text.toString().trim()
             if (slotId.isEmpty()) return@button toast("请输入悬浮球广告位")
-            adManager.loadFloatingAd(this, slotId, debugCallback("悬浮球"))
+            adManager.loadFloatingBallAd(this, slotId, debugCallback("悬浮球"))
         })
         root.addView(button("展示悬浮球广告") {
-            adManager.showFloatingAd(this)
+            adManager.showFloatingBallAd(this)
         })
 
         root.addView(spacer())

@@ -49,7 +49,7 @@ dependencies {
     implementation("com.umeng.umsdk:common:9.8.9")
     implementation("com.umeng.umsdk:asms:1.8.7.2")
     implementation("com.umeng.umsdk:apm:2.0.6")
-    implementation("com.umeng.umsdk:union:1.7.0")
+    implementation("com.umeng.umsdk:union:3.1.0")
 
     implementation("cn.jiguang.sdk:jpush:5.9.2")
 }
