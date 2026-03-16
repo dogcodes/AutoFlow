@@ -226,26 +226,28 @@ private fun MoreMenuItem(
 @Composable
 private fun MoreWebViewScreen(url: String) {
     val webViewHelper = remember { mutableStateOf<FoundationWebViewHelper?>(null) }
+    var progress by remember { mutableStateOf(100) }
     DisposableEffect(Unit) {
         onDispose { webViewHelper.value?.destroy() }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
-    ) {
-        Text(
-            text = "帮助页面加载：$url\n该页面展示了 GrabRedEnvelope 的介绍内容，可作为通用 WebView 示例。",
-            style = MaterialTheme.typography.bodyMedium
-        )
-        Spacer(modifier = Modifier.height(12.dp))
+    Column(modifier = Modifier.fillMaxSize()) {
+        if (progress < 100) {
+            androidx.compose.material3.LinearProgressIndicator(
+                progress = { progress / 100f },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
         AndroidView(
             factory = { context ->
                 WebView(context).apply {
                     webViewHelper.value = FoundationWebViewHelper(this).also { helper ->
                         helper.configure(
-                            chromeClient = WebChromeClient(),
+                            chromeClient = object : WebChromeClient() {
+                                override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                                    progress = newProgress
+                                }
+                            },
                             settingsConfig = {
                                 userAgentString = userAgentString + " AutoFlow/1.0"
                             }

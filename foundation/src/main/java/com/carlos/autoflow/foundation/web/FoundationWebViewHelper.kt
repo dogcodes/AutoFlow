@@ -24,6 +24,9 @@ class FoundationWebViewHelper(private val webView: WebView) {
             domStorageEnabled = true
             loadWithOverviewMode = true
             useWideViewPort = true
+            setSupportZoom(true)
+            builtInZoomControls = true
+            displayZoomControls = false
             settingsConfig()
         }
     }
