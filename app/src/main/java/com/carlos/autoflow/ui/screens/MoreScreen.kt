@@ -1,5 +1,7 @@
 package com.carlos.autoflow.ui.screens
 
+import android.webkit.WebChromeClient
+import android.webkit.WebView
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -7,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,6 +31,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,8 +39,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import com.carlos.autoflow.billing.ui.LicenseDialog
+import com.carlos.autoflow.foundation.web.FoundationWebViewHelper
 import com.carlos.autoflow.monitor.NodeMonitorDemo
 
 private enum class MoreDestination {
@@ -44,7 +51,8 @@ private enum class MoreDestination {
     HISTORY,
     MONITOR,
     SETTINGS,
-    ABOUT
+    ABOUT,
+    HELP
 }
 
 @Composable
@@ -98,6 +106,11 @@ fun MoreScreen(
                         }
                     }
                     item {
+                        MoreMenuItem("帮助", Icons.Default.Visibility) {
+                            destination = MoreDestination.HELP
+                        }
+                    }
+                    item {
                         MoreMenuItem("许可证管理", Icons.Default.Stars) {
                             showLicenseDialog = true
                         }
@@ -131,6 +144,15 @@ fun MoreScreen(
                 onBack = { destination = MoreDestination.MENU }
             ) {
                 AboutScreen()
+            }
+
+            MoreDestination.HELP -> MoreScreenContainer(
+                title = "帮助",
+                onBack = { destination = MoreDestination.MENU }
+            ) {
+                MoreWebViewScreen(
+                    url = "http://xbdcc.cn/GrabRedEnvelope/index.html"
+                )
             }
         }
 
@@ -198,5 +220,43 @@ private fun MoreMenuItem(
             )
             Icon(Icons.Default.ChevronRight, contentDescription = null)
         }
+    }
+}
+
+@Composable
+private fun MoreWebViewScreen(url: String) {
+    val webViewHelper = remember { mutableStateOf<FoundationWebViewHelper?>(null) }
+    DisposableEffect(Unit) {
+        onDispose { webViewHelper.value?.destroy() }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+    ) {
+        Text(
+            text = "帮助页面加载：$url\n该页面展示了 GrabRedEnvelope 的介绍内容，可作为通用 WebView 示例。",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        AndroidView(
+            factory = { context ->
+                WebView(context).apply {
+                    webViewHelper.value = FoundationWebViewHelper(this).also { helper ->
+                        helper.configure(
+                            chromeClient = WebChromeClient(),
+                            settingsConfig = {
+                                userAgentString = userAgentString + " AutoFlow/1.0"
+                            }
+                        )
+                        helper.load(url)
+                    }
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        )
     }
 }

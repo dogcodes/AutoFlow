@@ -83,6 +83,7 @@ android {
 dependencies {
     implementation(project(":license"))
     implementation(project(":platform"))
+    implementation(project(":foundation"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

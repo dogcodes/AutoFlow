@@ -156,8 +156,8 @@ class AdDebugActivity : Activity() {
                 onLoaded?.invoke()
             }
 
-            override fun onAdFailed(error: String) {
-                log("$name 广告加载失败: $error")
+            override fun onAdFailed(error: String?) {
+                log("$name 广告加载失败: ${error ?: "未知错误"}")
             }
 
             override fun onAdShown() {
