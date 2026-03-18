@@ -12,10 +12,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.carlos.autoflow.BuildConfig
 import com.carlos.autoflow.foundation.network.FoundationNetworkClient
+import com.carlos.autoflow.foundation.upgrade.UpgradeConfig
 import com.carlos.autoflow.foundation.upgrade.UpgradeManager
 import com.carlos.autoflow.foundation.upgrade.UpgradeResult
-
-private const val UPDATE_INFO_URL = "http://xbdcc.cn/autoflow/version.json"
+import com.carlos.autoflow.foundation.upgrade.ui.UpgradeDialog
 
 @Composable
 fun AboutScreen() {
@@ -24,20 +24,15 @@ fun AboutScreen() {
 
     if (checkState is CheckState.Available) {
         val result = (checkState as CheckState.Available).result
-        AlertDialog(
-            onDismissRequest = { checkState = CheckState.Idle },
-            title = { Text("发现新版本") },
-            text = { Text(result.info.releaseNotes ?: "有新版本可用，是否立即更新？") },
-            confirmButton = {
-                TextButton(onClick = {
-                    checkState = CheckState.Idle
-                    val upgradeManager = UpgradeManager(FoundationNetworkClient())
-                    upgradeManager.downloadAndInstall(context, result.downloadUrl)
-                }) { Text("立即更新") }
+        UpgradeDialog(
+            result = result,
+            forceUpdate = result.info.forceUpdate,
+            onConfirm = {
+                val upgradeManager = UpgradeManager(FoundationNetworkClient())
+                upgradeManager.downloadAndInstall(context, result.downloadUrl)
+                checkState = CheckState.Idle
             },
-            dismissButton = {
-                TextButton(onClick = { checkState = CheckState.Idle }) { Text("取消") }
-            }
+            onDismiss = { checkState = CheckState.Idle }
         )
     }
 
@@ -65,7 +60,7 @@ fun AboutScreen() {
             onClick = {
                 checkState = CheckState.Checking
                 val upgradeManager = UpgradeManager(FoundationNetworkClient())
-                upgradeManager.checkForUpdate(BuildConfig.VERSION_CODE, UPDATE_INFO_URL) { result ->
+                upgradeManager.checkForUpdate(BuildConfig.VERSION_CODE, UpgradeConfig.DEFAULT_VERSION_INFO_URL) { result ->
                     checkState = when (result) {
                         is UpgradeResult.Available -> CheckState.Available(result)
                         is UpgradeResult.UpToDate -> CheckState.UpToDate

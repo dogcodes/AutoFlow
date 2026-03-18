@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import com.carlos.autoflow.foundation.network.FoundationNetworkClient
+import com.carlos.autoflow.foundation.upgrade.UpgradeManager
+import com.carlos.autoflow.foundation.upgrade.ui.AutoUpgradeChecker
 import com.carlos.autoflow.ui.screens.MainHomeScreen
 import com.carlos.autoflow.ui.theme.AutoFlowTheme
 import com.carlos.autoflow.utils.PerformanceMonitor
@@ -26,7 +29,13 @@ class MainActivity : ComponentActivity() {
         PerformanceMonitor.initialize(this)
 
         setContent {
+            val upgradeManager = remember { UpgradeManager(FoundationNetworkClient()) }
+
             AutoFlowTheme {
+                AutoUpgradeChecker(
+                    versionCode = BuildConfig.VERSION_CODE,
+                    upgradeManager = upgradeManager
+                )
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

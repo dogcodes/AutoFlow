@@ -106,7 +106,8 @@ class UpgradeManager(
 data class UpgradeInfo(
     val versionCode: Int,
     val downloadUrl: String,
-    val releaseNotes: String? = null
+    val releaseNotes: String? = null,
+    val forceUpdate: Boolean = false
 )
 
 sealed class UpgradeResult {
