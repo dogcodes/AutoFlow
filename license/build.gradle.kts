@@ -37,5 +37,6 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation("androidx.security:security-crypto:1.1.0")
+    implementation("com.google.errorprone:error_prone_annotations:2.22.0")
     testImplementation(libs.junit)
 }

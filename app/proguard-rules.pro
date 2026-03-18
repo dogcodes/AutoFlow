@@ -56,3 +56,12 @@
     public java.lang.Object verifyPayment(...);
     public boolean applyPurchase(...);
 }
+
+-keepattributes Signature
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken { *; }
+
+# Preserve workflow model structures because Gson uses field names via reflection.
+-keep class com.carlos.autoflow.workflow.models.** {
+    *;
+}
