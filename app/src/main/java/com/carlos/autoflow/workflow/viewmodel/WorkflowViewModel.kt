@@ -121,47 +121,50 @@ class WorkflowViewModel : ViewModel() {
         )
     }
     
-    private fun addConnection(sourceNodeId: String, targetNodeId: String) {
-        // 避免重复连接
-        val existingConnection = _workflow.value.connections.find { 
-            it.sourceNodeId == sourceNodeId && it.targetNodeId == targetNodeId 
+    private fun addConnection(sourceNodeId: String, targetNodeId: String, sourceOutputId: String = "output") {
+        // 避免重复连接（同一源节点同一输出口到同一目标）
+        val existingConnection = _workflow.value.connections.find {
+            it.sourceNodeId == sourceNodeId && it.targetNodeId == targetNodeId && it.sourceOutputId == sourceOutputId
         }
         if (existingConnection != null) return
-        
+
         val connection = WorkflowConnection(
             sourceNodeId = sourceNodeId,
-            sourceOutputId = "output",
+            sourceOutputId = sourceOutputId,
             targetNodeId = targetNodeId,
             targetInputId = "input"
         )
-        
+
         _workflow.value = _workflow.value.copy(
             connections = _workflow.value.connections + connection,
             updatedAt = System.currentTimeMillis()
         )
     }
-    
+
     private val _connectingNodeId = MutableStateFlow<String?>(null)
     val connectingNodeId: StateFlow<String?> = _connectingNodeId
-    
-    fun startConnection(nodeId: String) {
+    private val _connectingOutputId = MutableStateFlow("output")
+    val connectingOutputId: StateFlow<String> = _connectingOutputId
+
+    fun startConnection(nodeId: String, outputId: String = "output") {
         val node = _workflow.value.nodes.find { it.id == nodeId }
         // 结束节点不能作为连接源（没有输出）
         if (node?.type == NodeType.END) return
-        
         _connectingNodeId.value = nodeId
+        _connectingOutputId.value = outputId
     }
-    
+
     fun finishConnection(targetNodeId: String) {
         val sourceNodeId = _connectingNodeId.value
         if (sourceNodeId != null && sourceNodeId != targetNodeId) {
             val targetNode = _workflow.value.nodes.find { it.id == targetNodeId }
             // 开始节点不能作为连接目标（没有输入）
             if (targetNode?.type != NodeType.START) {
-                addConnection(sourceNodeId, targetNodeId)
+                addConnection(sourceNodeId, targetNodeId, _connectingOutputId.value)
             }
         }
         _connectingNodeId.value = null
+        _connectingOutputId.value = "output"
     }
     
     fun cancelConnection() {

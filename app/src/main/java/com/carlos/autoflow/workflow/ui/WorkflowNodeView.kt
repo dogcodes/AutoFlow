@@ -27,16 +27,18 @@ fun WorkflowNodeView(
     node: WorkflowNode,
     isSelected: Boolean,
     isConnecting: Boolean = false,
+    connectingOutputId: String? = null,
     canvasScale: Float = 1f,
     onMove: (Float, Float) -> Unit,
     onSelect: () -> Unit,
     onDelete: () -> Unit,
     onConfig: () -> Unit = {},
-    onStartConnection: () -> Unit = {},
+    onStartConnection: (outputId: String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var isDragging by remember { mutableStateOf(false) }
     var showContextMenu by remember { mutableStateOf(false) }
+    var showOutputPicker by remember { mutableStateOf(false) }
     val density = LocalDensity.current
 
     Box {
@@ -94,10 +96,16 @@ fun WorkflowNodeView(
                     
                     if (isSelected) {
                         Row {
-                            // 连接按钮（除了END节点）
                             if (node.type != NodeType.END) {
                                 IconButton(
-                                    onClick = onStartConnection,
+                                    onClick = {
+                                        val outputs = node.outputs ?: emptyList()
+                                        if (outputs.size <= 1) {
+                                            onStartConnection(outputs.firstOrNull()?.id ?: "output")
+                                        } else {
+                                            showOutputPicker = true
+                                        }
+                                    },
                                     modifier = Modifier.size(20.dp)
                                 ) {
                                     Icon(
@@ -132,17 +140,20 @@ fun WorkflowNodeView(
                         fontWeight = FontWeight.Medium,
                         maxLines = 1
                     )
-                    
                     // 显示操作提示
                     val config = node.config
-                    if (config != null && config.isNotEmpty()) {
-                        Text(
+                    when {
+                        isConnecting && connectingOutputId != null -> Text(
+                            text = "从[$connectingOutputId]连线中...",
+                            fontSize = 10.sp,
+                            color = Color(0xFFFF9800)
+                        )
+                        config != null && config.isNotEmpty() -> Text(
                             text = "已配置",
                             fontSize = 10.sp,
                             color = Color(0xFF4CAF50)
                         )
-                    } else if (node.type != NodeType.START && node.type != NodeType.END) {
-                        Text(
+                        node.type != NodeType.START && node.type != NodeType.END -> Text(
                             text = if (isSelected) "双击配置" else "点击选择",
                             fontSize = 10.sp,
                             color = if (isSelected) Color(0xFFFF9800) else Color.Gray
@@ -171,17 +182,40 @@ fun WorkflowNodeView(
                     text = { Text("🔗 开始连接") },
                     onClick = {
                         showContextMenu = false
-                        onStartConnection()
+                        val outputs = node.outputs ?: emptyList()
+                        if (outputs.size <= 1) {
+                            onStartConnection(outputs.firstOrNull()?.id ?: "output")
+                        } else {
+                            showOutputPicker = true
+                        }
                     }
                 )
             }
             DropdownMenuItem(
                 text = { Text("🗑️ 删除节点") },
-                onClick = {
-                    showContextMenu = false
-                    onDelete()
-                }
+                onClick = { showContextMenu = false; onDelete() }
             )
+        }
+
+        // 多输出口选择弹窗
+        if (showOutputPicker) {
+            androidx.compose.ui.window.Dialog(onDismissRequest = { showOutputPicker = false }) {
+                androidx.compose.material3.Surface(shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("选择输出口", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        (node.outputs ?: emptyList()).forEach { output ->
+                            DropdownMenuItem(
+                                text = { Text("${output.id}  —  ${output.name}", fontSize = 13.sp) },
+                                onClick = {
+                                    showOutputPicker = false
+                                    onStartConnection(output.id)
+                                }
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

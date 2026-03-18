@@ -18,6 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.carlos.autoflow.ui.theme.Dimens
@@ -104,6 +106,37 @@ fun WorkflowConnections(
                 drawCircle(color = Color.White, radius = Dimens.WorkflowEditor.ConnectionCircleRadiusInner.toPx(), center = Offset(startX, startY))
                 drawCircle(color = Dimens.WorkflowEditorColors.ConnectionCircleTarget, radius = Dimens.WorkflowEditor.ConnectionCircleRadiusOuter.toPx(), center = Offset(endX, endY))
                 drawCircle(color = Color.White, radius = Dimens.WorkflowEditor.ConnectionCircleRadiusInner.toPx(), center = Offset(endX, endY))
+
+                // 输出口标签（Canvas 内绘制，天然居中）
+                val sourceOutputId = connection.sourceOutputId
+                if (sourceOutputId != "output" && sourceOutputId != "out" && sourceOutputId.isNotBlank()) {
+                    val midX = (startX + endX) / 2
+                    val midY = (startY + endY) / 2
+                    val labelY = midY - 14.dp.toPx()
+                    val textPaint = android.graphics.Paint().apply {
+                        color = android.graphics.Color.WHITE
+                        textSize = 9.dp.toPx()
+                        textAlign = android.graphics.Paint.Align.CENTER
+                        isAntiAlias = true
+                    }
+                    val bgPaint = android.graphics.Paint().apply {
+                        color = android.graphics.Color.argb(230, 25, 118, 210)
+                        isAntiAlias = true
+                    }
+                    drawIntoCanvas { canvas ->
+                        val textWidth = textPaint.measureText(sourceOutputId)
+                        val padH = 6.dp.toPx()
+                        val padV = 3.dp.toPx()
+                        val rect = android.graphics.RectF(
+                            midX - textWidth / 2 - padH,
+                            labelY - textPaint.textSize - padV,
+                            midX + textWidth / 2 + padH,
+                            labelY + padV
+                        )
+                        canvas.nativeCanvas.drawRoundRect(rect, 6f, 6f, bgPaint)
+                        canvas.nativeCanvas.drawText(sourceOutputId, midX, labelY, textPaint)
+                    }
+                }
             }
         }
     }
@@ -128,7 +161,6 @@ fun WorkflowConnections(
 
             Box(
                 modifier = Modifier
-                    // Use world coordinates directly, graphicsLayer will transform
                     .offset(
                         x = with(density) { midXWorld.toDp() } - buttonRadius,
                         y = with(density) { midYWorld.toDp() } - buttonRadius
@@ -143,6 +175,7 @@ fun WorkflowConnections(
                     Icon(Icons.Default.Remove, contentDescription = "删除连接", tint = Color.White, modifier = Modifier.size(16.dp))
                 }
             }
+
         }
     }
 }

@@ -41,7 +41,7 @@ fun WorkflowNodes(
                     },
                     onDelete = { workflowViewModel.deleteNode(node.id) },
                     onConfig = { onShowNodeConfig(node) },
-                    onStartConnection = { 
+                    onStartConnection = {
                         if (connectingNodeId == null) {
                             workflowViewModel.startConnection(node.id)
                         } else {

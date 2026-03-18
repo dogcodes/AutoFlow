@@ -40,7 +40,8 @@ fun NodeConfigDialog(
                 when (node.type) {
                     NodeType.HTTP_REQUEST -> HttpRequestConfig(config) { config = it }
                     NodeType.DATA_TRANSFORM -> DataTransformConfig(config) { config = it }
-                    NodeType.CONDITION -> ConditionConfig(config) { config = it }
+                    NodeType.EVENT_TRIGGER -> EventTriggerConfig(config) { config = it }
+                    NodeType.CONDITION -> ConditionConfig(config, node.outputs.map { it.id }) { config = it }
                     NodeType.DELAY -> DelayConfig(config) { config = it }
                     NodeType.SCRIPT -> ScriptConfig(config) { config = it }
                     NodeType.LOOP -> LoopConfig(config) { config = it }
@@ -151,21 +152,156 @@ private fun DataTransformConfig(
 @Composable
 private fun ConditionConfig(
     config: MutableMap<String, Any>,
+    availableOutputIds: List<String> = emptyList(),
     onUpdate: (MutableMap<String, Any>) -> Unit
 ) {
-    var condition by remember { mutableStateOf(config["condition"] as? String ?: "") }
-    
-    OutlinedTextField(
-        value = condition,
-        onValueChange = { 
-            condition = it
-            config["condition"] = it
-            onUpdate(config)
-        },
-        label = { Text("判断条件") },
-        placeholder = { Text("例: data.status == 'success'") },
-        modifier = Modifier.fillMaxWidth()
-    )
+    var checkType by remember { mutableStateOf(config["checkType"] as? String ?: "element_exists") }
+
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+        OutlinedTextField(
+            value = when (checkType) {
+                "element_exists" -> "元素是否存在"
+                "activity_name_matches" -> "Activity 路由匹配"
+                "activity_name_matches_any" -> "Activity 集合匹配"
+                else -> checkType
+            },
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("判断类型") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.menuAnchor().fillMaxWidth()
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            listOf(
+                "element_exists" to "元素是否存在",
+                "activity_name_matches" to "Activity 路由匹配",
+                "activity_name_matches_any" to "Activity 集合匹配"
+            ).forEach { (value, label) ->
+                DropdownMenuItem(text = { Text(label) }, onClick = {
+                    checkType = value
+                    config["checkType"] = value
+                    onUpdate(config)
+                    expanded = false
+                })
+            }
+        }
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    when (checkType) {
+        "element_exists" -> {
+            var selector by remember { mutableStateOf(config["selector"] as? String ?: "") }
+            OutlinedTextField(
+                value = selector,
+                onValueChange = { selector = it; config["selector"] = it; onUpdate(config) },
+                label = { Text("元素选择器") },
+                placeholder = { Text("id=com.tencent.mm:id/j6g") },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        "activity_name_matches" -> {
+            // cases: list of {value, outputId}
+            val casesRaw = config["cases"] as? List<Map<String, Any>> ?: emptyList()
+            var cases by remember {
+                mutableStateOf(casesRaw.map {
+                    (it["value"] as? String ?: "") to (it["outputId"] as? String ?: "")
+                }.toMutableList().also { list ->
+                    if (list.isEmpty()) list.add("" to "")
+                })
+            }
+
+            fun save() {
+                config["cases"] = cases
+                    .filter { it.first.isNotBlank() }
+                    .map { mapOf("value" to it.first, "outputId" to it.second) }
+                onUpdate(config)
+            }
+
+            cases.forEachIndexed { index, (activityName, outputId) ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = activityName,
+                        onValueChange = {
+                            cases = cases.toMutableList().also { list -> list[index] = it to outputId }
+                            save()
+                        },
+                        label = { Text("Activity类名") },
+                        placeholder = { Text("com.tencent.mm.ui.LauncherUI") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+
+                    var expanded by remember { mutableStateOf(false) }
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = !expanded },
+                        modifier = Modifier.weight(0.6f)
+                    ) {
+                        OutlinedTextField(
+                            value = outputId,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("输出口") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                            modifier = Modifier.menuAnchor(),
+                            singleLine = true
+                        )
+                        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            availableOutputIds.forEach { id ->
+                                DropdownMenuItem(text = { Text(id) }, onClick = {
+                                    cases = cases.toMutableList().also { list -> list[index] = activityName to id }
+                                    save()
+                                    expanded = false
+                                })
+                            }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = {
+                    cases = cases.toMutableList().also { it.add("" to "") }
+                }) { Text("+ 添加规则") }
+                if (cases.size > 1) {
+                    TextButton(onClick = {
+                        cases = cases.toMutableList().also { it.removeLastOrNull() }
+                        save()
+                    }) { Text("- 删除最后一条") }
+                }
+            }
+        }
+        "activity_name_matches_any" -> {
+            var valuesText by remember {
+                mutableStateOf(
+                    when (val v = config["values"]) {
+                        is List<*> -> v.joinToString("\n")
+                        is String -> v
+                        else -> ""
+                    }
+                )
+            }
+            OutlinedTextField(
+                value = valuesText,
+                onValueChange = {
+                    valuesText = it
+                    config["values"] = it.lines().map { l -> l.trim() }.filter { l -> l.isNotEmpty() }
+                    onUpdate(config)
+                },
+                label = { Text("Activity 列表（每行一个）") },
+                placeholder = { Text("com.tencent.mm.ui.LauncherUI\ncom.tencent.mm.ui.chatting.ChattingUI") },
+                modifier = Modifier.fillMaxWidth().height(120.dp),
+                maxLines = 6
+            )
+        }
+    }
 }
 
 @Composable
@@ -368,34 +504,73 @@ private fun UIClickConfig(
 
     Spacer(modifier = Modifier.height(8.dp))
 
-    var childConditionsStr by remember { 
-        mutableStateOf(
-            when (val value = config["childConditions"]) {
-                is List<*> -> value.toString() // 如果是列表，转为字符串显示
-                is String -> value
-                else -> ""
+    // 解析 childConditions 为列表
+    val initialConditions = remember {
+        when (val value = config["childConditions"]) {
+            is List<*> -> value.mapNotNull { item ->
+                if (item is Map<*, *>) {
+                    (item["selector"] as? String ?: "") to (item["exclude"] as? Boolean ?: false)
+                } else null
+            }.toMutableList()
+            else -> mutableListOf()
+        }.also { if (it.isEmpty()) it.add("" to false) }
+    }
+    var childConditions by remember { mutableStateOf(initialConditions) }
+
+    fun saveConditions() {
+        config["childConditions"] = childConditions
+            .filter { it.first.isNotBlank() }
+            .map { (sel, exclude) ->
+                if (exclude) mapOf("selector" to sel, "exclude" to true)
+                else mapOf("selector" to sel)
             }
-        )
+        onUpdate(config)
     }
 
-    OutlinedTextField(
-        value = childConditionsStr,
-        onValueChange = { 
-            childConditionsStr = it
-            config["childConditions"] = it
-            onUpdate(config)
-        },
-        label = { Text("子节点约束 (JSON或逗号分隔)") },
-        placeholder = { Text("例: id=ht5, text=[微信红包]") },
-        modifier = Modifier.fillMaxWidth(),
-        supportingText = {
-            Text(
-                "当主元素包含这些子元素时才执行点击。格式: id=xxx, text=yyy",
-                fontSize = 10.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+    Text("子节点约束", style = MaterialTheme.typography.bodyMedium)
+    Spacer(modifier = Modifier.height(4.dp))
+
+    childConditions.forEachIndexed { index, (selector, exclude) ->
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = selector,
+                onValueChange = {
+                    childConditions = childConditions.toMutableList().also { list -> list[index] = it to exclude }
+                    saveConditions()
+                },
+                placeholder = { Text("id=xxx 或 text=yyy") },
+                modifier = Modifier.weight(1f),
+                singleLine = true
             )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = exclude,
+                    onCheckedChange = {
+                        childConditions = childConditions.toMutableList().also { list -> list[index] = selector to it }
+                        saveConditions()
+                    }
+                )
+                Text("排除", fontSize = 11.sp)
+            }
         }
-    )
+        Spacer(modifier = Modifier.height(2.dp))
+    }
+
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        TextButton(onClick = {
+            childConditions = childConditions.toMutableList().also { it.add("" to false) }
+        }) { Text("+ 添加") }
+        if (childConditions.size > 1) {
+            TextButton(onClick = {
+                childConditions = childConditions.toMutableList().also { it.removeLastOrNull() }
+                saveConditions()
+            }) { Text("- 删除") }
+        }
+    }
 
     Spacer(modifier = Modifier.height(8.dp))
     StateMachineConfigSection(config, onUpdate)
@@ -1004,6 +1179,104 @@ private fun StateMachineConfigSection(
         },
         label = { Text("更新原因（可选）") },
         placeholder = { Text("聊天页点击目标气泡") },
+        modifier = Modifier.fillMaxWidth()
+    )
+}
+
+@Composable
+private fun EventTriggerConfig(
+    config: MutableMap<String, Any>,
+    onUpdate: (MutableMap<String, Any>) -> Unit
+) {
+    // conditions 顶层通常固定为 PACKAGE_NAME + OR(EVENT_TYPE...)
+    // 用两个简单字段覆盖最常见场景：包名 + 事件类型多选
+    var packageName by remember {
+        mutableStateOf(
+            (config["conditions"] as? List<Map<String, Any>>)
+                ?.firstOrNull { it["type"] == "PACKAGE_NAME" }
+                ?.get("value") as? String ?: ""
+        )
+    }
+
+    val allEventTypes = listOf(
+        "TYPE_WINDOW_STATE_CHANGED",
+        "TYPE_WINDOW_CONTENT_CHANGED",
+        "TYPE_NOTIFICATION_STATE_CHANGED",
+        "TYPE_VIEW_CLICKED",
+        "TYPE_VIEW_TEXT_CHANGED"
+    )
+
+    val initialSelected = run {
+        val conditions = config["conditions"] as? List<Map<String, Any>> ?: emptyList()
+        val orNode = conditions.firstOrNull { it["type"] == "OR" }
+        val children = orNode?.get("children") as? List<Map<String, Any>> ?: emptyList()
+        children.mapNotNull { it["value"] as? String }.toMutableSet()
+    }
+    var selectedEvents by remember { mutableStateOf<Set<String>>(initialSelected) }
+
+    fun buildAndSave() {
+        val conditions = mutableListOf<Map<String, Any>>()
+        if (packageName.isNotBlank()) {
+            conditions.add(mapOf("type" to "PACKAGE_NAME", "value" to packageName))
+        }
+        if (selectedEvents.isNotEmpty()) {
+            conditions.add(mapOf(
+                "type" to "OR",
+                "children" to selectedEvents.map { mapOf("type" to "EVENT_TYPE", "value" to it) }
+            ))
+        }
+        config["conditions"] = conditions
+        onUpdate(config)
+    }
+
+    OutlinedTextField(
+        value = packageName,
+        onValueChange = { packageName = it; buildAndSave() },
+        label = { Text("监听包名") },
+        placeholder = { Text("com.tencent.mm") },
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+    Text("监听事件类型", style = MaterialTheme.typography.bodyMedium)
+    Spacer(modifier = Modifier.height(4.dp))
+
+    allEventTypes.forEach { eventType ->
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = selectedEvents.contains(eventType),
+                onCheckedChange = { checked ->
+                    selectedEvents = if (checked) selectedEvents + eventType else selectedEvents - eventType
+                    buildAndSave()
+                }
+            )
+            Text(eventType, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    // actions: LOG
+    var logMessage by remember {
+        mutableStateOf(
+            (config["actions"] as? List<Map<String, Any>>)
+                ?.firstOrNull { it["type"] == "LOG" }
+                ?.get("message") as? String ?: ""
+        )
+    }
+    OutlinedTextField(
+        value = logMessage,
+        onValueChange = {
+            logMessage = it
+            config["actions"] = if (it.isBlank()) emptyList<Map<String, Any>>()
+            else listOf(mapOf("type" to "LOG", "message" to it))
+            onUpdate(config)
+        },
+        label = { Text("触发日志（可选）") },
+        placeholder = { Text("捕获到事件") },
         modifier = Modifier.fillMaxWidth()
     )
 }
