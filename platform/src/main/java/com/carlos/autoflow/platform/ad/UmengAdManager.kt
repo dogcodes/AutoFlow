@@ -54,8 +54,8 @@ class UmengAdManager(private val application: Application) : AdManager {
                     callback.onAdLoaded()
                 }
 
-                override fun onFailure(type: UMUnionApi.AdType, error: String) {
-                    callback.onAdFailed(error)
+                override fun onFailure(type: UMUnionApi.AdType, error: String?) {
+                    callback.onAdFailed(error ?: "Unknown splash error")
                 }
             },
             5
@@ -125,8 +125,8 @@ class UmengAdManager(private val application: Application) : AdManager {
                     callback.onAdLoaded()
                 }
 
-                override fun onFailure(type: UMUnionApi.AdType, error: String) {
-                    callback.onAdFailed(error)
+                override fun onFailure(type: UMUnionApi.AdType, error: String?) {
+                    callback.onAdFailed(error ?: "Reward ad load failed")
                 }
             }
         )
@@ -162,8 +162,8 @@ class UmengAdManager(private val application: Application) : AdManager {
                     callback.onAdLoaded()
                 }
 
-                override fun onFailure(type: UMUnionApi.AdType, error: String) {
-                    callback.onAdFailed(error)
+                override fun onFailure(type: UMUnionApi.AdType, error: String?) {
+                    callback.onAdFailed(error ?: "Interstitial ad load failed")
                 }
             }
         )
@@ -191,8 +191,8 @@ class UmengAdManager(private val application: Application) : AdManager {
                     callback.onAdLoaded()
                 }
 
-                override fun onFailure(type: UMUnionApi.AdType, error: String) {
-                    callback.onAdFailed(error)
+                override fun onFailure(type: UMUnionApi.AdType, error: String?) {
+                    callback.onAdFailed(error ?: "Banner ad load failed")
                 }
             }
         )
@@ -220,8 +220,8 @@ class UmengAdManager(private val application: Application) : AdManager {
                     callback.onAdLoaded()
                 }
 
-                override fun onFailure(type: UMUnionApi.AdType, error: String) {
-                    callback.onAdFailed(error)
+                override fun onFailure(type: UMUnionApi.AdType, error: String?) {
+                    callback.onAdFailed(error ?: "Floating ad load failed")
                 }
             }
         )
@@ -241,8 +241,8 @@ class UmengAdManager(private val application: Application) : AdManager {
                     callback.onAdLoaded()
                 }
 
-                override fun onFailure(type: UMUnionApi.AdType, error: String) {
-                    callback.onAdFailed(error)
+                override fun onFailure(type: UMUnionApi.AdType, error: String?) {
+                    callback.onAdFailed(error ?: "Feed ad load failed")
                 }
             }
         )
