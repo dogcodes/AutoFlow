@@ -35,31 +35,7 @@ class UmengAdManager(private val application: Application) : AdManager {
     }
 
     override fun loadSplashAd(activity: Activity, adId: String, callback: AdCallback) {
-        UMUnionSdk.getApi().loadSplashAd(
-            adConfig(adId),
-            object : UMUnionApi.AdLoadListener<UMSplashAD> {
-                override fun onSuccess(type: UMUnionApi.AdType, ad: UMSplashAD) {
-                    splashAd = ad.apply {
-                        setAdEventListener(object : UMUnionApi.SplashAdListener {
-                            override fun onExposed() = callback.onAdShown()
-
-                            override fun onClicked(view: android.view.View) = callback.onAdClicked()
-
-                            override fun onError(code: Int, message: String) =
-                                callback.onAdFailed("$code:$message")
-
-                            override fun onDismissed() = callback.onAdClosed()
-                        })
-                    }
-                    callback.onAdLoaded()
-                }
-
-                override fun onFailure(type: UMUnionApi.AdType, error: String?) {
-                    callback.onAdFailed(error ?: "Unknown splash error")
-                }
-            },
-            5
-        )
+        SplashAdActivity.start(activity, adId, callback)
     }
 
     override fun loadRewardedAd(activity: Activity, adId: String, callback: AdCallback) {

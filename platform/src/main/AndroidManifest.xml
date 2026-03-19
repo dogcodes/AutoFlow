@@ -11,6 +11,11 @@
             android:name=".push.AutoFlowJPushMessageReceiver"
             android:enabled="true"
             android:exported="false" />
+        <activity
+            android:name=".ad.SplashAdActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AutoFlow"
+            android:taskAffinity="" />
     </application>
 
 </manifest>
