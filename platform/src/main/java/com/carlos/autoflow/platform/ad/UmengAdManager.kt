@@ -31,7 +31,7 @@ import java.util.UUID
 class UmengAdManager(private val application: Application) : AdManager {
     private var splashAd: UMSplashAD? = null
     private var interstitialAd: UMUnionApi.AdDisplay? = null
-    private var bannerAd: UMUnionApi.AdDisplay? = null
+    private var bannerAd: UMNativeAD? = null
     private var floatingAd: UMUnionApi.AdDisplay? = null
     private var floatingBallAd: UMFloatingIconAD? = null
     private var feedAd: UMNativeAD? = null
@@ -135,32 +135,29 @@ class UmengAdManager(private val application: Application) : AdManager {
     }
 
     override fun loadBannerAd(activity: Activity, adId: String, callback: AdCallback) {
-        UMUnionSdk.getApi().loadFloatingBannerAd(
-            activity,
+        UMUnionSdk.getApi().loadNativeBannerAd(
             adConfig(adId),
-            object : UMUnionApi.AdLoadListener<UMUnionApi.AdDisplay> {
-                override fun onSuccess(type: UMUnionApi.AdType, ad: UMUnionApi.AdDisplay) {
-                    bannerAd = ad.apply {
-                        setAdEventListener(object : UMUnionApi.AdEventListener {
-                            override fun onExposed() = callback.onAdShown()
-                            override fun onClicked(view: android.view.View) = callback.onAdClicked()
-                            override fun onError(code: Int, message: String) =
-                                callback.onAdFailed("$code:$message")
-                        })
-                    }
+            object : UMUnionApi.AdLoadListener<UMNativeAD> {
+                override fun onSuccess(type: UMUnionApi.AdType, ad: UMNativeAD) {
+                    bannerAd = ad
                     callback.onAdLoaded()
                 }
 
                 override fun onFailure(type: UMUnionApi.AdType, error: String?) {
-                    callback.onAdFailed(error ?: "Interstitial ad load failed")
+                    callback.onAdFailed(error ?: "Banner ad load failed")
                 }
             }
         )
     }
 
     override fun showBannerAd(activity: Activity) {
-        bannerAd?.show(activity)
-            ?: Log.w(TAG, "Banner ad is not ready")
+        val ad = bannerAd
+        if (ad == null) {
+            Log.w(TAG, "Banner ad is not ready")
+            return
+        }
+        showNativeAdDialog(activity, ad, "Banner")
+        bannerAd = null
     }
 
     override fun loadFloatingAd(activity: Activity, adId: String, callback: AdCallback) {
@@ -293,6 +290,59 @@ class UmengAdManager(private val application: Application) : AdManager {
             .show()
 
         feedAd = null
+    }
+
+    private fun showNativeAdDialog(activity: Activity, ad: UMNativeAD, label: String) {
+        val layout = UMNativeLayout(activity).apply {
+            setBackgroundColor(Color.WHITE)
+            setPadding(32)
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        val title = TextView(activity).apply {
+            text = ad.title ?: label
+            textSize = 18f
+            setTextColor(Color.BLACK)
+        }
+        val body = TextView(activity).apply {
+            text = ad.content ?: ""
+            textSize = 14f
+            setTextColor(Color.DKGRAY)
+        }
+        val imageView = ImageView(activity).apply {
+            adjustViewBounds = true
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        layout.addView(title)
+        layout.addView(body)
+        layout.addView(imageView)
+
+        val request = ImageRequest.Builder(activity)
+            .data(ad.imageUrl)
+            .size(Size.ORIGINAL)
+            .placeholder(android.R.color.darker_gray)
+            .transformations(RoundedCornersTransformation(8f))
+            .target(imageView)
+            .build()
+        ImageLoader(activity).enqueue(request)
+
+        ad.bindView(activity, layout, listOf(layout))
+
+        AlertDialog.Builder(activity)
+            .setTitle(label)
+            .setView(layout)
+            .setPositiveButton("关闭") { dialog, _ -> dialog.dismiss() }
+            .setOnDismissListener {
+                Log.d(TAG, "$label dismissed")
+            }
+            .show()
     }
 
     private fun adConfig(slotId: String): UMAdConfig {
