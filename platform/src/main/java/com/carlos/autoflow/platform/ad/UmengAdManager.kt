@@ -2,7 +2,9 @@ package com.carlos.autoflow.platform.ad
 
 import android.app.Application
 import android.app.Activity
+import android.provider.Settings
 import android.util.Log
+import android.view.View
 import com.umeng.commonsdk.UMConfigure
 import com.umeng.union.UMFloatingIconAD
 import com.umeng.union.UMNativeAD
@@ -11,6 +13,7 @@ import com.umeng.union.UMSplashAD
 import com.umeng.union.UMUnionSdk
 import com.umeng.union.api.UMAdConfig
 import com.umeng.union.api.UMUnionApi
+import java.util.UUID
 
 class UmengAdManager(private val application: Application) : AdManager {
     private var splashAd: UMSplashAD? = null
@@ -20,6 +23,7 @@ class UmengAdManager(private val application: Application) : AdManager {
     private var floatingBallAd: UMFloatingIconAD? = null
     private var feedAd: UMNativeAD? = null
     private var rewardAd: UMRewardAD? = null
+    private val userId: String by lazy { fetchUserId() }
 
     override fun initialize() {
         runCatching {
@@ -60,18 +64,34 @@ class UmengAdManager(private val application: Application) : AdManager {
 
     override fun loadRewardedAd(activity: Activity, adId: String, callback: AdCallback) {
         UMUnionSdk.getApi().loadRewardAd(
-            adConfig(adId),
+            rewardAdConfig(adId),
             object : UMUnionApi.AdLoadListener<UMRewardAD> {
                 override fun onSuccess(type: UMUnionApi.AdType, ad: UMRewardAD) {
                     rewardAd = ad.apply {
-                        setAdCloseListener { callback.onAdClosed() }
-                        setAdEventListener(object : UMUnionApi.AdEventListener {
+                        setAdCloseListener {
+                            callback.onAdClosed()
+                            clearRewardAd()
+                        }
+                        setAdEventListener(object : UMUnionApi.RewardAdListener {
+                            override fun onReward(success: Boolean, rewardInfo: Map<String, Any>) {
+                                if (success) {
+                                    callback.onAdRewarded()
+                                } else {
+                                    callback.onAdFailed("Reward verification failed")
+                                }
+                            }
+
                             override fun onExposed() = callback.onAdShown()
 
-                            override fun onClicked(view: android.view.View) = callback.onAdClicked()
+                            override fun onClicked(view: View) = callback.onAdClicked()
 
                             override fun onError(code: Int, message: String) =
                                 callback.onAdFailed("$code:$message")
+
+                            override fun onDismissed() {
+                                callback.onAdClosed()
+                                clearRewardAd()
+                            }
                         })
                     }
                     callback.onAdLoaded()
@@ -79,6 +99,7 @@ class UmengAdManager(private val application: Application) : AdManager {
 
                 override fun onFailure(type: UMUnionApi.AdType, error: String) {
                     callback.onAdFailed(error)
+                    clearRewardAd()
                 }
             }
         )
@@ -112,7 +133,7 @@ class UmengAdManager(private val application: Application) : AdManager {
     }
 
     override fun showRewardedAd(activity: Activity) {
-        rewardAd?.show() ?: Log.w(TAG, "Rewarded ad is not ready")
+        rewardAd?.show(activity) ?: Log.w(TAG, "Rewarded ad is not ready")
     }
 
     override fun showSplashAd(activity: Activity) {
@@ -237,6 +258,28 @@ class UmengAdManager(private val application: Application) : AdManager {
         return UMAdConfig.Builder()
             .setSlotId(slotId)
             .build()
+    }
+
+    private fun rewardAdConfig(slotId: String): UMAdConfig {
+        return UMAdConfig.Builder()
+            .setSlotId(slotId)
+            .setUserId(userId)
+            .setCustomData(buildCustomData())
+            .build()
+    }
+
+    private fun buildCustomData(): String {
+        val packageName = application.packageName
+        return "{\"pkg\":\"$packageName\"}"
+    }
+
+    private fun fetchUserId(): String {
+        val androidId = Settings.Secure.getString(application.contentResolver, Settings.Secure.ANDROID_ID)
+        return androidId ?: UUID.randomUUID().toString()
+    }
+
+    private fun clearRewardAd() {
+        rewardAd = null
     }
 
     private companion object {
