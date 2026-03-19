@@ -1,10 +1,22 @@
 package com.carlos.autoflow.platform.ad
 
-import android.app.Application
+import android.app.AlertDialog
 import android.app.Activity
+import android.app.Application
+import android.graphics.Color
 import android.provider.Settings
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.core.view.setPadding
+import coil.ImageLoader
+import coil.request.ImageRequest
+import coil.size.Size
+import coil.transform.RoundedCornersTransformation
 import com.umeng.commonsdk.UMConfigure
 import com.umeng.union.UMFloatingIconAD
 import com.umeng.union.UMNativeAD
@@ -13,6 +25,7 @@ import com.umeng.union.UMSplashAD
 import com.umeng.union.UMUnionSdk
 import com.umeng.union.api.UMAdConfig
 import com.umeng.union.api.UMUnionApi
+import com.umeng.union.widget.UMNativeLayout
 import java.util.UUID
 
 class UmengAdManager(private val application: Application) : AdManager {
@@ -225,9 +238,61 @@ class UmengAdManager(private val application: Application) : AdManager {
     }
 
     override fun showFeedAd(activity: Activity) {
-        feedAd?.let {
-            Log.d(TAG, "Feed ad loaded; bind it in UI manually")
-        } ?: Log.w(TAG, "Feed ad is not ready")
+        val ad = feedAd
+        if (ad == null) {
+            Log.w(TAG, "Feed ad is not ready")
+            return
+        }
+
+        val contentLayout = UMNativeLayout(activity)
+        contentLayout.setBackgroundColor(Color.WHITE)
+        contentLayout.layoutParams = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        contentLayout.setPadding(24)
+
+        val title = TextView(activity).apply {
+            text = ad.title ?: "信息流广告"
+            textSize = 16f
+            setTextColor(Color.BLACK)
+            setPadding(0, 0, 0, 8)
+        }
+        val body = TextView(activity).apply {
+            text = ad.content ?: ""
+            textSize = 14f
+            setTextColor(Color.DKGRAY)
+        }
+        val imageView = ImageView(activity).apply {
+            setBackgroundColor(Color.LTGRAY)
+            adjustViewBounds = true
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        contentLayout.addView(title)
+        contentLayout.addView(body)
+        contentLayout.addView(imageView)
+
+        val request = ImageRequest.Builder(activity)
+            .data(ad.imageUrl)
+            .size(Size.ORIGINAL)
+            .placeholder(android.R.color.darker_gray)
+            .transformations(RoundedCornersTransformation(8f))
+            .target(imageView)
+            .build()
+        ImageLoader(activity).enqueue(request)
+
+        ad.bindView(activity, contentLayout, listOf(contentLayout))
+
+        AlertDialog.Builder(activity)
+            .setView(contentLayout)
+            .setPositiveButton("关闭") { _, _ -> }
+            .show()
+
+        feedAd = null
     }
 
     private fun adConfig(slotId: String): UMAdConfig {
