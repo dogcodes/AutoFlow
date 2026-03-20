@@ -25,8 +25,6 @@ object AutoFlowLogger {
             Log.d("$TAG_PREFIX$tag", message)
         }
     }
-
-    // You can add more log levels (i.e., i, w, v) as needed
 }
 
 // Extension function to get a simple tag from any class

@@ -4,10 +4,10 @@ import android.content.Context
 
 class AdPreferenceStore(context: Context) {
     companion object {
-        private const val PREFS_NAME = "ad_preferences" // 存储每种广告位的配置
-        private const val KEY_PREFIX_ENABLED = "enabled_"
-        private const val KEY_PREFIX_COOLDOWN = "cooldown_"
-        private const val DEFAULT_SPLASH_COOLDOWN = 24 * 60 * 60 * 1000L
+        private const val PREFS_NAME = "ad_preferences" // 存储每种广告位的开关/冷却配置
+        private const val KEY_PREFIX_ENABLED = "enabled_" // 单个广告类型开关前缀
+        private const val KEY_PREFIX_COOLDOWN = "cooldown_" // 单个广告类型冷却时间前缀
+        private const val DEFAULT_SPLASH_COOLDOWN = 10 * 1000L // 开屏默认冷却 10 秒
     }
 
     private val prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
