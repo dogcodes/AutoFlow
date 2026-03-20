@@ -37,12 +37,13 @@ class AdDebugActivity : Activity() {
 
         root.addView(splashIdInput.label)
         root.addView(splashIdInput.input)
-        root.addView(button("加载并展示开屏广告") {
+        root.addView(button("加载开屏广告") {
             val slotId = splashIdInput.input.text.toString().trim()
             if (slotId.isEmpty()) return@button toast("请输入开屏广告位")
-            adManager.loadSplashAd(this, slotId, debugCallback("开屏") {
-                adManager.showSplashAd(this)
-            })
+            adManager.loadSplashAd(this, slotId, debugCallback("开屏"))
+        })
+        root.addView(button("展示开屏广告") {
+            adManager.showSplashAd(this)
         })
 
         root.addView(spacer())

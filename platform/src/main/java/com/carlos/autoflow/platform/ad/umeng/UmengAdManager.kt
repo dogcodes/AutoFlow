@@ -30,9 +30,18 @@ import com.umeng.union.api.UMAdConfig
 import com.umeng.union.api.UMUnionApi
 import com.umeng.union.widget.UMNativeLayout
 import java.util.UUID
+import android.os.Handler
+import android.os.Looper
 
 class UmengAdManager(private val application: Application) : AdManager {
     private var splashAd: UMSplashAD? = null
+    private var splashCallback: AdCallback? = null
+    private val handler = Handler(Looper.getMainLooper())
+    private var loadTimeout: Runnable? = null
+    private companion object {
+        private const val SPLASH_TIMEOUT_MS = 5_000L
+        private const val TAG = "UmengAdManager"
+    }
     private var interstitialAd: UMUnionApi.AdDisplay? = null
     private var bannerAd: UMNativeAD? = null
     private var floatingAd: UMUnionApi.AdDisplay? = null
@@ -51,7 +60,32 @@ class UmengAdManager(private val application: Application) : AdManager {
     }
 
     override fun loadSplashAd(activity: Activity, adId: String, callback: AdCallback) {
-        SplashAdActivity.Companion.start(activity, adId, callback)
+        splashCallback = callback
+        loadTimeout?.let { handler.removeCallbacks(it) }
+        loadTimeout = Runnable {
+            callback.onAdFailed("Splash load timeout")
+            splashAd = null
+        }.also { handler.postDelayed(it, SPLASH_TIMEOUT_MS) }
+        val config = UMAdConfig.Builder()
+            .setSlotId(adId)
+            .build()
+        UMUnionSdk.loadSplashAd(
+            config,
+            object : UMUnionApi.AdLoadListener<UMSplashAD> {
+                override fun onSuccess(type: UMUnionApi.AdType, display: UMSplashAD) {
+                    loadTimeout?.let { handler.removeCallbacks(it) }
+                    splashAd = display
+                    callback.onAdLoaded()
+                }
+
+                override fun onFailure(type: UMUnionApi.AdType, error: String?) {
+                    loadTimeout?.let { handler.removeCallbacks(it) }
+                    callback.onAdFailed(error ?: "Splash ad load failed")
+                    splashAd = null
+                }
+            },
+            SPLASH_TIMEOUT_MS.toInt()
+        )
     }
 
     override fun loadRewardedAd(activity: Activity, adId: String, callback: AdCallback) {
@@ -129,7 +163,14 @@ class UmengAdManager(private val application: Application) : AdManager {
     }
 
     override fun showSplashAd(activity: Activity) {
-        splashAd?.show(activity) ?: Log.w(TAG, "Splash ad is not ready")
+        val ad = splashAd
+        if (ad == null) {
+            Log.w(TAG, "Splash ad is not ready")
+            return
+        }
+        SplashAdActivity.show(activity, ad, splashCallback)
+        splashAd = null
+        splashCallback = null
     }
 
     override fun showInterstitialAd(activity: Activity) {
@@ -374,9 +415,5 @@ class UmengAdManager(private val application: Application) : AdManager {
 
     private fun clearRewardAd() {
         rewardAd = null
-    }
-
-    private companion object {
-        private const val TAG = "UmengAdManager"
     }
 }

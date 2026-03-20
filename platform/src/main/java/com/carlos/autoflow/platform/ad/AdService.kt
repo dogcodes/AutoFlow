@@ -8,6 +8,7 @@ object AdService {
 
     fun initialize(application: Application) {
         if (adManager == null) {
+            val preferenceStore = AdPreferenceStore(application)
             val umengManager = UmengAdManager(application)
             adManager = AdRouter(
                 listOf(
@@ -17,7 +18,8 @@ object AdService {
                         enabledTypes = AdType.values().toSet(),
                         priority = 0
                     )
-                )
+                ),
+                preferenceStore
             )
             adManager?.initialize()
         }
@@ -26,4 +28,7 @@ object AdService {
     fun getAdManager(): AdManager {
         return adManager ?: throw IllegalStateException("AdService not initialized. Call initialize() first.")
     }
+
+    fun preferenceStore(): AdPreferenceStore =
+        (adManager as? AdRouter)?.let { it.preferenceStore } ?: throw IllegalStateException("Router not initialized")
 }

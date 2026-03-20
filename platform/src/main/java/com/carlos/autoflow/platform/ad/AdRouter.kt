@@ -4,7 +4,10 @@ import android.app.Activity
 import android.util.Log
 import java.util.EnumMap
 
-class AdRouter(configs: List<AdPlatformConfig>) : AdManager {
+class AdRouter(
+    configs: List<AdPlatformConfig>,
+    val preferenceStore: AdPreferenceStore
+) : AdManager {
     companion object {
         private const val TAG = "AdRouter"
     }
@@ -100,6 +103,10 @@ class AdRouter(configs: List<AdPlatformConfig>) : AdManager {
         callback: AdCallback,
         loadAction: (AdManager, AdCallback) -> Unit
     ) {
+        if (!preferenceStore.isEnabled(adType)) {
+            callback.onAdFailed("Ad type $adType disabled via preferences")
+            return
+        }
         val candidates = platformConfigs.filter { adType in it.enabledTypes }
         if (candidates.isEmpty()) {
             callback.onAdFailed("Ad type $adType disabled")

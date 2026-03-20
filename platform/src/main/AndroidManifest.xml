@@ -14,7 +14,7 @@
         <activity
             android:name=".ad.SplashAdActivity"
             android:exported="true"
-            android:theme="@style/Theme.AutoFlow"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen"
             android:taskAffinity="" />
     </application>
 

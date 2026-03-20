@@ -1,6 +1,7 @@
 package com.carlos.autoflow
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -17,17 +18,34 @@ import com.carlos.autoflow.foundation.privacy.PrivacyConsentDialog
 import com.carlos.autoflow.foundation.privacy.PrivacyConsentManager
 import com.carlos.autoflow.foundation.upgrade.UpgradeManager
 import com.carlos.autoflow.foundation.upgrade.ui.AutoUpgradeChecker
+import com.carlos.autoflow.platform.ad.AdService
+import com.carlos.autoflow.platform.ad.SplashAdCoordinator
+import com.carlos.autoflow.platform.ad.SplashAdCooldownManager
 import com.carlos.autoflow.ui.screens.MainHomeScreen
 import com.carlos.autoflow.ui.theme.AutoFlowTheme
 import com.carlos.autoflow.utils.PerformanceMonitor
 
 class MainActivity : ComponentActivity() {
     private lateinit var privacyConsentManager: PrivacyConsentManager
+    private lateinit var splashCoordinator: SplashAdCoordinator
+    private val isColdStartLaunch by lazy { isColdStart() }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         requestNotificationPermissionIfNeeded()
         privacyConsentManager = PrivacyConsentManager(this)
+        splashCoordinator = SplashAdCoordinator(
+            this,
+            AdService.getAdManager(),
+            SplashAdCooldownManager(AdService.preferenceStore(), this)
+        )
+        if (privacyConsentManager.hasConsent()) {
+            splashCoordinator.maybeShowSplash(
+                isColdStartLaunch,
+                true
+            )
+        }
 
         // 初始化性能监控
         PerformanceMonitor.initialize(this)
@@ -52,6 +70,14 @@ class MainActivity : ComponentActivity() {
                         versionCode = BuildConfig.VERSION_CODE,
                         upgradeManager = upgradeManager
                     )
+                    LaunchedEffect(showPrivacyConsentDialog) {
+                        if (!showPrivacyConsentDialog) {
+                            splashCoordinator.maybeShowSplash(
+                                isColdStartLaunch,
+                                privacyConsentManager.hasConsent()
+                            )
+                        }
+                    }
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
@@ -80,4 +106,10 @@ class MainActivity : ComponentActivity() {
     companion object {
         private const val REQUEST_POST_NOTIFICATIONS = 1001
     }
+
+    private fun isColdStart(): Boolean {
+        val fromHistory = intent?.flags?.and(Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0
+        return isTaskRoot && !fromHistory
+    }
+
 }
