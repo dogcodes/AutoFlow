@@ -1,7 +1,8 @@
-package com.carlos.autoflow.platform.ad
+package com.carlos.autoflow.platform.ad.umeng
 
-import android.app.AlertDialog
+import android.R
 import android.app.Activity
+import android.app.AlertDialog
 import android.app.Application
 import android.graphics.Color
 import android.provider.Settings
@@ -17,7 +18,9 @@ import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.size.Size
 import coil.transform.RoundedCornersTransformation
-import com.umeng.commonsdk.UMConfigure
+import com.carlos.autoflow.platform.ad.AdCallback
+import com.carlos.autoflow.platform.ad.AdManager
+import com.carlos.autoflow.platform.ad.SplashAdActivity
 import com.umeng.union.UMFloatingIconAD
 import com.umeng.union.UMNativeAD
 import com.umeng.union.UMRewardAD
@@ -48,7 +51,7 @@ class UmengAdManager(private val application: Application) : AdManager {
     }
 
     override fun loadSplashAd(activity: Activity, adId: String, callback: AdCallback) {
-        SplashAdActivity.start(activity, adId, callback)
+        SplashAdActivity.Companion.start(activity, adId, callback)
     }
 
     override fun loadRewardedAd(activity: Activity, adId: String, callback: AdCallback) {
@@ -105,7 +108,7 @@ class UmengAdManager(private val application: Application) : AdManager {
                         setAdEventListener(object : UMUnionApi.AdEventListener {
                             override fun onExposed() = callback.onAdShown()
 
-                            override fun onClicked(view: android.view.View) = callback.onAdClicked()
+                            override fun onClicked(view: View) = callback.onAdClicked()
 
                             override fun onError(code: Int, message: String) =
                                 callback.onAdFailed("$code:$message")
@@ -169,7 +172,7 @@ class UmengAdManager(private val application: Application) : AdManager {
                     floatingAd = ad.apply {
                         setAdEventListener(object : UMUnionApi.AdEventListener {
                             override fun onExposed() = callback.onAdShown()
-                            override fun onClicked(view: android.view.View) = callback.onAdClicked()
+                            override fun onClicked(view: View) = callback.onAdClicked()
                             override fun onError(code: Int, message: String) =
                                 callback.onAdFailed("$code:$message")
                         })
@@ -198,7 +201,7 @@ class UmengAdManager(private val application: Application) : AdManager {
                     floatingBallAd = ad.apply {
                         setAdEventListener(object : UMUnionApi.AdEventListener {
                             override fun onExposed() = callback.onAdShown()
-                            override fun onClicked(view: android.view.View) = callback.onAdClicked()
+                            override fun onClicked(view: View) = callback.onAdClicked()
                             override fun onError(code: Int, message: String) =
                                 callback.onAdFailed("$code:$message")
                         })
@@ -275,8 +278,8 @@ class UmengAdManager(private val application: Application) : AdManager {
 
         val request = ImageRequest.Builder(activity)
             .data(ad.imageUrl)
-            .size(Size.ORIGINAL)
-            .placeholder(android.R.color.darker_gray)
+            .size(Size.Companion.ORIGINAL)
+            .placeholder(R.color.darker_gray)
             .transformations(RoundedCornersTransformation(8f))
             .target(imageView)
             .build()
@@ -326,8 +329,8 @@ class UmengAdManager(private val application: Application) : AdManager {
 
         val request = ImageRequest.Builder(activity)
             .data(ad.imageUrl)
-            .size(Size.ORIGINAL)
-            .placeholder(android.R.color.darker_gray)
+            .size(Size.Companion.ORIGINAL)
+            .placeholder(R.color.darker_gray)
             .transformations(RoundedCornersTransformation(8f))
             .target(imageView)
             .build()
