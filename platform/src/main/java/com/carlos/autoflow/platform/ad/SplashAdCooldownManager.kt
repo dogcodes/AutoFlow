@@ -2,7 +2,7 @@ package com.carlos.autoflow.platform.ad
 
 import android.content.Context
 import com.carlos.autoflow.utils.AutoFlowLogger
-import java.time.LocalDate
+import java.util.Calendar
 
 /** 负责开屏广告的频率控制，包括冷启动/热启动间隔和每天展示上限。 */
 class SplashAdCooldownManager(
@@ -93,5 +93,11 @@ class SplashAdCooldownManager(
         editor.apply()
     }
 
-    private fun currentDateKey() = LocalDate.now().toString()
+    private fun currentDateKey(): String {
+        val calendar = Calendar.getInstance()
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH) + 1
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+        return "%04d-%02d-%02d".format(year, month, day)
+    }
 }
