@@ -123,8 +123,8 @@ class UmengAdManager(private val application: Application) : AdManager {
                     callback.onAdLoaded()
                 }
 
-                override fun onFailure(type: UMUnionApi.AdType, error: String) {
-                    callback.onAdFailed(error)
+                override fun onFailure(type: UMUnionApi.AdType, error: String?) {
+                    callback.onAdFailed(error ?: "Reward ad load failed")
                     clearRewardAd()
                 }
             }
