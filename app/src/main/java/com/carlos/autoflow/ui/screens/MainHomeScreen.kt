@@ -1,5 +1,6 @@
 package com.carlos.autoflow.ui.screens
 
+import android.app.Activity
 import android.content.Intent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
@@ -23,11 +24,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import com.carlos.autoflow.demo.DemoAppActivity
 import com.carlos.autoflow.recorder.ui.RecordingControlPanel
 import com.carlos.autoflow.workflow.models.Workflow
@@ -35,6 +38,9 @@ import com.carlos.autoflow.workflow.repository.ExecutionHistoryRepository
 import com.carlos.autoflow.workflow.repository.WorkflowRepository
 import com.carlos.autoflow.workflow.ui.WorkflowEditor
 import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
+import com.carlos.autoflow.platform.ad.AdCallback
+import com.carlos.autoflow.platform.ad.AdService
+import com.carlos.autoflow.platform.ad.AdSlots
 
 private enum class HomeTab(val title: String) {
     TASKS("任务"),
@@ -52,7 +58,34 @@ fun MainHomeScreen(
     val historyRepository = remember { ExecutionHistoryRepository(context) }
     val currentWorkflow by workflowViewModel.workflow.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
     var currentTab by rememberSaveable { mutableStateOf(HomeTab.TASKS) }
+    val rewardSlotId = AdSlots.REWARD
+    val rewardAdRequest: () -> Unit = rewardAdRequest@{
+        val activity = context as? Activity ?: return@rewardAdRequest
+        val adManager = AdService.getAdManager()
+        adManager.loadRewardedAd(activity, rewardSlotId, object : AdCallback {
+            override fun onAdLoaded() {
+                adManager.showRewardedAd(activity)
+            }
+
+            override fun onAdFailed(error: String?) {
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar("激励广告加载失败：${error ?: "未知"}")
+                }
+            }
+
+            override fun onAdShown() {}
+            override fun onAdClicked() {}
+            override fun onAdClosed() {}
+
+            override fun onAdRewarded() {
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar("已延长 30 分钟体验时间")
+                }
+            }
+        })
+    }
 
     LaunchedEffect(Unit) {
         if (workflowRepository.workflows.value.isEmpty()) {
@@ -87,27 +120,28 @@ fun MainHomeScreen(
     ) { innerPadding ->
         when (currentTab) {
             HomeTab.TASKS -> {
-                TasksScreen(
-                    modifier = Modifier,
-                    workflowViewModel = workflowViewModel,
-                    workflowRepository = workflowRepository,
-                    historyRepository = historyRepository,
-                    onEditTask = { workflow ->
-                        workflowViewModel.loadWorkflow(workflow)
-                        currentTab = HomeTab.ARRANGE
-                    },
-                    onCreateTask = {
-                        val newWorkflow = Workflow(
-                            name = "新建任务",
-                            nodes = emptyList(),
-                            connections = emptyList()
-                        )
-                        workflowViewModel.loadWorkflow(newWorkflow)
-                        currentTab = HomeTab.ARRANGE
-                    },
-                    contentPadding = innerPadding
-                )
-            }
+                    TasksScreen(
+                        modifier = Modifier,
+                        workflowViewModel = workflowViewModel,
+                        workflowRepository = workflowRepository,
+                        historyRepository = historyRepository,
+                        onEditTask = { workflow ->
+                            workflowViewModel.loadWorkflow(workflow)
+                            currentTab = HomeTab.ARRANGE
+                        },
+                        onCreateTask = {
+                            val newWorkflow = Workflow(
+                                name = "新建任务",
+                                nodes = emptyList(),
+                                connections = emptyList()
+                            )
+                            workflowViewModel.loadWorkflow(newWorkflow)
+                            currentTab = HomeTab.ARRANGE
+                        },
+                        onRewardAdRequest = rewardAdRequest,
+                        contentPadding = innerPadding
+                    )
+                }
 
             HomeTab.ARRANGE -> {
                 Box(

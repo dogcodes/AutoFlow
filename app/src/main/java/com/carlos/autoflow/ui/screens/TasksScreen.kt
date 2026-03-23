@@ -72,6 +72,49 @@ import com.carlos.autoflow.workflow.repository.ExecutionHistoryRepository
 import com.carlos.autoflow.workflow.repository.WorkflowRepository
 import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
 
+@Composable
+private fun RewardedAdPromo(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "观看激励广告可延长体验",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "未付费用户观看广告即可获得 30 分钟额外体验时间，收益会立即生效。",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                textAlign = TextAlign.Start
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Button(
+                    onClick = onClick
+                ) {
+                    Text("立即体验")
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun TasksScreen(
@@ -80,6 +123,7 @@ fun TasksScreen(
     historyRepository: ExecutionHistoryRepository,
     onEditTask: (Workflow) -> Unit,
     onCreateTask: () -> Unit,
+    onRewardAdRequest: () -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
 ) {
@@ -129,6 +173,8 @@ fun TasksScreen(
                         "先进入编排或录制生成任务，再保存到列表中。",
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    RewardedAdPromo(onClick = onRewardAdRequest)
                 }
             }
         } else {
@@ -137,6 +183,14 @@ fun TasksScreen(
                 contentPadding = mergedPadding,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                item {
+                    RewardedAdPromo(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        onClick = onRewardAdRequest
+                    )
+                }
                 items(workflows, key = { it.id }) { workflow ->
                     TaskCard(
                         workflow = workflow,
