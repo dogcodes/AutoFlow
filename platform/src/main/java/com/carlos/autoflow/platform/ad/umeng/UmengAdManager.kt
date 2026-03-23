@@ -159,7 +159,12 @@ class UmengAdManager(private val application: Application) : AdManager {
     }
 
     override fun showRewardedAd(activity: Activity) {
-        rewardAd?.show(activity) ?: Log.w(TAG, "Rewarded ad is not ready")
+        val ad = rewardAd
+        if (ad == null) {
+            Log.w(TAG, "Rewarded ad is not ready")
+            return
+        }
+        ad.show(activity)
     }
 
     override fun showSplashAd(activity: Activity) {
