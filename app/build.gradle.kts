@@ -30,7 +30,7 @@ android {
         minSdk = 21
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.1.0"
         manifestPlaceholders["JPUSH_APPKEY"] = "8875cd8a215618b05a8e9640"
         manifestPlaceholders["JPUSH_CHANNEL"] = "developer-default"
 
