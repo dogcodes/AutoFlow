@@ -6,7 +6,8 @@ import java.util.EnumMap
 
 class AdRouter(
     configs: List<AdPlatformConfig>,
-    val preferenceStore: AdPreferenceStore
+    val preferenceStore: AdPreferenceStore,
+    private val shouldLoadAds: () -> Boolean = { true }
 ) : AdManager {
     companion object {
         private const val TAG = "AdRouter"
@@ -103,6 +104,10 @@ class AdRouter(
         callback: AdCallback,
         loadAction: (AdManager, AdCallback) -> Unit
     ) {
+        if (!shouldLoadAds()) {
+            callback.onAdFailed("Ads globally disabled")
+            return
+        }
         if (!preferenceStore.isEnabled(adType)) {
             callback.onAdFailed("Ad type $adType disabled via preferences")
             return

@@ -15,8 +15,6 @@ class SplashAdCooldownManager(
         private const val KEY_SPLASH_LAST_HOT_SHOWN = "key_splash_last_hot_shown"
         private const val KEY_SPLASH_DAILY_COUNT = "key_splash_daily_count"
         private const val KEY_SPLASH_DAILY_DATE = "key_splash_daily_date"
-        private const val HOT_COOLDOWN_MS = 10 * 60 * 1000L // 热启动 10 分钟内只展示一次
-        private const val DAILY_LIMIT = 10 // 每天最多展示次数
     }
 
     private val prefs =
@@ -39,10 +37,11 @@ class SplashAdCooldownManager(
             AutoFlowLogger.d(TAG, "冷启动检查：上次展示=$lastShown，间隔=${elapsed}ms，冷却=${cooldownMs}ms")
             System.currentTimeMillis() - lastShown >= cooldownMs
         } else {
+            val hotCooldown = preferenceStore.getHotStartupCooldown()
             val lastHot = prefs.getLong(KEY_SPLASH_LAST_HOT_SHOWN, 0L)
             val elapsed = System.currentTimeMillis() - lastHot
-            AutoFlowLogger.d(TAG, "热启动检查：上次热展示=$lastHot，间隔=${elapsed}ms，热冷却=${HOT_COOLDOWN_MS}ms")
-            System.currentTimeMillis() - lastHot >= HOT_COOLDOWN_MS
+            AutoFlowLogger.d(TAG, "热启动检查：上次热展示=$lastHot，间隔=${elapsed}ms，热冷却=${hotCooldown}ms")
+            System.currentTimeMillis() - lastHot >= hotCooldown
         }
     }
 
@@ -73,9 +72,14 @@ class SplashAdCooldownManager(
             AutoFlowLogger.d(TAG, "新的一天，重置计数，日期=$todayKey")
             return true
         }
+        val limit = preferenceStore.getDailyLimit(AdType.SPLASH)
+        if (limit <= 0) {
+            AutoFlowLogger.d(TAG, "今日展示不限（limit=$limit）")
+            return true
+        }
         val count = prefs.getInt(KEY_SPLASH_DAILY_COUNT, 0)
-        AutoFlowLogger.d(TAG, "今日展示=$count/$DAILY_LIMIT")
-        return count < DAILY_LIMIT
+        AutoFlowLogger.d(TAG, "今日展示=$count/$limit")
+        return count < limit
     }
 
     private fun updateDailyCount() {

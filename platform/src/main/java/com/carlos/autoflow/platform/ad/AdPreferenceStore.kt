@@ -7,7 +7,11 @@ class AdPreferenceStore(context: Context) {
         private const val PREFS_NAME = "ad_preferences" // 存储每种广告位的开关/冷却配置
         private const val KEY_PREFIX_ENABLED = "enabled_" // 单个广告类型开关前缀
         private const val KEY_PREFIX_COOLDOWN = "cooldown_" // 单个广告类型冷却时间前缀
+        private const val KEY_PREFIX_DAILY_LIMIT = "daily_limit_"
+        private const val KEY_HOT_STARTUP_COOLDOWN = "hot_startup_cooldown"
         private const val DEFAULT_SPLASH_COOLDOWN = 10 * 1000L // 开屏默认冷却 10 秒
+        private const val DEFAULT_SPLASH_DAILY_LIMIT = 10
+        private const val DEFAULT_HOT_STARTUP_COOLDOWN = 10 * 60 * 1000L
     }
 
     private val prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -28,6 +32,23 @@ class AdPreferenceStore(context: Context) {
     /** 设置某个广告位的冷却时长，例如插屏 5 分钟、开屏 24 小时。 */
     fun setCooldown(type: AdType, millis: Long) {
         prefs.edit().putLong(KEY_PREFIX_COOLDOWN + type.name, millis).apply()
+    }
+
+    fun getDailyLimit(type: AdType): Int =
+        prefs.getInt(
+            KEY_PREFIX_DAILY_LIMIT + type.name,
+            if (type == AdType.SPLASH) DEFAULT_SPLASH_DAILY_LIMIT else Int.MAX_VALUE
+        )
+
+    fun setDailyLimit(type: AdType, limit: Int) {
+        prefs.edit().putInt(KEY_PREFIX_DAILY_LIMIT + type.name, if (limit < 0) 0 else limit).apply()
+    }
+
+    fun getHotStartupCooldown(): Long =
+        prefs.getLong(KEY_HOT_STARTUP_COOLDOWN, DEFAULT_HOT_STARTUP_COOLDOWN)
+
+    fun setHotStartupCooldown(millis: Long) {
+        prefs.edit().putLong(KEY_HOT_STARTUP_COOLDOWN, millis).apply()
     }
 
     fun reset() {

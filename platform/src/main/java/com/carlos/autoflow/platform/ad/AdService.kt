@@ -5,6 +5,7 @@ import com.carlos.autoflow.platform.ad.umeng.UmengAdManager
 
 object AdService {
     private var adManager: AdManager? = null
+    private var globalAdsEnabled = true
 
     fun initialize(application: Application) {
         if (adManager == null) {
@@ -19,7 +20,8 @@ object AdService {
                         priority = 0
                     )
                 ),
-                preferenceStore
+                preferenceStore,
+                shouldLoadAds = { globalAdsEnabled }
             )
             adManager?.initialize()
         }
@@ -31,4 +33,8 @@ object AdService {
 
     fun preferenceStore(): AdPreferenceStore =
         (adManager as? AdRouter)?.let { it.preferenceStore } ?: throw IllegalStateException("Router not initialized")
+
+    fun setGlobalAdsEnabled(enabled: Boolean) {
+        globalAdsEnabled = enabled
+    }
 }
