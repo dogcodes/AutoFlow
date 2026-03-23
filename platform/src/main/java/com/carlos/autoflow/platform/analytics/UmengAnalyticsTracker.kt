@@ -10,11 +10,12 @@ class UmengAnalyticsTracker : AnalyticsTracker {
         if (BuildConfig.UMENG_APP_KEY.isBlank()) return
 
         UMConfigure.setLogEnabled(BuildConfig.ENABLE_PLATFORM_LOGGING)
-        UMConfigure.preInit(application, BuildConfig.UMENG_APP_KEY, BuildConfig.UMENG_CHANNEL)
+        val effectiveChannel = "auto"
+        UMConfigure.preInit(application, BuildConfig.UMENG_APP_KEY, effectiveChannel)
         UMConfigure.init(
             application,
             BuildConfig.UMENG_APP_KEY,
-            BuildConfig.UMENG_CHANNEL,
+            effectiveChannel,
             UMConfigure.DEVICE_TYPE_PHONE,
             null
         )

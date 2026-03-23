@@ -56,6 +56,9 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
+        <meta-data
+            android:name="UMENG_CHANNEL"
+            android:value="${UMENG_CHANNEL}" />
         
         <service
             android:name=".monitor.NodeMonitorAccessibilityService"

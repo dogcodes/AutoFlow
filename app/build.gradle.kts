@@ -35,6 +35,7 @@ android {
         versionName = "0.1.0"
         manifestPlaceholders["JPUSH_APPKEY"] = "8875cd8a215618b05a8e9640"
         manifestPlaceholders["JPUSH_CHANNEL"] = "developer-default"
+        manifestPlaceholders["UMENG_CHANNEL"] = "default"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -47,6 +48,43 @@ android {
                 keyAlias = signingProperties["keyAlias"] as String
                 keyPassword = signingProperties["keyPassword"] as String
             }
+        }
+    }
+
+    flavorDimensions.add("market")
+
+    productFlavors {
+        create("google") {
+            dimension = "market"
+            manifestPlaceholders["UMENG_CHANNEL"] = "google"
+        }
+        create("xiaomi") {
+            dimension = "market"
+            manifestPlaceholders["UMENG_CHANNEL"] = "xiaomi"
+        }
+        create("huawei") {
+            dimension = "market"
+            manifestPlaceholders["UMENG_CHANNEL"] = "huawei"
+        }
+        create("vivo") {
+            dimension = "market"
+            manifestPlaceholders["UMENG_CHANNEL"] = "vivo"
+        }
+        create("oppo") {
+            dimension = "market"
+            manifestPlaceholders["UMENG_CHANNEL"] = "oppo"
+        }
+        create("samsung") {
+            dimension = "market"
+            manifestPlaceholders["UMENG_CHANNEL"] = "samsung"
+        }
+        create("appchina") {
+            dimension = "market"
+            manifestPlaceholders["UMENG_CHANNEL"] = "appchina"
+        }
+        create("default") {
+            dimension = "market"
+            manifestPlaceholders["UMENG_CHANNEL"] = "default"
         }
     }
 
