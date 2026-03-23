@@ -57,34 +57,42 @@ android {
         create("google") {
             dimension = "market"
             manifestPlaceholders["UMENG_CHANNEL"] = "google"
+            manifestPlaceholders["JPUSH_CHANNEL"] = "google"
         }
         create("xiaomi") {
             dimension = "market"
             manifestPlaceholders["UMENG_CHANNEL"] = "xiaomi"
+            manifestPlaceholders["JPUSH_CHANNEL"] = "xiaomi"
         }
         create("huawei") {
             dimension = "market"
             manifestPlaceholders["UMENG_CHANNEL"] = "huawei"
+            manifestPlaceholders["JPUSH_CHANNEL"] = "huawei"
         }
         create("vivo") {
             dimension = "market"
             manifestPlaceholders["UMENG_CHANNEL"] = "vivo"
+            manifestPlaceholders["JPUSH_CHANNEL"] = "vivo"
         }
         create("oppo") {
             dimension = "market"
             manifestPlaceholders["UMENG_CHANNEL"] = "oppo"
+            manifestPlaceholders["JPUSH_CHANNEL"] = "oppo"
         }
         create("samsung") {
             dimension = "market"
             manifestPlaceholders["UMENG_CHANNEL"] = "samsung"
+            manifestPlaceholders["JPUSH_CHANNEL"] = "samsung"
         }
         create("appchina") {
             dimension = "market"
             manifestPlaceholders["UMENG_CHANNEL"] = "appchina"
+            manifestPlaceholders["JPUSH_CHANNEL"] = "appchina"
         }
         create("default") {
             dimension = "market"
             manifestPlaceholders["UMENG_CHANNEL"] = "default"
+            manifestPlaceholders["JPUSH_CHANNEL"] = "default"
         }
     }
 
