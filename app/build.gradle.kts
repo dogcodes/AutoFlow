@@ -1,3 +1,5 @@
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Properties
 
 plugins {
@@ -77,6 +79,21 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    applicationVariants.configureEach {
+        val baseName = "AutoFlow"
+        val resolvedVersionName = versionName ?: "0.0.0"
+        val dateValue = SimpleDateFormat("yyyyMMdd").format(Date())
+        val channel = if (productFlavors.isEmpty()) "default" else productFlavors.joinToString("-") { it.name }
+        val buildTypeName = buildType.name
+        val normalizedVersion = resolvedVersionName.replace('.', '_')
+
+        outputs.configureEach {
+            if (this is com.android.build.gradle.api.ApkVariantOutput) {
+                outputFileName = "${baseName}_v${normalizedVersion}_${dateValue}_${channel}_${buildTypeName}.apk"
+            }
+        }
     }
 }
 
