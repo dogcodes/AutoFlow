@@ -71,6 +71,8 @@ class PaymentManager(private val context: Context) {
         }
     }
 
+    fun isPaymentAvailable(): Boolean = false
+
     fun verifyPayment(orderId: String): Boolean {
         Log.d(TAG, "验证支付: $orderId")
         return true

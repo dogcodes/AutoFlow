@@ -47,6 +47,7 @@ fun PaymentDialog(
     val context = LocalContext.current
     val paymentManager = remember { PaymentManager(context) }
     val products = remember { paymentManager.getProducts() }
+    val paymentAvailable = remember { paymentManager.isPaymentAvailable() }
 
     var selectedProduct by remember { mutableStateOf<PaymentManager.Product?>(null) }
     var isProcessing by remember { mutableStateOf(false) }
@@ -85,6 +86,10 @@ fun PaymentDialog(
 
                     Button(
                         onClick = {
+                            if (!paymentAvailable) {
+                                paymentMessage = "支付暂未开放，请联系微信 xbdcc1 购买激活码\n并激活使用时长"
+                                return@Button
+                            }
                             if (context is Activity) {
                                 isProcessing = true
                                 paymentManager.startPayment(
@@ -116,7 +121,7 @@ fun PaymentDialog(
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !isProcessing,
+                        enabled = paymentAvailable && !isProcessing,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF1976D2)
                         )
@@ -133,6 +138,16 @@ fun PaymentDialog(
                             Text("立即支付 ${selectedProduct!!.price}")
                         }
                     }
+                }
+
+                if (!paymentAvailable) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "支付暂未开放，请联系微信 xbdcc1 购买激活码\n并激活使用时长",
+                        fontSize = 12.sp,
+                        color = Color(0xFFF44336),
+                        textAlign = TextAlign.Center
+                    )
                 }
 
                 if (paymentMessage.isNotEmpty()) {
