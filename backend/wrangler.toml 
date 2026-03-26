@@ -1,0 +1,6 @@
+name = "autoflow-worker"
+main = "src/worker.js"
+compatibility_date = "2024-03-25"
+
+[assets]
+directory = "public"  # 指向你的静态资源文件夹
