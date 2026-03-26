@@ -1,4 +1,4 @@
-name = "autoflow-worker"
+name = "autoflow"
 main = "src/worker.js"
 compatibility_date = "2024-03-25"
 
