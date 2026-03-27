@@ -44,6 +44,11 @@
             <!-- No intent-filter with LAUNCHER category here to avoid a second icon in the app drawer -->
             <!-- It can be launched via explicit intent or adb shell am start -->
         </activity>
+
+        <activity
+            android:name="com.carlos.autoflow.foundation.ui.WebViewActivity"
+            android:exported="false"
+            android:label="AutoFlow" />
         
         <service
             android:name=".accessibility.AutoFlowAccessibilityService"
