@@ -1,11 +1,125 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <title>AutoFlow</title>
-</head>
-<body>
-<h1>✅ 静态页面正常加载</h1>
-<p>访问 /hello 或 /api 可以看到接口响应</p>
-</body>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AutoFlow 简介</title>
+    <style>
+      body {
+        font-family: "Inter", "Noto Sans SC", system-ui, sans-serif;
+        margin: 0;
+        background: #0e1117;
+        color: #e3e8f0;
+      }
+      header {
+        background: linear-gradient(135deg,#572df1,#14acff);
+        padding: 40px 5%;
+        text-align: center;
+      }
+      header h1 {
+        margin: 0;
+        font-size: clamp(2.4rem,4vw,3.6rem);
+        letter-spacing: 0.08em;
+      }
+      header p {
+        max-width: 720px;
+        margin: 12px auto 0;
+        color: rgba(255,255,255,0.85);
+        font-size: 1rem;
+        line-height: 1.7;
+      }
+      main {
+        padding: 40px 5%;
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+      }
+      section {
+        background: #141922;
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        border: 1px solid rgba(255,255,255,0.05);
+      }
+      section h2 {
+        margin-top: 0;
+        font-size: 1.6rem;
+        color: #f3f7ff;
+      }
+      section p {
+        margin-bottom: 1rem;
+        color: #cbd4e9;
+        line-height: 1.7;
+      }
+      ul {
+        padding-left: 1.5rem;
+        margin-top: 0;
+        color: #cbd4e9;
+      }
+      footer {
+        text-align: center;
+        padding: 24px 5% 40px;
+        font-size: 0.95rem;
+        color: rgba(255,255,255,0.6);
+      }
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid rgba(255,255,255,0.2);
+        padding: 10px 18px;
+        border-radius: 999px;
+        text-decoration: none;
+        color: inherit;
+        font-weight: 600;
+        transition: background 0.3s ease, border 0.3s ease;
+      }
+      .cta:hover {
+        background: rgba(255,255,255,0.08);
+        border-color: rgba(255,255,255,0.35);
+      }
+      @media (max-width: 600px){
+        section {padding:24px;}
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>AutoFlow</h1>
+      <p>AutoFlow 是一套面向个人与企业的 Android 自动化助手，集成脚本编排、流程录制、行为执行与辅助操作，让高频重复工作在手机上也能像在桌面端一样批量执行。</p>
+    </header>
+    <main>
+      <section>
+        <h2>核心能力</h2>
+        <ul>
+          <li>流程录制+回放，自动重现用户操作路径。</li>
+          <li>节点化图形编辑器，支持条件、循环、定时等钩子。</li>
+          <li>本地任务调度与支持后台运行的悬浮球入口。</li>
+          <li>融合辅助服务权限，兼容主流系统版本。</li>
+        </ul>
+      </section>
+      <section>
+        <h2>为什么选择 AutoFlow</h2>
+        <p>AutoFlow 面向移动端无人值守场景，辅以 SOTA 的 Accessibility 与无障碍节点，无需复杂配置可以快速部署。适用于效率工具、产品测试、渠道运营、个人助手等多种场景。</p>
+        <p>我们提供会员订阅与激活码机制，精简易用的付费体验＋多渠道分发保障合规。插件化的核心架构也方便后续接入更多广告与统计平台。</p>
+      </section>
+      <section>
+        <h2>适用客户场景</h2>
+        <ul>
+          <li>需要批量重复点击/填写的业务流程，例如签到、上报、抽奖等自动化操作。</li>
+          <li>QA 场景下的脚本回放与结果验证，无需安装额外设备。</li>
+          <li>OTT、电视端应用的辅助控制需求，可通过浮窗快速触发任务。</li>
+          <li>运营团队希望将广告/打点与自动化能力搭配，实现策略化运营。</li>
+        </ul>
+      </section>
+      <section>
+        <h2>平台与合作</h2>
+        <p>AutoFlow 支持友盟、极光等国内主流 SDK，与多家渠道（应用宝、华为、应用汇等）合作分发。我们的 SDK 初始化逻辑可根据渠道自动切换，广告/统计的开关由云端配置管理，确保合规发布。</p>
+        <p>希望了解更多？请联系我们的运营团队：<strong>微信 xbdcc1</strong>；或访问 <a class="cta" href="https://xbdcc.cn" target="_blank" rel="noreferrer">官网 xbdcc.cn</a></p>
+      </section>
+    </main>
+    <footer>
+      <p>© 2026 AutoFlow，致力于把手机变成可编程的自动化终端。</p>
+    </footer>
+  </body>
 </html>
