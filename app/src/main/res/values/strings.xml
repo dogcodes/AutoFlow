@@ -3,4 +3,6 @@
     <string name="privacy_policy_url">https://example.com/privacy</string>
     <string name="accessibility_service_description">AutoFlow无障碍服务，用于自动化操作和工作流执行。启用后可以自动点击、输入文本、滚动页面等操作。</string>
     <string name="monitor_accessibility_service_description">AutoFlow节点监控服务，用于实时监控和分析界面节点信息。启用后可以查看页面元素结构、属性和位置信息。</string>
+    <string name="settings_title">设置</string>
+    <string name="settings_subtitle">功能开发中，隐私政策与用户协议可查询</string>
 </resources>
