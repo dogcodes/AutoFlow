@@ -151,7 +151,7 @@ fun MoreScreen(
                 onBack = { destination = MoreDestination.MENU }
             ) {
                 MoreWebViewScreen(
-                    url = "http://xbdcc.cn/GrabRedEnvelope/index.html"
+                    url = "http://autoflow.xbdcc.cn/GrabRedEnvelope/index.html"
                 )
             }
         }
