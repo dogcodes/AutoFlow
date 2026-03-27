@@ -6,91 +6,116 @@
     <title>AutoFlow 隐私协议</title>
     <style>
       body {
-        font-family: "Noto Sans SC", "PingFang SC", sans-serif;
+        font-family: "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
         margin: 0;
-        background: #050708;
-        color: #eef2ff;
+        background: #f6f6f8;
+        color: #1c1c1c;
       }
-      .wrap {
-        max-width: 960px;
+      .container {
+        max-width: 720px;
         margin: 0 auto;
-        padding: 40px 5%;
+        padding: 32px 24px 48px;
       }
-      h1 {
-        font-size: clamp(2rem,4vw,3rem);
-        margin-bottom: 12px;
+      header {
+        text-align: left;
+        margin-bottom: 24px;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 2rem;
+      }
+      header p {
+        margin: 8px 0 0;
+        color: #5c5f66;
+        line-height: 1.7;
       }
       section {
-        background: rgba(255,255,255,0.02);
-        border-radius: 16px;
-        border: 1px solid rgba(255,255,255,0.05);
-        padding: 28px;
-        margin-bottom: 24px;
-        box-shadow: 0 25px 60px rgba(0,0,0,0.45);
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 30px rgba(15, 15, 30, 0.08);
       }
       h2 {
         margin-top: 0;
-        color: #fdfdff;
-        font-size: 1.4rem;
+        font-size: 1.3rem;
+        color: #121212;
       }
-      p, ul {
-        color: #cfd8ff;
-        line-height: 1.8;
-        font-size: 1rem;
+      p,
+      li {
+        color: #3a3a3f;
+        line-height: 1.7;
+        font-size: 0.98rem;
       }
       ul {
-        padding-left: 1.5rem;
+        padding-left: 1.3rem;
       }
       a {
-        color: #7fe4ff;
+        color: #2b5dfa;
         text-decoration: none;
       }
       a:hover {
         text-decoration: underline;
       }
-      .sdk-list li {
-        margin-bottom: 6px;
+      footer {
+        text-align: center;
+        font-size: 0.85rem;
+        color: #7a7d85;
+        margin-top: 16px;
+      }
+      @media (max-width: 600px) {
+        .container {
+          padding: 24px 16px 40px;
+        }
+        section {
+          padding: 20px;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="wrap">
-      <h1>AutoFlow 隐私协议</h1>
+    <div class="container">
+      <header>
+        <h1>AutoFlow 隐私协议</h1>
+        <p>说明 AutoFlow 如何收集、使用、储存和保护与您相关的数据。</p>
+      </header>
       <section>
-        <h2>一、我们收集的信息</h2>
-        <p>为了让 AutoFlow 正常运行，我们会收集必要的设备标识（如设备 ID）、性能指标、日志与渠道信息，以及部分运行过程中的统计数据。所有数据仅用于改善产品、监控稳定性和满足合规要求。</p>
+        <h2>一、收集的信息</h2>
+        <p>为了保障 AutoFlow 自动化流程的稳定运行，会收集设备标识（设备 ID）、运行日志、渠道与激活信息、性能指标以及推送统计等数据。</p>
+        <p>收集行为仅限于分析稳定性、改善产品与合规要求，不会用于其他目的。</p>
       </section>
       <section>
         <h2>二、数据用途与存储</h2>
         <ul>
-          <li>设备标识用于确认激活码绑定、会员时长与频控机制。</li>
-          <li>性能与行为日志帮助我们定位异常、优化自动化节点。</li>
-          <li>渠道信息（如友盟/极光）用于广告与推送统计，便于调整投放策略。</li>
-          <li>所有数据均采用必要的加密与权限控制，保存在安全环境内，不会出售。</li>
+          <li>设备 ID 等标识用于验证激活与会员有效期、控制调用频次。</li>
+          <li>行为与性能日志帮助定位异常、优化脚本节点与流程。</li>
+          <li>渠道信息（如友盟/极光）用于统计、推送与投放效果评估。</li>
+          <li>全程采用必要的加密与权限控制，数据仅在合理范围内保存与使用，不会出售。</li>
         </ul>
       </section>
       <section>
         <h2>三、第三方 SDK</h2>
-        <p>AutoFlow 依赖以下 SDK 提供特定服务：）</p>
-        <ul class="sdk-list">
-          <li>友盟统计（UMeng）：<a href="https://developer.umeng.com/docs/65532/detail/73442" target="_blank" rel="noreferrer">访问隐私政策</a></li>
-          <li>极光推送（JPush）：<a href="https://www.jiguang.cn/privacy/" target="_blank" rel="noreferrer">访问隐私政策</a></li>
+        <p>AutoFlow 需使用第三方 SDK 实现统计与推送，具体包括：</p>
+        <ul>
+          <li>友盟统计（UMeng）：<a href="https://developer.umeng.com/docs/65532/detail/73442" target="_blank" rel="noreferrer">官方隐私政策</a></li>
+          <li>极光推送（JPush）：<a href="https://www.jiguang.cn/privacy/" target="_blank" rel="noreferrer">官方隐私政策</a></li>
         </ul>
-        <p>这些 SDK 的具体行为由其官方隐私说明控制，AutoFlow 仅在其提供的接口范围内采集数据。</p>
+        <p>AutoFlow 仅在其允许范围内调用以上 SDK 的接口。</p>
       </section>
       <section>
         <h2>四、用户权利</h2>
         <ul>
-          <li>您可以随时通过系统设置撤销某些权限（如无障碍、通知），撤销后部分功能可能无法使用。</li>
-          <li>若需删除设备数据，可通过微信 <strong>xbdcc1</strong> 联系我们，我们将在合理时间内处理。</li>
-          <li>如对协议有疑问，可在官网 <a href="https://autoflow.xbdcc.cn" target="_blank" rel="noreferrer">autoflow.xbdcc.cn</a> 查看最新版本。</li>
+          <li>可通过系统设置随时撤销无障碍、通知等权限，撤销后部分功能可能受限。</li>
+          <li>如需删除设备数据或取消绑定，请联系官方微信 <strong>xbdcc1</strong>，我们将在合理时间内协助处理。</li>
+          <li>协议更新会在官网 <a href="https://autoflow.xbdcc.cn" target="_blank" rel="noreferrer">autoflow.xbdcc.cn</a> 公布，建议不定期查阅。</li>
         </ul>
       </section>
       <section>
-        <h2>五、我们如何保护数据</h2>
-        <p>AutoFlow 采用多层安全策略，包括数据加密、最小化存储、权限隔离等；定期更新第三方库并进行漏洞评估，确保运行时环境合规安全。</p>
+        <h2>五、安全保障</h2>
+        <p>采取多层安全策略（如数据加密、权限隔离、最小化存储、定期升级第三方依赖）确保运行环境合规。</p>
       </section>
-      <div class="footer">© 2026 AutoFlow 隐私运营团队</div>
+      <footer>© 2026 AutoFlow 隐私运营团队</footer>
     </div>
   </body>
 </html>

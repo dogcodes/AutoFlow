@@ -6,80 +6,111 @@
     <title>AutoFlow 用户协议</title>
     <style>
       body {
-        font-family: "Noto Sans SC", "PingFang SC", sans-serif;
+        font-family: "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
         margin: 0;
-        background: #0b0d14;
-        color: #f4f6fb;
+        background: #f6f6f8;
+        color: #1c1c1c;
       }
-      .wrap {
-        padding: 40px 5%;
-        max-width: 1000px;
+      .container {
+        max-width: 720px;
         margin: 0 auto;
+        padding: 32px 24px 48px;
       }
-      h1 {
-        margin: 0 0 16px;
-        font-size: clamp(2rem,5vw,2.8rem);
-        letter-spacing: 0.1em;
+      header {
+        text-align: left;
+        margin-bottom: 24px;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 2rem;
+      }
+      header p {
+        margin: 8px 0 0;
+        color: #5c5f66;
+        line-height: 1.7;
       }
       section {
-        background: rgba(255,255,255,0.02);
-        border: 1px solid rgba(255,255,255,0.05);
-        border-radius: 18px;
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
         padding: 24px;
-        margin-bottom: 24px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+        margin-bottom: 20px;
+        box-shadow: 0 10px 30px rgba(15, 15, 30, 0.08);
       }
       h2 {
         margin-top: 0;
-        font-size: 1.4rem;
-        color: #fafbfb;
+        font-size: 1.3rem;
+        color: #121212;
       }
-      p, li {
-        color: #cbd5f0;
+      p,
+      li {
+        color: #3a3a3f;
         line-height: 1.7;
+        font-size: 0.98rem;
       }
       ol {
-        padding-left: 1.5rem;
+        padding-left: 1.3rem;
       }
-      .footer {
+      strong {
+        color: #1b1c23;
+      }
+      a {
+        color: #2b5dfa;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      footer {
         text-align: center;
-        color: rgba(255,255,255,0.6);
-        font-size: 0.9rem;
-        margin-top: 32px;
+        font-size: 0.85rem;
+        color: #7a7d85;
+        margin-top: 16px;
+      }
+      @media (max-width: 600px) {
+        .container {
+          padding: 24px 16px 40px;
+        }
+        section {
+          padding: 20px;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="wrap">
-      <h1>AutoFlow 用户协议</h1>
+    <div class="container">
+      <header>
+        <h1>AutoFlow 用户协议</h1>
+        <p>说明您在本地安装与使用 AutoFlow 时需遵守的服务边界与责任规则。</p>
+      </header>
       <section>
-        <h2>一、服务说明与适用范围</h2>
-        <p>欢迎使用 AutoFlow。AutoFlow 是聚焦移动端自动化任务的一站式解决方案，提供流程录制、任务调度、辅助执行等能力。本协议适用于所有使用 AutoFlow App 及其关联服务的用户。</p>
-        <p>在使用前，请确保您已年满 18 岁且具备完全民事行为能力。如果您未满 18 岁，请在监护人陪同下阅读并遵守本协议。</p>
+        <h2>一、服务说明与适用</h2>
+        <p>AutoFlow 提供移动端自动化流程录制、执行、调度等能力。本协议覆盖 AutoFlow App、云端配置与关联服务的所有功能。</p>
+        <p>使用前请确认您具备完全民事行为能力；如未满 18 岁请在监护人监督下使用。</p>
       </section>
       <section>
-        <h2>二、账号与付费</h2>
+        <h2>二、账号、激活与付费</h2>
         <ol>
-          <li>部分功能需要激活码/会员。我们提供“激活码购买 + 输入激活码”的流程，在官方指定渠道（如微信 xbdcc1）完成实际支付后方可使用。</li>
-          <li>目前支付功能尚未接入第三方网关，点击“立即支付”按钮仅能看到提示；真正的付费交付通过客服或指定渠道完成。</li>
-          <li>AutoFlow 不会在您未确认支付的情况下自动扣费。任何形式的回调都必须在收到官方明确授权后才会处理权益发放。</li>
+          <li>部分功能需激活码或会员，需在官方指定渠道（如微信 <strong>xbdcc1</strong>）完成实际支付后获取。</li>
+          <li>“立即支付”按钮目前仅展示提示，实际付费需通过客服或渠道人员确认并录入激活码。</li>
+          <li>未经您确认，AutoFlow 不会执行自动扣费；任何权益发放都以后台状态与激活码为准。</li>
         </ol>
       </section>
       <section>
         <h2>三、权限与合规</h2>
-        <p>为了实现自动化能力，AutoFlow 需要访问无障碍服务、悬浮窗、后台运行等权限，您在授权时即代表同意。</p>
-        <p>禁止将 AutoFlow 用于违法或扰乱他人设备的操作。若我们发现违规行为，将暂停相关账户使用权。</p>
+        <p>AutoFlow 需要无障碍服务、悬浮窗、后台运行等权限来确保自动化流程执行，通过授权即视为同意。</p>
+        <p>不得利用本产品从事违法、骚扰或破坏他人设备等行为，若发现将立即限制相关功能。</p>
       </section>
       <section>
         <h2>四、知识产权与免责</h2>
-        <p>AutoFlow 所有内容（包括 UI、文字、脚本、配置等）均受知识产权保护，未经授权不得复制或传播。</p>
-        <p>由于设备差异、系统版本、第三方 SDK 或网络限制可能导致功能不稳定，AutoFlow 在法律允许范围内对因此产生的数据损失、业务中断不承担赔偿责任。</p>
+        <p>本应用及相关内容（包括文案、界面、脚本、配置等）均受版权/商标等知识产权保护，未经授权不得复制。</p>
+        <p>由于设备差异、操作系统或第三方依赖可能导致功能不稳定，AutoFlow 在法律允许范围内不对由此产生的数据损失或业务中断承担赔偿责任。</p>
       </section>
       <section>
         <h2>五、联系我们</h2>
-        <p>若有疑问或需要开通服务，请通过官方微信 <strong>xbdcc1</strong> 或访问官网 <a href="https://autoflow.xbdcc.cn" style="color:#9ef6ff;">autoflow.xbdcc.cn</a> 获取最新通知。</p>
+        <p>如需技术支持或权益开通，请联系官方微信 <strong>xbdcc1</strong> 或在官网 <a href="https://autoflow.xbdcc.cn" target="_blank" rel="noreferrer">autoflow.xbdcc.cn</a> 查询最新公告。</p>
       </section>
-      <div class="footer">© 2026 AutoFlow，一切权利保留。</div>
+      <footer>© 2026 AutoFlow。版权所有。</footer>
     </div>
   </body>
 </html>
