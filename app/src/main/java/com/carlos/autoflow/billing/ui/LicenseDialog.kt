@@ -122,66 +122,64 @@ fun LicenseDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // 激活区域
-                if (licenseStatus != LicenseManager.STATUS_PREMIUM) {
-                    if (!showActivation) {
-                        Column {
-                            Button(
-                                onClick = { showPayment = true },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF1976D2)
-                                )
-                            ) {
-                                Text("购买使用时长")
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            OutlinedButton(
-                                onClick = { showActivation = true },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text("已有激活码")
-                            }
-                        }
-                    } else {
-                        Column {
-                            OutlinedTextField(
-                                value = activationCode,
-                                onValueChange = { activationCode = it },
-                                label = { Text("激活码") },
-                                placeholder = { Text("请输入24位激活码") },
-                                modifier = Modifier.fillMaxWidth()
+                if (!showActivation) {
+                    Column {
+                        Button(
+                            onClick = { showPayment = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF1976D2)
                             )
+                        ) {
+                            Text("购买使用时长")
+                        }
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        OutlinedButton(
+                            onClick = { showActivation = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(if (licenseStatus == LicenseManager.STATUS_PREMIUM) "延长使用时长" else "已有激活码")
+                        }
+                    }
+                } else {
+                    Column {
+                        OutlinedTextField(
+                            value = activationCode,
+                            onValueChange = { activationCode = it },
+                            label = { Text("激活码") },
+                            placeholder = { Text("请输入24位激活码") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = { showActivation = false },
+                                modifier = Modifier.weight(1f)
                             ) {
-                                OutlinedButton(
-                                    onClick = { showActivation = false },
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("取消")
-                                }
+                                Text("取消")
+                            }
 
-                                Button(
-                                    onClick = {
-                                        if (licenseManager.activateLicense(activationCode)) {
-                                            licenseStatus = LicenseManager.STATUS_PREMIUM
-                                            message = "激活成功！"
-                                            showActivation = false
-                                        } else {
-                                            message = "激活码无效"
-                                        }
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                    enabled = activationCode.length == 24
-                                ) {
-                                    Text("激活")
-                                }
+                            Button(
+                                onClick = {
+                                    if (licenseManager.activateLicense(activationCode)) {
+                                        licenseStatus = LicenseManager.STATUS_PREMIUM
+                                        message = "激活成功！"
+                                        showActivation = false
+                                    } else {
+                                        message = "激活码无效"
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                enabled = activationCode.length == 24
+                            ) {
+                                Text("激活")
                             }
                         }
                     }

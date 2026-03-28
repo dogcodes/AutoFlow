@@ -28,6 +28,8 @@ class LicenseManager(
         private const val ONE_DAY_MILLIS = 1000L * 60 * 60 * 24
 
         private const val VALIDITY_DAY_MAX = 30
+        private const val TYPE_MIN = 0
+        private const val TYPE_MAX = 3
         private val DATE_FORMATTER: DateTimeFormatter =
             DateTimeFormatter.ofPattern("yyMMdd")
 
@@ -85,12 +87,14 @@ class LicenseManager(
     fun grantDays(
         days: Int,
         validityDays: Int = 1,
+        type: Int = 1,
         seed: String = System.currentTimeMillis().toString()
     ): Boolean {
         return activateLicense(
             generateLicenseKey(
                 days = days,
                 validityDays = validityDays,
+                type = type,
                 seed = seed,
                 deviceId = getDeviceId()
             )
@@ -160,6 +164,7 @@ class LicenseManager(
     fun generateLicenseKey(
         days: Int,
         validityDays: Int,
+        type: Int,
         seed: String,
         deviceId: String
     ): String {
@@ -168,9 +173,11 @@ class LicenseManager(
         val daysStr = normalizedDays.toString().padStart(3, '0')
         val dateStr = LocalDate.now().format(DATE_FORMATTER)
         val validityStr = normalizedValidity.toString().padStart(2, '0')
+        val normalizedType = type.coerceIn(TYPE_MIN, TYPE_MAX)
+        val typeStr = normalizedType.toString()
         val cleanSeed = seed.filter { it.isLetterOrDigit() }
-        val seedData = cleanSeed.take(5).padEnd(5, '0')
-        val data = daysStr + dateStr + validityStr + seedData
+        val seedData = cleanSeed.take(4).padEnd(4, '0')
+        val data = daysStr + dateStr + validityStr + typeStr + seedData
         val checksum = generateChecksum(data, deviceId)
         return data + checksum
     }
@@ -183,8 +190,10 @@ class LicenseManager(
 
         if (!validateDateSegment(data.substring(3, 9))) return false
         val validityDays = data.substring(9, 11).toIntOrNull() ?: return false
+        val typeValue = data.substring(11, 12).toIntOrNull() ?: return false
 
         if (validityDays !in 1..VALIDITY_DAY_MAX) return false
+        if (typeValue !in TYPE_MIN..TYPE_MAX) return false
         if (isExpired(data.substring(3, 9), validityDays)) return false
 
         return generateChecksum(data, deviceId) == checksum
@@ -205,8 +214,10 @@ class LicenseManager(
         if (generateChecksum(data, deviceId) != checksum) return false
         val datePart = data.substring(3, 9)
         val validityDays = data.substring(9, 11).toIntOrNull() ?: return false
+        val typeValue = data.substring(11, 12).toIntOrNull() ?: return false
 
-        return validateDateSegment(datePart) && validityDays in 1..VALIDITY_DAY_MAX && !isExpired(datePart, validityDays)
+        return validateDateSegment(datePart) && validityDays in 1..VALIDITY_DAY_MAX &&
+            typeValue in TYPE_MIN..TYPE_MAX && !isExpired(datePart, validityDays)
     }
 
     private fun parseDaysFromKey(key: String): Int? {

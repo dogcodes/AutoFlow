@@ -12,9 +12,11 @@ class LicenseKeyGenerationTest {
         val seed = "seed1234567890"
         val licenseManager = LicenseManagerForTest()
         val validityDays = 3
+        val type = 1
         val key = licenseManager.generateLicenseKey(
             days = days,
             validityDays = validityDays,
+            type = type,
             seed = seed,
             deviceId = fakeDeviceId
         )

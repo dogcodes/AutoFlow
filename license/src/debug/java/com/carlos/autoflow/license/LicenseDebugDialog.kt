@@ -34,6 +34,7 @@ fun LicenseDebugDialog(
     var debugDeviceId by remember(initialDeviceId) { mutableStateOf(initialDeviceId) }
     var debugDays by remember { mutableStateOf("30") }
     var debugValidityDays by remember { mutableStateOf("3") }
+    var debugType by remember { mutableStateOf("1") }
     var generatedDebugKey by remember { mutableStateOf("") }
     var verifyActivationKey by remember { mutableStateOf("") }
     var verifyMessage by remember { mutableStateOf("") }
@@ -65,6 +66,13 @@ fun LicenseDebugDialog(
                     value = debugValidityDays,
                     onValueChange = { debugValidityDays = it.filter(Char::isDigit) },
                     label = { Text("激活码有效期（天）") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = debugType,
+                    onValueChange = { debugType = it.filter(Char::isDigit) },
+                    label = { Text("激活码类型（0-3）") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 if (generatedDebugKey.isNotEmpty()) {
@@ -107,10 +115,12 @@ fun LicenseDebugDialog(
                         onClick = {
                                 val days = debugDays.toIntOrNull() ?: 30
                                 val validity = debugValidityDays.toIntOrNull() ?: 1
+                                val typeValue = debugType.toIntOrNull() ?: 1
                                 val result = licenseDebugTool.generateKey(
                                     deviceId = debugDeviceId,
                                     days = days,
-                                    validityDays = validity
+                                    validityDays = validity,
+                                    type = typeValue
                                 )
                             generatedDebugKey = result.activationKey
                             clipboardManager.setText(AnnotatedString(result.activationKey))
