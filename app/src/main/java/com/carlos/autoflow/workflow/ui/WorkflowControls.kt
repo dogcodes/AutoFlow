@@ -35,6 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.carlos.autoflow.ui.theme.Dimens
 import com.carlos.autoflow.workflow.viewmodel.CanvasViewModel
 import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
+import com.carlos.autoflow.compliance.ComplianceConfig
 
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.lazy.LazyColumn
@@ -118,99 +119,101 @@ fun WorkflowControls(
             }
         }
 
-        // 右上角：功能菜单
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(Dimens.WorkflowEditor.DefaultPadding)
-        ) {
-            var showMenu by remember { mutableStateOf(false) }
-            
-            FloatingActionButton(
-                onClick = { showMenu = true },
-                modifier = Modifier.size(48.dp),
-                containerColor = MaterialTheme.colorScheme.primary
+        if (!ComplianceConfig.isComplianceMode) {
+            // 右上角：功能菜单
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(Dimens.WorkflowEditor.DefaultPadding)
             ) {
-                Icon(Icons.Default.MoreVert, "菜单", tint = Color.White)
-            }
-            
-            DropdownMenu(
-                expanded = showMenu,
-                onDismissRequest = { showMenu = false }
-            ) {
-                DropdownMenuItem(
-                    text = { Text("📥 导入工作流") },
-                    onClick = {
-                        showMenu = false
-                        onShowImportDialog()
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text("💡 加载示例") },
-                    onClick = {
-                        showMenu = false
-                        workflowViewModel.loadSampleWorkflow()
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text("💾 保存当前任务") },
-                    onClick = {
-                        showMenu = false
-                        onSaveWorkflow()
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text("📤 导出工作流") },
-                    onClick = {
-                        showMenu = false
-                        onShowExportDialog()
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text("▶️ 执行工作流") },
-                    onClick = {
-                        showMenu = false
-                        onShowExecuteDialog()
-                    }
-                )
-                DropdownMenuItem(
-                    text = { 
-                        Text(if (canvasState.showFlowAnimation) "🔄 关闭流动动画" else "🔄 开启流动动画") 
-                    },
-                    onClick = {
-                        showMenu = false
-                        canvasViewModel.toggleFlowAnimation()
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text("💎 许可证管理") },
-                    onClick = {
-                        showMenu = false
-                        onShowLicenseDialog()
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text("📱 无障碍示例") },
-                    onClick = {
-                        showMenu = false
-                        onShowAccessibilityExamples()
-                    }
-                )
-                if (isDebug) {
+                var showMenu by remember { mutableStateOf(false) }
+                
+                FloatingActionButton(
+                    onClick = { showMenu = true },
+                    modifier = Modifier.size(48.dp),
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(Icons.Default.MoreVert, "菜单", tint = Color.White)
+                }
+                
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
                     DropdownMenuItem(
-                        text = { Text("📄 无障碍JSON示例") },
+                        text = { Text("📥 导入工作流") },
                         onClick = {
                             showMenu = false
-                            onShowJsonExamplesDialog() // 调用新的lambda
+                            onShowImportDialog()
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("📢 广告测试") },
+                        text = { Text("💡 加载示例") },
                         onClick = {
                             showMenu = false
-                            onShowAdDebug()
+                            workflowViewModel.loadSampleWorkflow()
                         }
                     )
+                    DropdownMenuItem(
+                        text = { Text("💾 保存当前任务") },
+                        onClick = {
+                            showMenu = false
+                            onSaveWorkflow()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("📤 导出工作流") },
+                        onClick = {
+                            showMenu = false
+                            onShowExportDialog()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("▶️ 执行工作流") },
+                        onClick = {
+                            showMenu = false
+                            onShowExecuteDialog()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { 
+                            Text(if (canvasState.showFlowAnimation) "🔄 关闭流动动画" else "🔄 开启流动动画") 
+                        },
+                        onClick = {
+                            showMenu = false
+                            canvasViewModel.toggleFlowAnimation()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("💎 许可证管理") },
+                        onClick = {
+                            showMenu = false
+                            onShowLicenseDialog()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("📱 无障碍示例") },
+                        onClick = {
+                            showMenu = false
+                            onShowAccessibilityExamples()
+                        }
+                    )
+                    if (isDebug) {
+                        DropdownMenuItem(
+                            text = { Text("📄 无障碍JSON示例") },
+                            onClick = {
+                                showMenu = false
+                                onShowJsonExamplesDialog() // 调用新的lambda
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("📢 广告测试") },
+                            onClick = {
+                                showMenu = false
+                                onShowAdDebug()
+                            }
+                        )
+                    }
                 }
             }
         }

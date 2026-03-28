@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
+import com.carlos.autoflow.compliance.ComplianceConfig
 import com.carlos.autoflow.demo.DemoAppActivity
 import com.carlos.autoflow.recorder.ui.RecordingControlPanel
 import com.carlos.autoflow.workflow.models.Workflow
@@ -93,11 +94,21 @@ fun MainHomeScreen(
         }
     }
 
+    val availableTabs = remember {
+        HomeTab.values().filter {
+            it != HomeTab.RECORD || !ComplianceConfig.isComplianceMode
+        }
+    }
+
+    if (ComplianceConfig.isComplianceMode && currentTab == HomeTab.RECORD) {
+        currentTab = HomeTab.TASKS
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             NavigationBar {
-                HomeTab.entries.forEach { tab ->
+                availableTabs.forEach { tab ->
                     NavigationBarItem(
                         selected = currentTab == tab,
                         onClick = { currentTab = tab },
@@ -120,12 +131,12 @@ fun MainHomeScreen(
     ) { innerPadding ->
         when (currentTab) {
             HomeTab.TASKS -> {
-                    TasksScreen(
-                        modifier = Modifier,
-                        workflowViewModel = workflowViewModel,
-                        workflowRepository = workflowRepository,
-                        historyRepository = historyRepository,
-                        onEditTask = { workflow ->
+                        TasksScreen(
+                            modifier = Modifier,
+                            workflowViewModel = workflowViewModel,
+                            workflowRepository = workflowRepository,
+                            historyRepository = historyRepository,
+                            onEditTask = { workflow ->
                             workflowViewModel.loadWorkflow(workflow)
                             currentTab = HomeTab.ARRANGE
                         },
@@ -138,9 +149,10 @@ fun MainHomeScreen(
                             workflowViewModel.loadWorkflow(newWorkflow)
                             currentTab = HomeTab.ARRANGE
                         },
-                        onRewardAdRequest = rewardAdRequest,
-                        contentPadding = innerPadding
-                    )
+                            onRewardAdRequest = rewardAdRequest,
+                            hideRewardAd = ComplianceConfig.isComplianceMode,
+                            contentPadding = innerPadding
+                        )
                 }
 
             HomeTab.ARRANGE -> {
@@ -160,6 +172,7 @@ fun MainHomeScreen(
             }
 
             HomeTab.RECORD -> {
+                if (ComplianceConfig.isComplianceMode) return@Scaffold
                 Box(
                     modifier = Modifier
                         .fillMaxSize()

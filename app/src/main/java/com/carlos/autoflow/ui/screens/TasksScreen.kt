@@ -124,6 +124,7 @@ fun TasksScreen(
     onEditTask: (Workflow) -> Unit,
     onCreateTask: () -> Unit,
     onRewardAdRequest: () -> Unit,
+    hideRewardAd: Boolean,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
 ) {
@@ -174,7 +175,9 @@ fun TasksScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    RewardedAdPromo(onClick = onRewardAdRequest)
+                    if (!hideRewardAd) {
+                        RewardedAdPromo(onClick = onRewardAdRequest)
+                    }
                 }
             }
         } else {
@@ -183,13 +186,15 @@ fun TasksScreen(
                 contentPadding = mergedPadding,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                item {
-                    RewardedAdPromo(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        onClick = onRewardAdRequest
-                    )
+                if (!hideRewardAd) {
+                    item {
+                        RewardedAdPromo(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            onClick = onRewardAdRequest
+                        )
+                    }
                 }
                 items(workflows, key = { it.id }) { workflow ->
                     TaskCard(

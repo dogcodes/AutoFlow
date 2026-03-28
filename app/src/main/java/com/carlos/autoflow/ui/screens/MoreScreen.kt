@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.carlos.autoflow.billing.ui.LicenseDialog
+import com.carlos.autoflow.compliance.ComplianceConfig
 import com.carlos.autoflow.foundation.web.FoundationWebViewHelper
 import com.carlos.autoflow.monitor.NodeMonitorDemo
 
@@ -71,6 +72,13 @@ fun MoreScreen(
     ) {
         when (destination) {
             MoreDestination.MENU -> {
+                val menuItems = listOf(
+                    "历史记录" to Icons.Default.History,
+                    "示例应用" to Icons.Default.Apps,
+                    "设置" to Icons.Default.Settings,
+                    "关于" to Icons.Default.Info,
+                    "帮助" to Icons.Default.Visibility
+                )
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
@@ -87,13 +95,17 @@ fun MoreScreen(
                             destination = MoreDestination.HISTORY
                         }
                     }
-                    item {
-                        MoreMenuItem("节点监控器", Icons.Default.Visibility) {
-                            destination = MoreDestination.MONITOR
+                    if (!ComplianceConfig.isComplianceMode) {
+                        item {
+                            MoreMenuItem("节点监控器", Icons.Default.Visibility) {
+                                destination = MoreDestination.MONITOR
+                            }
                         }
                     }
-                    item {
-                        MoreMenuItem("示例应用", Icons.Default.Apps, onLaunchDemo)
+                    if (!ComplianceConfig.isComplianceMode) {
+                        item {
+                            MoreMenuItem("示例应用", Icons.Default.Apps, onLaunchDemo)
+                        }
                     }
                     item {
                         MoreMenuItem("设置", Icons.Default.Settings) {
@@ -105,14 +117,18 @@ fun MoreScreen(
                             destination = MoreDestination.ABOUT
                         }
                     }
-                    item {
-                        MoreMenuItem("帮助", Icons.Default.Visibility) {
-                            destination = MoreDestination.HELP
+                    if (!ComplianceConfig.isComplianceMode) {
+                        item {
+                            MoreMenuItem("帮助", Icons.Default.Visibility) {
+                                destination = MoreDestination.HELP
+                            }
                         }
                     }
-                    item {
-                        MoreMenuItem("许可证管理", Icons.Default.Stars) {
-                            showLicenseDialog = true
+                    if (!ComplianceConfig.isComplianceMode) {
+                        item {
+                            MoreMenuItem("许可证管理", Icons.Default.Stars) {
+                                showLicenseDialog = true
+                            }
                         }
                     }
                 }

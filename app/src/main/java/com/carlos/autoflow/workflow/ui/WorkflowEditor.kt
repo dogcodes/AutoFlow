@@ -55,6 +55,7 @@ import com.carlos.autoflow.BuildConfig
 import com.carlos.autoflow.billing.ui.LicenseDialog
 import com.carlos.autoflow.billing.BannerAdView
 import com.carlos.autoflow.license.FeatureManager
+import com.carlos.autoflow.compliance.ComplianceConfig
 import com.carlos.autoflow.demo.DemoAppActivity
 import com.carlos.autoflow.ui.SideDrawer
 import com.carlos.autoflow.ui.screens.HistoryScreen
@@ -150,9 +151,11 @@ fun WorkflowEditor(
                 }
 
                 // 无障碍权限状态卡片
-                AccessibilityPermissionCard(
-                    modifier = Modifier.align(Alignment.TopCenter)
-                )
+                if (!ComplianceConfig.isComplianceMode) {
+                    AccessibilityPermissionCard(
+                        modifier = Modifier.align(Alignment.TopCenter)
+                    )
+                }
 
                 WorkflowControls(
                     workflowViewModel = workflowViewModel,
@@ -213,19 +216,21 @@ fun WorkflowEditor(
                     NodeMonitorDemo()
                     
                     // 侧滑栏按钮
-                    FloatingActionButton(
-                        onClick = { showSideDrawer = true },
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(16.dp)
-                            .size(48.dp),
-                        containerColor = MaterialTheme.colorScheme.secondary
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Menu,
-                            contentDescription = "打开侧滑栏",
-                            tint = Color.White
-                        )
+                    if (!ComplianceConfig.isComplianceMode) {
+                        FloatingActionButton(
+                            onClick = { showSideDrawer = true },
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .padding(16.dp)
+                                .size(48.dp),
+                            containerColor = MaterialTheme.colorScheme.secondary
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "打开侧滑栏",
+                                tint = Color.White
+                            )
+                        }
                     }
                 }
             }
@@ -244,20 +249,21 @@ fun WorkflowEditor(
                         modifier = Modifier.fillMaxSize().padding(16.dp)
                     )
                     
-                    // 侧滑栏按钮
-                    FloatingActionButton(
-                        onClick = { showSideDrawer = true },
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(16.dp)
-                            .size(48.dp),
-                        containerColor = MaterialTheme.colorScheme.secondary
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Menu,
-                            contentDescription = "打开侧滑栏",
-                            tint = Color.White
-                        )
+                    if (!ComplianceConfig.isComplianceMode) {
+                        FloatingActionButton(
+                            onClick = { showSideDrawer = true },
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .padding(16.dp)
+                                .size(48.dp),
+                            containerColor = MaterialTheme.colorScheme.secondary
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "打开侧滑栏",
+                                tint = Color.White
+                            )
+                        }
                     }
                 }
             }
@@ -265,20 +271,21 @@ fun WorkflowEditor(
                 Box(modifier = Modifier.fillMaxSize()) {
                     HistoryScreen()
                     
-                    // 侧滑栏按钮
-                    FloatingActionButton(
-                        onClick = { showSideDrawer = true },
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(16.dp)
-                            .size(48.dp),
-                        containerColor = MaterialTheme.colorScheme.secondary
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Menu,
-                            contentDescription = "打开侧滑栏",
-                            tint = Color.White
-                        )
+                    if (!ComplianceConfig.isComplianceMode) {
+                        FloatingActionButton(
+                            onClick = { showSideDrawer = true },
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .padding(16.dp)
+                                .size(48.dp),
+                            containerColor = MaterialTheme.colorScheme.secondary
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "打开侧滑栏",
+                                tint = Color.White
+                            )
+                        }
                     }
                 }
             }
