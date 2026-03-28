@@ -9,8 +9,21 @@ import androidx.security.crypto.MasterKey
 import java.security.MessageDigest
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.format.ResolverStyle
 import java.util.Calendar
+
+sealed interface ActivationResult {
+    object Success : ActivationResult
+    data class Failure(val reason: FailureReason) : ActivationResult
+}
+
+enum class FailureReason {
+    FORMAT_ERROR,
+    EXPIRED,
+    TYPE_MISMATCH,
+    ALREADY_USED,
+    DEVICE_MISMATCH,
+    UNKNOWN
+}
 
 class LicenseManager(
     private val context: Context,
@@ -30,6 +43,7 @@ class LicenseManager(
         private const val VALIDITY_DAY_MAX = 30
         private const val TYPE_MIN = 0
         private const val TYPE_MAX = 3
+        private val ALLOWED_TYPES_FOR_APP = setOf(0, 1)
         private val DATE_FORMATTER: DateTimeFormatter =
             DateTimeFormatter.ofPattern("yyMMdd")
 
@@ -52,42 +66,56 @@ class LicenseManager(
         }
     }
 
-    fun activateLicense(activationCode: String): Boolean {
-        if (!validateLicenseKey(activationCode)) {
-            return false
-        }
-        val currentActivatedKeys = getActivatedKeys().toMutableSet()
-        if (currentActivatedKeys.contains(activationCode)) {
-            return false
+    fun activateLicense(activationCode: String): ActivationResult {
+        val deviceId = getDeviceId()
+        if (deviceId.isEmpty()) {
+            return ActivationResult.Failure(FailureReason.DEVICE_MISMATCH)
         }
 
-        val daysToAdd = parseDaysFromKey(activationCode) ?: return false
-        val isCurrentlyActive = isPremium()
-        var currentTotalDays = prefs.getInt(KEY_TOTAL_DAYS, 0)
+        when (val parseResult = parseActivationCode(activationCode, deviceId)) {
+            is ActivationParseResult.Failure -> return ActivationResult.Failure(parseResult.reason)
+            is ActivationParseResult.Success -> {
+                val parsed = parseResult.parsed
+                if (parsed.type !in ALLOWED_TYPES_FOR_APP) {
+                    return ActivationResult.Failure(FailureReason.TYPE_MISMATCH)
+                }
 
-        if (!isCurrentlyActive) {
-            prefs.edit()
-                .putLong(KEY_TRIAL_START, getStartOfDayMillis(System.currentTimeMillis()))
-                .putStringSet(KEY_ACTIVATED_KEYS, emptySet())
-                .putInt(KEY_TOTAL_DAYS, 0)
-                .apply()
-            currentActivatedKeys.clear()
-            currentTotalDays = 0
+                val currentActivatedKeys = getActivatedKeys().toMutableSet()
+                if (currentActivatedKeys.contains(activationCode)) {
+                    return ActivationResult.Failure(FailureReason.ALREADY_USED)
+                }
+
+                val daysToAdd = parsed.days
+                val isCurrentlyActive = isPremium()
+                var currentTotalDays = prefs.getInt(KEY_TOTAL_DAYS, 0)
+
+                if (!isCurrentlyActive) {
+                    prefs.edit()
+                        .putLong(KEY_TRIAL_START, getStartOfDayMillis(System.currentTimeMillis()))
+                        .putStringSet(KEY_ACTIVATED_KEYS, emptySet())
+                        .putInt(KEY_TOTAL_DAYS, 0)
+                        .apply()
+                    currentActivatedKeys.clear()
+                    currentTotalDays = 0
+                }
+
+                currentActivatedKeys.add(activationCode)
+                val newTotalDays = currentTotalDays + daysToAdd
+                prefs.edit()
+                    .putStringSet(KEY_ACTIVATED_KEYS, currentActivatedKeys)
+                    .putInt(KEY_TOTAL_DAYS, newTotalDays)
+                    .apply()
+                return ActivationResult.Success
+            }
         }
 
-        currentActivatedKeys.add(activationCode)
-        val newTotalDays = currentTotalDays + daysToAdd
-        prefs.edit()
-            .putStringSet(KEY_ACTIVATED_KEYS, currentActivatedKeys)
-            .putInt(KEY_TOTAL_DAYS, newTotalDays)
-            .apply()
-        return true
+        return ActivationResult.Failure(FailureReason.UNKNOWN)
     }
 
     fun grantDays(
         days: Int,
         validityDays: Int = 1,
-        type: Int = 1,
+        type: Int = 0,
         seed: String = System.currentTimeMillis().toString()
     ): Boolean {
         return activateLicense(
@@ -98,7 +126,7 @@ class LicenseManager(
                 seed = seed,
                 deviceId = getDeviceId()
             )
-        )
+        ) is ActivationResult.Success
     }
 
     fun getLicenseStatus(): Int {
@@ -183,20 +211,8 @@ class LicenseManager(
     }
 
     fun verifyLicenseKey(key: String, deviceId: String): Boolean {
-        if (key.length != 24 || deviceId.isEmpty()) return false
-
-        val data = key.substring(0, 16)
-        val checksum = key.substring(16)
-
-        if (!validateDateSegment(data.substring(3, 9))) return false
-        val validityDays = data.substring(9, 11).toIntOrNull() ?: return false
-        val typeValue = data.substring(11, 12).toIntOrNull() ?: return false
-
-        if (validityDays !in 1..VALIDITY_DAY_MAX) return false
-        if (typeValue !in TYPE_MIN..TYPE_MAX) return false
-        if (isExpired(data.substring(3, 9), validityDays)) return false
-
-        return generateChecksum(data, deviceId) == checksum
+        val parseResult = parseActivationCode(key, deviceId)
+        return parseResult is ActivationParseResult.Success
     }
 
     private fun getActivatedKeys(): Set<String> {
@@ -216,13 +232,9 @@ class LicenseManager(
         val validityDays = data.substring(9, 11).toIntOrNull() ?: return false
         val typeValue = data.substring(11, 12).toIntOrNull() ?: return false
 
+        val parsedDate = LocalDate.parse(datePart, DATE_FORMATTER)
         return validateDateSegment(datePart) && validityDays in 1..VALIDITY_DAY_MAX &&
-            typeValue in TYPE_MIN..TYPE_MAX && !isExpired(datePart, validityDays)
-    }
-
-    private fun parseDaysFromKey(key: String): Int? {
-        if (key.length < 3) return null
-        return key.substring(0, 3).toIntOrNull()
+            typeValue in TYPE_MIN..TYPE_MAX && !isExpired(parsedDate, validityDays)
     }
 
     private fun generateChecksum(data: String, deviceId: String): String {
@@ -240,10 +252,68 @@ class LicenseManager(
         }
     }
 
-    private fun isExpired(segment: String, validityDays: Int): Boolean {
-        val startDate = LocalDate.parse(segment, DATE_FORMATTER)
-        val expiry = startDate.plusDays((validityDays - 1).toLong())
+    private fun isExpired(date: LocalDate, validityDays: Int): Boolean {
+        val expiry = date.plusDays((validityDays - 1).toLong())
         return LocalDate.now().isAfter(expiry)
+    }
+
+    private fun parseActivationCode(key: String, deviceId: String): ActivationParseResult {
+        if (key.length != 24 || deviceId.isEmpty()) {
+            return ActivationParseResult.Failure(FailureReason.FORMAT_ERROR)
+        }
+
+        val data = key.substring(0, 16)
+        val checksum = key.substring(16)
+        val datePart = data.substring(3, 9)
+        val validityDays = data.substring(9, 11).toIntOrNull() ?: return ActivationParseResult.Failure(FailureReason.FORMAT_ERROR)
+        val typeValue = data.substring(11, 12).toIntOrNull() ?: return ActivationParseResult.Failure(FailureReason.FORMAT_ERROR)
+        val days = data.substring(0, 3).toIntOrNull() ?: return ActivationParseResult.Failure(FailureReason.FORMAT_ERROR)
+
+        if (!validateDateSegment(datePart)) {
+            return ActivationParseResult.Failure(FailureReason.FORMAT_ERROR)
+        }
+
+        if (validityDays !in 1..VALIDITY_DAY_MAX) {
+            return ActivationParseResult.Failure(FailureReason.FORMAT_ERROR)
+        }
+
+        if (typeValue !in TYPE_MIN..TYPE_MAX) {
+            return ActivationParseResult.Failure(FailureReason.TYPE_MISMATCH)
+        }
+
+        val parsedDate = LocalDate.parse(datePart, DATE_FORMATTER)
+        if (isExpired(parsedDate, validityDays)) {
+            return ActivationParseResult.Failure(FailureReason.EXPIRED)
+        }
+
+        if (generateChecksum(data, deviceId) != checksum) {
+            return ActivationParseResult.Failure(FailureReason.DEVICE_MISMATCH)
+        }
+
+        return ActivationParseResult.Success(
+            ParsedLicense(
+                days = days,
+                date = parsedDate,
+                validityDays = validityDays,
+                type = typeValue,
+                data = data,
+                checksum = checksum
+            )
+        )
+    }
+
+    private data class ParsedLicense(
+        val days: Int,
+        val date: LocalDate,
+        val validityDays: Int,
+        val type: Int,
+        val data: String,
+        val checksum: String
+    )
+
+    private sealed interface ActivationParseResult {
+        data class Success(val parsed: ParsedLicense) : ActivationParseResult
+        data class Failure(val reason: FailureReason) : ActivationParseResult
     }
 
     private fun calculateDaysUsed(trialStart: Long): Long {

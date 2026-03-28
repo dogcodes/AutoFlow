@@ -34,7 +34,7 @@ fun LicenseDebugDialog(
     var debugDeviceId by remember(initialDeviceId) { mutableStateOf(initialDeviceId) }
     var debugDays by remember { mutableStateOf("30") }
     var debugValidityDays by remember { mutableStateOf("3") }
-    var debugType by remember { mutableStateOf("1") }
+    var debugType by remember { mutableStateOf("0") }
     var generatedDebugKey by remember { mutableStateOf("") }
     var verifyActivationKey by remember { mutableStateOf("") }
     var verifyMessage by remember { mutableStateOf("") }

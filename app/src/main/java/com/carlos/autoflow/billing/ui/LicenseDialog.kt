@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.carlos.autoflow.BuildConfig
 import com.carlos.autoflow.billing.PaymentDialog
+import com.carlos.autoflow.license.ActivationResult
+import com.carlos.autoflow.license.FailureReason
 import com.carlos.autoflow.license.LicenseManager
 
 @Composable
@@ -166,21 +168,28 @@ fun LicenseDialog(
                                 Text("取消")
                             }
 
-                            Button(
-                                onClick = {
-                                    if (licenseManager.activateLicense(activationCode)) {
-                                        licenseStatus = LicenseManager.STATUS_PREMIUM
-                                        message = "激活成功！"
-                                        showActivation = false
-                                    } else {
-                                        message = "激活码无效"
-                                    }
-                                },
-                                modifier = Modifier.weight(1f),
-                                enabled = activationCode.length == 24
-                            ) {
-                                Text("激活")
-                            }
+                                Button(
+                                    onClick = {
+                                        if (activationCode.length == 24) {
+                                            when (val result = licenseManager.activateLicense(activationCode)) {
+                                                ActivationResult.Success -> {
+                                                    licenseStatus = LicenseManager.STATUS_PREMIUM
+                                                    message = "激活成功！"
+                                                    showActivation = false
+                                                }
+                                                is ActivationResult.Failure -> {
+                                                    message = result.reason.toMessage()
+                                                }
+                                            }
+                                        } else {
+                                            message = "激活码格式错误"
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    enabled = activationCode.length == 24
+                                ) {
+                                    Text("激活")
+                                }
                         }
                     }
                 }
@@ -276,5 +285,16 @@ private fun FeatureRow(
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.End
         )
+    }
+}
+
+private fun FailureReason.toMessage(): String {
+    return when (this) {
+        FailureReason.FORMAT_ERROR -> "激活码格式错误"
+        FailureReason.EXPIRED -> "激活码已过期"
+        FailureReason.TYPE_MISMATCH -> "此激活码不适用于当前应用"
+        FailureReason.ALREADY_USED -> "激活码已被使用"
+        FailureReason.DEVICE_MISMATCH -> "设备与激活码不匹配"
+        FailureReason.UNKNOWN -> "激活码无效"
     }
 }
