@@ -22,6 +22,9 @@ import com.carlos.autoflow.billing.PaymentDialog
 import com.carlos.autoflow.license.ActivationResult
 import com.carlos.autoflow.license.FailureReason
 import com.carlos.autoflow.license.LicenseManager
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun LicenseDialog(
@@ -94,11 +97,20 @@ fun LicenseDialog(
                         )
 
                         if (licenseStatus == LicenseManager.STATUS_PREMIUM) {
+                            val expiryTimestamp = licenseManager.getExpiryTimestamp()
                             Text(
                                 text = "剩余 ${licenseManager.getRemainingDays()} 天",
                                 color = Color.White,
                                 fontSize = 12.sp
                             )
+                            expiryTimestamp?.let {
+                                val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                                Text(
+                                    text = "截至 ${formatter.format(Date(it))}",
+                                    color = Color(0xFFE0F2F1),
+                                    fontSize = 10.sp
+                                )
+                            }
                         }
                     }
                 }

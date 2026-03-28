@@ -176,6 +176,13 @@ class LicenseManager(
         return (totalDays - daysUsed).toInt().coerceAtLeast(0)
     }
 
+    fun getExpiryTimestamp(): Long? {
+        val trialStart = prefs.getLong(KEY_TRIAL_START, 0)
+        val totalDays = prefs.getInt(KEY_TOTAL_DAYS, 0)
+        if (trialStart == 0L || totalDays == 0) return null
+        return trialStart + totalDays * ONE_DAY_MILLIS
+    }
+
     fun resetLicense() {
         prefs.edit()
             .remove(KEY_ACTIVATED_KEYS)
