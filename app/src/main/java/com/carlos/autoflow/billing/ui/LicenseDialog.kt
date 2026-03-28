@@ -150,7 +150,7 @@ fun LicenseDialog(
                                 value = activationCode,
                                 onValueChange = { activationCode = it },
                                 label = { Text("激活码") },
-                                placeholder = { Text("请输入20位激活码") },
+                                placeholder = { Text("请输入24位激活码") },
                                 modifier = Modifier.fillMaxWidth()
                             )
 
@@ -178,7 +178,7 @@ fun LicenseDialog(
                                         }
                                     },
                                     modifier = Modifier.weight(1f),
-                                    enabled = activationCode.length == 20
+                                    enabled = activationCode.length == 24
                                 ) {
                                     Text("激活")
                                 }

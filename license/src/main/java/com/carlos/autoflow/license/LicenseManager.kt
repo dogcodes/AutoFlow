@@ -7,6 +7,9 @@ import android.provider.Settings
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import java.security.MessageDigest
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.ResolverStyle
 import java.util.Calendar
 
 class LicenseManager(
@@ -23,6 +26,10 @@ class LicenseManager(
         private const val KEY_TOTAL_DAYS = "total_days"
 
         private const val ONE_DAY_MILLIS = 1000L * 60 * 60 * 24
+
+        private const val VALIDITY_DAY_MAX = 30
+        private val DATE_FORMATTER: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("yyMMdd")
 
         const val STATUS_FREE = 0
         const val STATUS_PREMIUM = 1
@@ -75,8 +82,19 @@ class LicenseManager(
         return true
     }
 
-    fun grantDays(days: Int, seed: String = System.currentTimeMillis().toString()): Boolean {
-        return activateLicense(generateLicenseKey(days, seed, getDeviceId()))
+    fun grantDays(
+        days: Int,
+        validityDays: Int = 1,
+        seed: String = System.currentTimeMillis().toString()
+    ): Boolean {
+        return activateLicense(
+            generateLicenseKey(
+                days = days,
+                validityDays = validityDays,
+                seed = seed,
+                deviceId = getDeviceId()
+            )
+        )
     }
 
     fun getLicenseStatus(): Int {
@@ -139,19 +157,36 @@ class LicenseManager(
         return Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) ?: ""
     }
 
-    fun generateLicenseKey(days: Int, seed: String, deviceId: String): String {
-        val daysStr = days.toString().padStart(3, '0')
-        val seedData = seed.take(13).padEnd(13, '0')
-        val data = daysStr + seedData
+    fun generateLicenseKey(
+        days: Int,
+        validityDays: Int,
+        seed: String,
+        deviceId: String
+    ): String {
+        val normalizedDays = days.coerceIn(1, 999)
+        val normalizedValidity = validityDays.coerceIn(1, VALIDITY_DAY_MAX)
+        val daysStr = normalizedDays.toString().padStart(3, '0')
+        val dateStr = LocalDate.now().format(DATE_FORMATTER)
+        val validityStr = normalizedValidity.toString().padStart(2, '0')
+        val cleanSeed = seed.filter { it.isLetterOrDigit() }
+        val seedData = cleanSeed.take(5).padEnd(5, '0')
+        val data = daysStr + dateStr + validityStr + seedData
         val checksum = generateChecksum(data, deviceId)
         return data + checksum
     }
 
     fun verifyLicenseKey(key: String, deviceId: String): Boolean {
-        if (key.length != 20 || deviceId.isEmpty()) return false
+        if (key.length != 24 || deviceId.isEmpty()) return false
 
         val data = key.substring(0, 16)
         val checksum = key.substring(16)
+
+        if (!validateDateSegment(data.substring(3, 9))) return false
+        val validityDays = data.substring(9, 11).toIntOrNull() ?: return false
+
+        if (validityDays !in 1..VALIDITY_DAY_MAX) return false
+        if (isExpired(data.substring(3, 9), validityDays)) return false
+
         return generateChecksum(data, deviceId) == checksum
     }
 
@@ -160,14 +195,18 @@ class LicenseManager(
     }
 
     private fun validateLicenseKey(key: String): Boolean {
-        if (key.length != 20) return false
+        if (key.length != 24) return false
 
         val data = key.substring(0, 16)
         val checksum = key.substring(16)
         val deviceId = getDeviceId()
         if (deviceId.isEmpty()) return false
 
-        return verifyLicenseKey(key, deviceId)
+        if (generateChecksum(data, deviceId) != checksum) return false
+        val datePart = data.substring(3, 9)
+        val validityDays = data.substring(9, 11).toIntOrNull() ?: return false
+
+        return validateDateSegment(datePart) && validityDays in 1..VALIDITY_DAY_MAX && !isExpired(datePart, validityDays)
     }
 
     private fun parseDaysFromKey(key: String): Int? {
@@ -178,7 +217,22 @@ class LicenseManager(
     private fun generateChecksum(data: String, deviceId: String): String {
         val md = MessageDigest.getInstance("MD5")
         val hash = md.digest((data + deviceId).toByteArray())
-        return hash.take(2).joinToString("") { "%02x".format(it) }
+        return hash.take(4).joinToString("") { "%02x".format(it) }
+    }
+
+    private fun validateDateSegment(segment: String): Boolean {
+        return try {
+            LocalDate.parse(segment, DATE_FORMATTER)
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun isExpired(segment: String, validityDays: Int): Boolean {
+        val startDate = LocalDate.parse(segment, DATE_FORMATTER)
+        val expiry = startDate.plusDays((validityDays - 1).toLong())
+        return LocalDate.now().isAfter(expiry)
     }
 
     private fun calculateDaysUsed(trialStart: Long): Long {

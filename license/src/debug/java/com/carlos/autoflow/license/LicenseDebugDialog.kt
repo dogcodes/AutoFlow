@@ -33,6 +33,7 @@ fun LicenseDebugDialog(
     val clipboardManager = LocalClipboardManager.current
     var debugDeviceId by remember(initialDeviceId) { mutableStateOf(initialDeviceId) }
     var debugDays by remember { mutableStateOf("30") }
+    var debugValidityDays by remember { mutableStateOf("3") }
     var generatedDebugKey by remember { mutableStateOf("") }
     var verifyActivationKey by remember { mutableStateOf("") }
     var verifyMessage by remember { mutableStateOf("") }
@@ -56,7 +57,14 @@ fun LicenseDebugDialog(
                 OutlinedTextField(
                     value = debugDays,
                     onValueChange = { debugDays = it.filter(Char::isDigit) },
-                    label = { Text("时长天数") },
+                    label = { Text("使用时长（天）") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = debugValidityDays,
+                    onValueChange = { debugValidityDays = it.filter(Char::isDigit) },
+                    label = { Text("激活码有效期（天）") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 if (generatedDebugKey.isNotEmpty()) {
@@ -68,16 +76,16 @@ fun LicenseDebugDialog(
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = verifyActivationKey,
-                    onValueChange = {
-                        verifyActivationKey = it
-                        verifyMessage = ""
-                    },
-                    label = { Text("待校验激活码") },
-                    placeholder = { Text("请输入20位激活码") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                            OutlinedTextField(
+                                value = verifyActivationKey,
+                                onValueChange = {
+                                    verifyActivationKey = it
+                                    verifyMessage = ""
+                                },
+                                label = { Text("待校验激活码") },
+                                placeholder = { Text("请输入24位激活码") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -91,17 +99,19 @@ fun LicenseDebugDialog(
                             )
                             verifyMessage = if (result.isValid) "激活码有效" else "激活码无效"
                         },
-                        enabled = debugDeviceId.isNotBlank() && verifyActivationKey.length == 20
-                    ) {
-                        Text("校验")
-                    }
+                                enabled = debugDeviceId.isNotBlank() && verifyActivationKey.length == 24
+                            ) {
+                                Text("校验")
+                            }
                     Button(
                         onClick = {
-                            val days = debugDays.toIntOrNull() ?: 30
-                            val result = licenseDebugTool.generateKey(
-                                deviceId = debugDeviceId,
-                                days = days
-                            )
+                                val days = debugDays.toIntOrNull() ?: 30
+                                val validity = debugValidityDays.toIntOrNull() ?: 1
+                                val result = licenseDebugTool.generateKey(
+                                    deviceId = debugDeviceId,
+                                    days = days,
+                                    validityDays = validity
+                                )
                             generatedDebugKey = result.activationKey
                             clipboardManager.setText(AnnotatedString(result.activationKey))
                             verifyMessage = "已复制激活码"

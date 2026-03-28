@@ -7,6 +7,7 @@ class LicenseDebugTool(
     data class GenerateResult(
         val deviceId: String,
         val days: Int,
+        val validityDays: Int,
         val activationKey: String
     )
 
@@ -19,15 +20,19 @@ class LicenseDebugTool(
     fun generateKey(
         deviceId: String,
         days: Int,
-        seed: String = System.currentTimeMillis().toString()
+        seed: String = System.currentTimeMillis().toString(),
+        validityDays: Int = 1
     ): GenerateResult {
         val normalizedDeviceId = deviceId.trim()
         val normalizedDays = days.coerceIn(1, 365)
+        val normalizedValidity = validityDays.coerceIn(1, 30)
         return GenerateResult(
             deviceId = normalizedDeviceId,
             days = normalizedDays,
+            validityDays = normalizedValidity,
             activationKey = licenseManager.generateLicenseKey(
                 days = normalizedDays,
+                validityDays = normalizedValidity,
                 seed = seed,
                 deviceId = normalizedDeviceId
             )
