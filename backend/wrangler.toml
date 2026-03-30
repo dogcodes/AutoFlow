@@ -7,4 +7,4 @@ directory = "public"  # 指向你的静态资源文件夹
 
 [[kv_namespaces]]
 binding = "CHECKIN_CONFIG"
-id = ""
+id = "545e0894435d4feca26189c836822732"
