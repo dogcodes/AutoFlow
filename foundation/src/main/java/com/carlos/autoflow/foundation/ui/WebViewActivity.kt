@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.webkit.WebView
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,7 +25,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.carlos.autoflow.foundation.ui.components.FoundationTopAppBar
 import com.carlos.autoflow.foundation.web.FoundationWebViewHelper
 
-class WebViewActivity : ComponentActivity() {
+class WebViewActivity : BaseComposeActivity() {
     companion object {
         private const val EXTRA_URL = "extra_url"
         private const val EXTRA_TITLE = "extra_title"
@@ -93,6 +91,8 @@ class WebViewActivity : ComponentActivity() {
                     }
                 }
             }
+
+            AutoFlowStatusBarColor()
 
             DisposableEffect(Unit) {
                 onDispose {

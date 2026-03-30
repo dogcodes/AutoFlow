@@ -4,12 +4,12 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.carlos.autoflow.foundation.network.FoundationNetworkClient
@@ -20,8 +20,9 @@ import com.carlos.autoflow.foundation.upgrade.ui.AutoUpgradeChecker
 import com.carlos.autoflow.ui.screens.MainHomeScreen
 import com.carlos.autoflow.ui.theme.AutoFlowTheme
 import com.carlos.autoflow.utils.PerformanceMonitor
+import com.carlos.autoflow.foundation.ui.BaseComposeActivity
 
-class MainActivity : ComponentActivity() {
+class MainActivity : BaseComposeActivity() {
     private lateinit var privacyConsentManager: PrivacyConsentManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,6 +41,7 @@ class MainActivity : ComponentActivity() {
             val upgradeManager = remember { UpgradeManager(FoundationNetworkClient()) }
 
             AutoFlowTheme {
+                AutoFlowStatusBarColor()
                 if (showPrivacyConsentDialog) {
                     PrivacyConsentDialog(
                         onAgree = {
