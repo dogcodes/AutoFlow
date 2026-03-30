@@ -15,7 +15,11 @@ async function loadConfig(env) {
   }
   try {
     const stored = await kv.get("config", { type: "json" });
-    return stored ?? DEFAULT_CHECKIN_CONFIG;
+    if (stored) {
+      return stored;
+    }
+    await persistConfig(env, DEFAULT_CHECKIN_CONFIG);
+    return DEFAULT_CHECKIN_CONFIG;
   } catch (error) {
     console.error("failed to read check-in config", error);
     return DEFAULT_CHECKIN_CONFIG;
