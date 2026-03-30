@@ -27,7 +27,10 @@ import com.carlos.autoflow.workflow.models.WorkflowExecution
 import com.carlos.autoflow.workflow.repository.ExecutionHistoryRepository
 
 @Composable
-fun HistoryScreen() {
+fun HistoryScreen(
+    modifier: Modifier = Modifier,
+    showTitleBar: Boolean = true
+) {
     val context = LocalContext.current
     val historyRepository = remember { ExecutionHistoryRepository(context) }
     val executions by historyRepository.executions.collectAsState()
@@ -35,34 +38,36 @@ fun HistoryScreen() {
     var showClearDialog by remember { mutableStateOf(false) }
     
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // 标题栏
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "执行历史",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-            
-            if (executions.isNotEmpty()) {
-                IconButton(onClick = { showClearDialog = true }) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "清空全部",
-                        tint = MaterialTheme.colorScheme.error
-                    )
+        if (showTitleBar) {
+            // 标题栏
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "执行历史",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                if (executions.isNotEmpty()) {
+                    IconButton(onClick = { showClearDialog = true }) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "清空全部",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
-        
-        Spacer(modifier = Modifier.height(16.dp))
         
         if (executions.isEmpty()) {
             Box(

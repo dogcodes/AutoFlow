@@ -37,6 +37,36 @@
             android:theme="@style/Theme.AutoFlow" />
 
         <activity
+            android:name=".ui.screens.SettingsActivity"
+            android:exported="false"
+            android:label="设置"
+            android:theme="@style/Theme.AutoFlow" />
+
+        <activity
+            android:name=".ui.screens.HistoryActivity"
+            android:exported="false"
+            android:label="历史记录"
+            android:theme="@style/Theme.AutoFlow" />
+
+        <activity
+            android:name=".ui.screens.AboutActivity"
+            android:exported="false"
+            android:label="关于"
+            android:theme="@style/Theme.AutoFlow" />
+
+        <activity
+            android:name=".ui.screens.NodeMonitorActivity"
+            android:exported="false"
+            android:label="节点监控器"
+            android:theme="@style/Theme.AutoFlow" />
+
+        <activity
+            android:name=".ui.screens.LicenseActivity"
+            android:exported="false"
+            android:label="许可证管理"
+            android:theme="@style/Theme.AutoFlow.TransparentDialog" />
+
+        <activity
             android:name=".demo.DemoAppActivity"
             android:exported="true"
             android:label="AutoFlow Demo App"

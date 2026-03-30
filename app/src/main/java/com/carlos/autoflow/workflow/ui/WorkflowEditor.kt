@@ -45,6 +45,7 @@ import com.carlos.autoflow.workflow.ui.ExportDialog
 import com.carlos.autoflow.workflow.ui.ExecuteResultDialog
 import com.carlos.autoflow.workflow.ui.NodeConfigDialog
 import com.carlos.autoflow.workflow.ui.AccessibilityExamplesDialog
+import com.carlos.autoflow.workflow.ui.JsonExamplesDialog
 import com.carlos.autoflow.workflow.models.NodeType
 import com.carlos.autoflow.workflow.models.WorkflowNode
 import com.carlos.autoflow.workflow.viewmodel.CanvasViewModel
@@ -52,21 +53,21 @@ import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
 import com.carlos.autoflow.accessibility.AccessibilityPermissionCard
 import com.carlos.autoflow.workflow.ui.ExecutionStatusOverlay
 import com.carlos.autoflow.BuildConfig
-import com.carlos.autoflow.billing.ui.LicenseDialog
 import com.carlos.autoflow.billing.BannerAdView
 import com.carlos.autoflow.license.FeatureManager
 import com.carlos.autoflow.compliance.ComplianceConfig
 import com.carlos.autoflow.demo.DemoAppActivity
 import com.carlos.autoflow.ui.SideDrawer
-import com.carlos.autoflow.ui.screens.HistoryScreen
-import com.carlos.autoflow.ui.screens.SettingsScreen
-import com.carlos.autoflow.ui.screens.AboutScreen
+import com.carlos.autoflow.ui.screens.HistoryActivity
+import com.carlos.autoflow.ui.screens.SettingsActivity
+import com.carlos.autoflow.ui.screens.AboutActivity
+import com.carlos.autoflow.ui.screens.NodeMonitorActivity
+import com.carlos.autoflow.ui.screens.LicenseActivity
 import com.carlos.autoflow.demo.DemoAppScreen
 import com.carlos.autoflow.recorder.ui.RecordingControlPanel
 import kotlinx.coroutines.delay
 import kotlin.math.floor
 import kotlin.math.pow
-import com.carlos.autoflow.monitor.NodeMonitorDemo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,7 +91,6 @@ fun WorkflowEditor(
     var showExportDialog by remember { mutableStateOf(false) }
     var showExecuteDialog by remember { mutableStateOf(false) }
     var showAccessibilityExamples by remember { mutableStateOf(false) }
-    var showLicenseDialog by remember { mutableStateOf(false) }
     var showSideDrawer by remember { mutableStateOf(false) }
     var currentScreen by remember { mutableStateOf("workflow") }
     var executeResult by remember { mutableStateOf("") }
@@ -150,7 +150,6 @@ fun WorkflowEditor(
                     )
                 }
 
-                // 无障碍权限状态卡片
                 if (!ComplianceConfig.isComplianceMode) {
                     AccessibilityPermissionCard(
                         modifier = Modifier.align(Alignment.TopCenter)
@@ -169,7 +168,7 @@ fun WorkflowEditor(
                         }
                     },
                     onShowAccessibilityExamples = { showAccessibilityExamples = true },
-                    onShowJsonExamplesDialog = { showJsonExamplesDialog = true }, // 传递新的lambda
+                    onShowJsonExamplesDialog = { showJsonExamplesDialog = true },
                     onShowAdDebug = {
                         runCatching {
                             context.startActivity(
@@ -183,7 +182,9 @@ fun WorkflowEditor(
                         }
                     },
                     onSaveWorkflow = onSaveWorkflow,
-                    onShowLicenseDialog = { showLicenseDialog = true },
+                    onOpenLicense = {
+                        context.startActivity(Intent(context, LicenseActivity::class.java))
+                    },
                     onShowSideDrawer = { showSideDrawer = true },
                     showSideDrawerButton = showSideDrawerButton,
                     isDebug = BuildConfig.DEBUG
@@ -195,14 +196,12 @@ fun WorkflowEditor(
                     selectedNodeId = selectedNodeId,
                     workflowViewModel = workflowViewModel
                 )
-                
-                // 执行状态覆盖层
+
                 ExecutionStatusOverlay(
                     executingNodes = executingNodes,
                     modifier = Modifier.align(Alignment.BottomCenter)
                 )
-                
-                // 底部广告 (仅免费版)
+
                 if (featureManager.shouldShowAds()) {
                     BannerAdView(
                         modifier = Modifier
@@ -211,33 +210,9 @@ fun WorkflowEditor(
                     )
                 }
             }
-            "monitor" -> {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    NodeMonitorDemo()
-                    
-                    // 侧滑栏按钮
-                    if (!ComplianceConfig.isComplianceMode) {
-                        FloatingActionButton(
-                            onClick = { showSideDrawer = true },
-                            modifier = Modifier
-                                .align(Alignment.TopStart)
-                                .padding(16.dp)
-                                .size(48.dp),
-                            containerColor = MaterialTheme.colorScheme.secondary
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "打开侧滑栏",
-                                tint = Color.White
-                            )
-                        }
-                    }
-                }
-            }
             "demo" -> {
-                val intent = Intent(context, DemoAppActivity::class.java)
-                context.startActivity(intent)
-                currentScreen = "workflow" // Reset to workflow after launching
+                context.startActivity(Intent(context, DemoAppActivity::class.java))
+                currentScreen = "workflow"
             }
             "recording" -> {
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -248,7 +223,7 @@ fun WorkflowEditor(
                         },
                         modifier = Modifier.fillMaxSize().padding(16.dp)
                     )
-                    
+
                     if (!ComplianceConfig.isComplianceMode) {
                         FloatingActionButton(
                             onClick = { showSideDrawer = true },
@@ -264,70 +239,6 @@ fun WorkflowEditor(
                                 tint = Color.White
                             )
                         }
-                    }
-                }
-            }
-            "history" -> {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    HistoryScreen()
-                    
-                    if (!ComplianceConfig.isComplianceMode) {
-                        FloatingActionButton(
-                            onClick = { showSideDrawer = true },
-                            modifier = Modifier
-                                .align(Alignment.TopStart)
-                                .padding(16.dp)
-                                .size(48.dp),
-                            containerColor = MaterialTheme.colorScheme.secondary
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "打开侧滑栏",
-                                tint = Color.White
-                            )
-                        }
-                    }
-                }
-            }
-            "settings" -> {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    SettingsScreen()
-                    
-                    // 侧滑栏按钮
-                    FloatingActionButton(
-                        onClick = { showSideDrawer = true },
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(16.dp)
-                            .size(48.dp),
-                        containerColor = MaterialTheme.colorScheme.secondary
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Menu,
-                            contentDescription = "打开侧滑栏",
-                            tint = Color.White
-                        )
-                    }
-                }
-            }
-            "about" -> {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    AboutScreen()
-                    
-                    // 侧滑栏按钮
-                    FloatingActionButton(
-                        onClick = { showSideDrawer = true },
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(16.dp)
-                            .size(48.dp),
-                        containerColor = MaterialTheme.colorScheme.secondary
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Menu,
-                            contentDescription = "打开侧滑栏",
-                            tint = Color.White
-                        )
                     }
                 }
             }
@@ -338,15 +249,19 @@ fun WorkflowEditor(
             isVisible = showSideDrawer,
             onDismiss = { showSideDrawer = false },
             onItemSelected = { screen ->
-                if (screen == "demo") {
-                    val intent = Intent(context, DemoAppActivity::class.java)
-                    context.startActivity(intent)
-                    currentScreen = "workflow" // Reset to workflow after launching
-                    // Do NOT dismiss drawer here, it will remain open when returning
-                } else {
-                    currentScreen = screen
-                    showSideDrawer = false // Dismiss drawer for internal screen changes
+                when (screen) {
+                    "workflow" -> currentScreen = "workflow"
+                    "recording" -> currentScreen = "recording"
+                    "demo" -> {
+                        context.startActivity(Intent(context, DemoAppActivity::class.java))
+                        currentScreen = "workflow"
+                    }
+                    "monitor" -> context.startActivity(Intent(context, NodeMonitorActivity::class.java))
+                    "history" -> context.startActivity(Intent(context, HistoryActivity::class.java))
+                    "settings" -> context.startActivity(Intent(context, SettingsActivity::class.java))
+                    "about" -> context.startActivity(Intent(context, AboutActivity::class.java))
                 }
+                showSideDrawer = false
             },
             modifier = Modifier.fillMaxSize()
         )
@@ -427,10 +342,4 @@ fun WorkflowEditor(
         )
     }
     
-    // 许可证管理对话框
-    if (showLicenseDialog) {
-        LicenseDialog(
-            onDismiss = { showLicenseDialog = false }
-        )
-    }
 }

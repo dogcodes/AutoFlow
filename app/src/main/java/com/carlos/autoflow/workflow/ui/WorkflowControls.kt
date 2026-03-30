@@ -52,7 +52,7 @@ fun WorkflowControls(
     onShowJsonExamplesDialog: () -> Unit = {}, // 新增参数
     onShowAdDebug: () -> Unit = {},
     onSaveWorkflow: () -> Unit = {},
-    onShowLicenseDialog: () -> Unit = {},
+    onOpenLicense: () -> Unit = {},
     onShowSideDrawer: () -> Unit = {},
     showSideDrawerButton: Boolean = true,
     isDebug: Boolean
@@ -184,13 +184,13 @@ fun WorkflowControls(
                             canvasViewModel.toggleFlowAnimation()
                         }
                     )
-                    DropdownMenuItem(
-                        text = { Text("💎 许可证管理") },
-                        onClick = {
-                            showMenu = false
-                            onShowLicenseDialog()
-                        }
-                    )
+                DropdownMenuItem(
+                    text = { Text("💎 许可证管理") },
+                    onClick = {
+                        showMenu = false
+                        onOpenLicense()
+                    }
+                )
                     DropdownMenuItem(
                         text = { Text("📱 无障碍示例") },
                         onClick = {

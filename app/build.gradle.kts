@@ -38,7 +38,7 @@ android {
         manifestPlaceholders["UMENG_CHANNEL"] = "default"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("boolean", "COMPLIANCE_MODE", "true")
+        buildConfigField("boolean", "COMPLIANCE_MODE", "false")
     }
 
     signingConfigs {

@@ -18,7 +18,7 @@ import com.carlos.autoflow.foundation.upgrade.UpgradeResult
 import com.carlos.autoflow.foundation.upgrade.ui.UpgradeDialog
 
 @Composable
-fun AboutScreen() {
+fun AboutScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var checkState by remember { mutableStateOf<CheckState>(CheckState.Idle) }
 
@@ -37,7 +37,7 @@ fun AboutScreen() {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {

@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.carlos.autoflow.compliance.ComplianceConfig
 
 data class DrawerItem(
     val title: String,
@@ -44,6 +45,14 @@ fun SideDrawer(
             DrawerItem("设置", Icons.Default.Settings, "settings"),
             DrawerItem("关于", Icons.Default.Info, "about")
         )
+    }
+
+    val visibleItems = remember(drawerItems) {
+        if (ComplianceConfig.isComplianceMode) {
+            drawerItems.filter { it.key != "monitor" }
+        } else {
+            drawerItems
+        }
     }
 
     AnimatedVisibility(
@@ -88,7 +97,7 @@ fun SideDrawer(
                     LazyColumn(
                         contentPadding = PaddingValues(horizontal = 16.dp)
                     ) {
-                        items(drawerItems) { item ->
+                        items(visibleItems) { item ->
                             DrawerMenuItem(
                                 item = item,
                                 onClick = { 

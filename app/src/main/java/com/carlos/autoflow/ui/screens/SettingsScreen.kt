@@ -17,10 +17,10 @@ import com.carlos.autoflow.R
 import com.carlos.autoflow.foundation.R as FoundationR
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
