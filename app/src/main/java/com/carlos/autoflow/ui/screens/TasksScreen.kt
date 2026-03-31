@@ -44,17 +44,22 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,7 +68,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.size
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import com.carlos.autoflow.workflow.models.ExecutionStatus
 import com.carlos.autoflow.workflow.models.Workflow
 import com.carlos.autoflow.workflow.models.WorkflowExecution
@@ -71,6 +78,13 @@ import com.carlos.autoflow.workflow.models.WorkflowScheduleConfig
 import com.carlos.autoflow.workflow.repository.ExecutionHistoryRepository
 import com.carlos.autoflow.workflow.repository.WorkflowRepository
 import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
+import com.carlos.autoflow.BuildConfig
+import com.carlos.autoflow.license.LicenseManager
+import com.carlos.autoflow.platform.task.config.DailyCheckInConfig
+import com.carlos.autoflow.platform.task.config.DailyCheckInConfigManager
+import com.carlos.autoflow.foundation.network.FoundationNetworkClient
+import com.carlos.autoflow.task.CheckInPrefs
+import kotlin.math.max
 
 @Composable
 private fun RewardedAdPromo(
@@ -133,11 +147,27 @@ fun TasksScreen(
     val histories by historyRepository.executions.collectAsState()
     val isExecuting by workflowViewModel.isExecuting.collectAsState()
     val executingWorkflowId by workflowViewModel.executingWorkflowId.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
     var deleteTarget by remember { mutableStateOf<Workflow?>(null) }
     var scheduleTarget by remember { mutableStateOf<Workflow?>(null) }
+    val checkInPrefs = remember { CheckInPrefs(context) }
+    val checkInConfigManager = remember {
+        DailyCheckInConfigManager(context, FoundationNetworkClient())
+    }
+    var checkInConfig by remember { mutableStateOf(checkInConfigManager.loadCachedConfig()) }
+    var lastCheckInAt by remember { mutableStateOf(checkInPrefs.lastCheckInAt) }
+    var isCheckInRunning by remember { mutableStateOf(false) }
+    val licenseManager = remember { LicenseManager(context, BuildConfig.FORCE_PREMIUM) }
+    LaunchedEffect(Unit) {
+        checkInConfigManager.fetchRemoteConfig { config ->
+            checkInConfig = config ?: checkInConfig
+        }
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
@@ -159,6 +189,30 @@ fun TasksScreen(
             end = 16.dp,
             bottom = innerPadding.calculateBottomPadding() + contentPadding.calculateBottomPadding() + 16.dp
         )
+        val config = checkInConfig
+        val cooldownMillis = (config?.cooldownMinutes ?: 1440) * 60_000L
+        val elapsedSinceLast = System.currentTimeMillis() - lastCheckInAt
+        val eligibleForCheckIn = config?.enabled == true && elapsedSinceLast >= cooldownMillis
+        val remainingCooldownMinutes = max(0, ((cooldownMillis - elapsedSinceLast + 59_999L) / 60_000L).toInt())
+        val rewardMinutes = config?.rewardMinutes ?: 0
+        val onCheckIn = {
+            if (eligibleForCheckIn && !isCheckInRunning && config != null) {
+                isCheckInRunning = true
+                val success = licenseManager.extendMinutes(rewardMinutes)
+                if (success) {
+                    checkInPrefs.markCheckedIn()
+                    lastCheckInAt = checkInPrefs.lastCheckInAt
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar("签到成功，获得${rewardMinutes}分钟会员")
+                    }
+                } else {
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar("签到失败，请稍后再试")
+                    }
+                }
+                isCheckInRunning = false
+            }
+        }
 
         if (workflows.isEmpty()) {
             Box(
@@ -186,6 +240,17 @@ fun TasksScreen(
                 contentPadding = mergedPadding,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                if (config != null && config.showBanner && config.enabled) {
+                    item {
+                        CheckInBanner(
+                            config = config,
+                            remainingCooldownMinutes = remainingCooldownMinutes,
+                            isEligible = eligibleForCheckIn,
+                            isLoading = isCheckInRunning,
+                            onCheckIn = onCheckIn
+                        )
+                    }
+                }
                 if (!hideRewardAd) {
                     item {
                         RewardedAdPromo(
@@ -683,4 +748,74 @@ private fun WorkflowScheduleConfig.toSummary(): String {
         .filter { daysOfWeek.contains(it.value) }
         .joinToString("") { "周${it.label}" }
     return "$daysLabel $timeLabel"
+}
+
+@Composable
+private fun CheckInBanner(
+    config: DailyCheckInConfig,
+    remainingCooldownMinutes: Int,
+    isEligible: Boolean,
+    isLoading: Boolean,
+    onCheckIn: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = config.title,
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = config.description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "奖励 ${config.rewardMinutes} 分钟会员",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Button(
+                    onClick = onCheckIn,
+                    enabled = isEligible && !isLoading
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            strokeWidth = 2.dp,
+                            modifier = Modifier
+                                .size(16.dp)
+                        )
+                    } else {
+                        Text(text = config.buttonText)
+                    }
+                }
+            }
+            if (!isEligible) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = if (remainingCooldownMinutes <= 0) "已签到" else "下次签到还有 $remainingCooldownMinutes 分钟",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
 }

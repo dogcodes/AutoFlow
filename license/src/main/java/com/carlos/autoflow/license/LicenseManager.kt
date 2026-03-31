@@ -37,8 +37,11 @@ class LicenseManager(
         private const val KEY_ACTIVATED_KEYS = "activated_keys"
         private const val KEY_TRIAL_START = "trial_start"
         private const val KEY_TOTAL_DAYS = "total_days"
+        private const val KEY_TOTAL_MINUTES = "total_minutes"
 
         private const val ONE_DAY_MILLIS = 1000L * 60 * 60 * 24
+        private const val ONE_MINUTE_MILLIS = 60_000L
+        private const val MINUTES_PER_DAY = 24 * 60
 
         private const val VALIDITY_DAY_MAX = 30
         private const val TYPE_MIN = 0
@@ -88,22 +91,27 @@ class LicenseManager(
                 val daysToAdd = parsed.days
                 val isCurrentlyActive = isPremium()
                 var currentTotalDays = prefs.getInt(KEY_TOTAL_DAYS, 0)
+                var currentTotalMinutes = prefs.getInt(KEY_TOTAL_MINUTES, 0)
 
                 if (!isCurrentlyActive) {
                     prefs.edit()
                         .putLong(KEY_TRIAL_START, getStartOfDayMillis(System.currentTimeMillis()))
                         .putStringSet(KEY_ACTIVATED_KEYS, emptySet())
                         .putInt(KEY_TOTAL_DAYS, 0)
+                        .putInt(KEY_TOTAL_MINUTES, 0)
                         .apply()
                     currentActivatedKeys.clear()
                     currentTotalDays = 0
+                    currentTotalMinutes = 0
                 }
 
                 currentActivatedKeys.add(activationCode)
                 val newTotalDays = currentTotalDays + daysToAdd
+                val newTotalMinutes = currentTotalMinutes + daysToAdd * MINUTES_PER_DAY
                 prefs.edit()
                     .putStringSet(KEY_ACTIVATED_KEYS, currentActivatedKeys)
                     .putInt(KEY_TOTAL_DAYS, newTotalDays)
+                    .putInt(KEY_TOTAL_MINUTES, newTotalMinutes)
                     .apply()
                 return ActivationResult.Success
             }
@@ -129,15 +137,33 @@ class LicenseManager(
         ) is ActivationResult.Success
     }
 
+    fun extendMinutes(minutes: Int): Boolean {
+        if (minutes <= 0) return false
+        val now = System.currentTimeMillis()
+        var trialStart = ensureTrialStart()
+        val currentTotalMinutes = prefs.getInt(KEY_TOTAL_MINUTES, 0)
+        val minutesUsed = getMinutesSinceTrialStart(trialStart)
+        val shouldReset = minutesUsed >= currentTotalMinutes || currentTotalMinutes == 0
+        val finalTrialStart = if (shouldReset) now else trialStart
+        val finalTotalMinutes = if (shouldReset) minutes else currentTotalMinutes + minutes
+        val finalTotalDays = (finalTotalMinutes + MINUTES_PER_DAY - 1) / MINUTES_PER_DAY
+        prefs.edit()
+            .putInt(KEY_TOTAL_MINUTES, finalTotalMinutes)
+            .putInt(KEY_TOTAL_DAYS, finalTotalDays)
+            .putLong(KEY_TRIAL_START, finalTrialStart)
+            .apply()
+        return true
+    }
+
     fun getLicenseStatus(): Int {
         if (forcePremium) {
             return STATUS_PREMIUM
         }
 
-        val totalDays = prefs.getInt(KEY_TOTAL_DAYS, 0)
+        val totalMinutes = prefs.getInt(KEY_TOTAL_MINUTES, 0)
         return when {
             isPremium() -> STATUS_PREMIUM
-            totalDays > 0 -> STATUS_EXPIRED
+            totalMinutes > 0 -> STATUS_EXPIRED
             else -> STATUS_FREE
         }
     }
@@ -154,9 +180,10 @@ class LicenseManager(
             return false
         }
 
-        val totalDays = prefs.getInt(KEY_TOTAL_DAYS, 0)
-        val daysUsed = calculateDaysUsed(trialStart)
-        return daysUsed < totalDays
+        val totalMinutes = prefs.getInt(KEY_TOTAL_MINUTES, 0)
+        if (totalMinutes == 0) return false
+        val minutesUsed = getMinutesSinceTrialStart(trialStart)
+        return minutesUsed < totalMinutes
     }
 
     fun isFree(): Boolean = getLicenseStatus() == STATUS_FREE
@@ -167,20 +194,18 @@ class LicenseManager(
         }
 
         val trialStart = prefs.getLong(KEY_TRIAL_START, 0)
-        val totalDays = prefs.getInt(KEY_TOTAL_DAYS, 0)
-        if (trialStart == 0L || totalDays == 0) {
-            return 0
-        }
-
-        val daysUsed = calculateDaysUsed(trialStart)
-        return (totalDays - daysUsed).toInt().coerceAtLeast(0)
+        val expiry = getExpiryTimestamp()
+        if (expiry == null) return 0
+        val remainingMillis = expiry - System.currentTimeMillis()
+        if (remainingMillis <= 0) return 0
+        return ((remainingMillis + ONE_DAY_MILLIS - 1) / ONE_DAY_MILLIS).toInt()
     }
 
     fun getExpiryTimestamp(): Long? {
         val trialStart = prefs.getLong(KEY_TRIAL_START, 0)
-        val totalDays = prefs.getInt(KEY_TOTAL_DAYS, 0)
-        if (trialStart == 0L || totalDays == 0) return null
-        return trialStart + totalDays * ONE_DAY_MILLIS
+        val totalMinutes = prefs.getInt(KEY_TOTAL_MINUTES, 0)
+        if (trialStart == 0L || totalMinutes == 0) return null
+        return trialStart + totalMinutes * ONE_MINUTE_MILLIS
     }
 
     fun resetLicense() {
@@ -188,6 +213,7 @@ class LicenseManager(
             .remove(KEY_ACTIVATED_KEYS)
             .remove(KEY_TRIAL_START)
             .remove(KEY_TOTAL_DAYS)
+            .remove(KEY_TOTAL_MINUTES)
             .apply()
     }
 
@@ -323,14 +349,17 @@ class LicenseManager(
         data class Failure(val reason: FailureReason) : ActivationParseResult
     }
 
-    private fun calculateDaysUsed(trialStart: Long): Long {
-        val currentDayCount = getDaysSinceEpochAtMidnight(System.currentTimeMillis())
-        val startDayCount = getDaysSinceEpochAtMidnight(trialStart)
-        return currentDayCount - startDayCount
+    private fun ensureTrialStart(): Long {
+        var trialStart = prefs.getLong(KEY_TRIAL_START, 0)
+        if (trialStart == 0L) {
+            trialStart = getStartOfDayMillis(System.currentTimeMillis())
+        }
+        return trialStart
     }
 
-    private fun getDaysSinceEpochAtMidnight(timestamp: Long): Long {
-        return getStartOfDayMillis(timestamp) / ONE_DAY_MILLIS
+    private fun getMinutesSinceTrialStart(trialStart: Long): Int {
+        val durationMillis = System.currentTimeMillis() - trialStart
+        return (durationMillis / ONE_MINUTE_MILLIS).toInt().coerceAtLeast(0)
     }
 
     private fun getStartOfDayMillis(timestamp: Long): Long {
