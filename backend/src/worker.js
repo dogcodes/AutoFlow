@@ -8,6 +8,16 @@ const DEFAULT_CHECKIN_CONFIG = {
   cooldownMinutes: 1440
 };
 
+function resolveCacheTTL(env) {
+  const DEFAULT_CACHE_TTL = 3600;
+  const raw = env.CACHE_TTL;
+  const parsed = Number(raw);
+  if (!Number.isNaN(parsed) && parsed > 0) {
+    return Math.floor(parsed);
+  }
+  return DEFAULT_CACHE_TTL;
+}
+
 async function loadConfig(env) {
   const kv = env.CHECKIN_CONFIG;
   if (!kv) {
@@ -32,16 +42,51 @@ async function persistConfig(env, config) {
   await kv.put("config", JSON.stringify(config));
 }
 
+function getConfigCacheKey(request) {
+  const url = new URL(request.url);
+  url.search = "";
+  url.hash = "";
+  return new Request(url.toString(), {
+    method: "GET",
+    headers: request.headers
+  });
+}
+
+function buildConfigResponse(config, env) {
+  const ttl = resolveCacheTTL(env);
+  const headers = new Headers({
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": `public, max-age=${ttl}`
+  });
+  return new Response(JSON.stringify(config), { headers });
+}
+
+async function cacheConfigResponse(request, env, config) {
+  const cache = caches.default;
+  const cacheKey = getConfigCacheKey(request);
+  const response = buildConfigResponse(config, env);
+  await cache.put(cacheKey, response.clone());
+  return response;
+}
+
+async function respondWithCachedConfig(request, env) {
+  const cache = caches.default;
+  const cacheKey = getConfigCacheKey(request);
+  const cached = await cache.match(cacheKey);
+  if (cached) {
+    return cached.clone();
+  }
+  const config = await loadConfig(env);
+  return cacheConfigResponse(request, env, config);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     if (url.pathname.startsWith("/checkin-config")) {
       if (request.method === "GET") {
-        const config = await loadConfig(env);
-        return new Response(JSON.stringify(config), {
-          headers: { "Content-Type": "application/json; charset=utf-8" },
-        });
+        return respondWithCachedConfig(request, env);
       }
 
       if (request.method === "POST") {
@@ -49,9 +94,7 @@ export default {
           const body = await request.json();
           const merged = { ...DEFAULT_CHECKIN_CONFIG, ...body };
           await persistConfig(env, merged);
-          return new Response(JSON.stringify(merged), {
-            headers: { "Content-Type": "application/json; charset=utf-8" },
-          });
+          return cacheConfigResponse(request, env, merged);
         } catch (error) {
           return new Response(JSON.stringify({ error: "Invalid payload" }), {
             status: 400,
