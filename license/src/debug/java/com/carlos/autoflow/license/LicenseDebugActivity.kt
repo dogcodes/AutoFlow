@@ -11,8 +11,7 @@ class LicenseDebugActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val initialDeviceId = intent.getStringExtra(EXTRA_DEVICE_ID).orEmpty()
-        val licenseManager = LicenseManager(this)
-        val licenseDebugTool = LicenseDebugTool(licenseManager)
+        val licenseDebugTool = LicenseDebugTool()
 
         setContent {
             MaterialTheme {

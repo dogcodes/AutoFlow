@@ -1,8 +1,9 @@
 package com.carlos.autoflow.license
 
-class LicenseDebugTool(
-    private val licenseManager: LicenseManager
-) {
+class LicenseDebugTool {
+
+    private val generator = LicenseKeyGenerator()
+
 
     data class GenerateResult(
         val deviceId: String,
@@ -34,7 +35,7 @@ class LicenseDebugTool(
             days = normalizedDays,
             validityDays = normalizedValidity,
             type = normalizedType,
-            activationKey = licenseManager.generateLicenseKey(
+            activationKey = generator.generateKey(
                 days = normalizedDays,
                 validityDays = normalizedValidity,
                 type = normalizedType,
@@ -53,7 +54,7 @@ class LicenseDebugTool(
         return VerifyResult(
             deviceId = normalizedDeviceId,
             activationKey = normalizedKey,
-            isValid = licenseManager.verifyLicenseKey(
+            isValid = generator.verifyKey(
                 key = normalizedKey,
                 deviceId = normalizedDeviceId
             )

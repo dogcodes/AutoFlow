@@ -120,21 +120,9 @@ class LicenseManager(
         return ActivationResult.Failure(FailureReason.UNKNOWN)
     }
 
-    fun grantDays(
-        days: Int,
-        validityDays: Int = 1,
-        type: Int = 0,
-        seed: String = System.currentTimeMillis().toString()
-    ): Boolean {
-        return activateLicense(
-            generateLicenseKey(
-                days = days,
-                validityDays = validityDays,
-                type = type,
-                seed = seed,
-                deviceId = getDeviceId()
-            )
-        ) is ActivationResult.Success
+    fun grantDays(days: Int): Boolean {
+        val minutes = days * MINUTES_PER_DAY
+        return extendMinutes(minutes)
     }
 
     fun extendMinutes(minutes: Int): Boolean {
@@ -220,32 +208,6 @@ class LicenseManager(
     @SuppressLint("HardwareIds")
     fun getDeviceId(): String {
         return Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) ?: ""
-    }
-
-    fun generateLicenseKey(
-        days: Int,
-        validityDays: Int,
-        type: Int,
-        seed: String,
-        deviceId: String
-    ): String {
-        val normalizedDays = days.coerceIn(1, 999)
-        val normalizedValidity = validityDays.coerceIn(1, VALIDITY_DAY_MAX)
-        val daysStr = normalizedDays.toString().padStart(3, '0')
-        val dateStr = LocalDate.now().format(DATE_FORMATTER)
-        val validityStr = normalizedValidity.toString().padStart(2, '0')
-        val normalizedType = type.coerceIn(TYPE_MIN, TYPE_MAX)
-        val typeStr = normalizedType.toString()
-        val cleanSeed = seed.filter { it.isLetterOrDigit() }
-        val seedData = cleanSeed.take(4).padEnd(4, '0')
-        val data = daysStr + dateStr + validityStr + typeStr + seedData
-        val checksum = generateChecksum(data, deviceId)
-        return data + checksum
-    }
-
-    fun verifyLicenseKey(key: String, deviceId: String): Boolean {
-        val parseResult = parseActivationCode(key, deviceId)
-        return parseResult is ActivationParseResult.Success
     }
 
     private fun getActivatedKeys(): Set<String> {
