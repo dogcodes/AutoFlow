@@ -1,6 +1,7 @@
 package com.carlos.autoflow.platform.ad.config
 
 import android.content.Context
+import com.carlos.autoflow.foundation.network.ApiRoutes
 import com.carlos.autoflow.foundation.network.FoundationNetworkClient
 import com.carlos.autoflow.foundation.network.NetworkResult
 import com.carlos.autoflow.platform.ad.AdPreferenceStore
@@ -9,8 +10,6 @@ import com.carlos.autoflow.platform.ad.DeviceIdentifiers
 import com.carlos.autoflow.platform.ad.config.RemoteAdConfiguration
 import com.google.gson.Gson
 import java.util.Locale
-
-private const val CONFIG_URL = "http://xbdcc.cn/autoflow/ad-config.json"
 
 class AdConfigurationManager(
     private val context: Context,
@@ -52,7 +51,7 @@ class AdConfigurationManager(
     }
 
     fun fetchRemoteConfig(onFetched: (RemoteAdConfiguration?) -> Unit) {
-        networkClient.get(CONFIG_URL) { result ->
+        networkClient.get(ApiRoutes.AD_CONFIG) { result ->
             when (result) {
                 is NetworkResult.Success -> {
                     val config = try {

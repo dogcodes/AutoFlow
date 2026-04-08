@@ -1,6 +1,8 @@
 package com.carlos.autoflow.foundation.privacy
 
+import com.carlos.autoflow.foundation.network.WebRoutes
+
 object PrivacyPolicy {
-    const val PRIVACY_URL = "https://autoflow.xbdcc.cn/AutoFlow-privacy-policy.html"
-    const val USER_AGREEMENT_URL = "https://autoflow.xbdcc.cn/AutoFlow-user-agreement.html"
+    const val PRIVACY_URL = WebRoutes.PRIVACY_POLICY
+    const val USER_AGREEMENT_URL = WebRoutes.USER_AGREEMENT
 }

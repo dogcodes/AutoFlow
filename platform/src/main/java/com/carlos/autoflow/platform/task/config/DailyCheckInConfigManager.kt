@@ -3,11 +3,10 @@ package com.carlos.autoflow.platform.task.config
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import com.carlos.autoflow.foundation.network.ApiRoutes
 import com.carlos.autoflow.foundation.network.FoundationNetworkClient
 import com.carlos.autoflow.foundation.network.NetworkResult
 import com.google.gson.Gson
-
-private const val CHECKIN_CONFIG_URL = "http://autoflow.xbdcc.cn/checkin-config.json"
 
 class DailyCheckInConfigManager(
     private val context: Context,
@@ -20,7 +19,7 @@ class DailyCheckInConfigManager(
     fun loadCachedConfig(): DailyCheckInConfig? = store.loadConfig()
 
     fun fetchRemoteConfig(onFetched: (DailyCheckInConfig?) -> Unit) {
-        networkClient.get(CHECKIN_CONFIG_URL) { result ->
+        networkClient.get(ApiRoutes.CHECKIN_CONFIG) { result ->
             when (result) {
                 is NetworkResult.Success -> {
                     val config = try {

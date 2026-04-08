@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.carlos.autoflow.compliance.ComplianceConfig
+import com.carlos.autoflow.foundation.network.WebRoutes
 import com.carlos.autoflow.foundation.ui.WebViewActivity
 import com.carlos.autoflow.ui.screens.AboutActivity
 import com.carlos.autoflow.ui.screens.HistoryActivity
@@ -78,7 +79,7 @@ fun MoreScreen(
                 context.startActivity(
                     WebViewActivity.createIntent(
                         context,
-                        "http://autoflow.xbdcc.cn/GrabRedEnvelope/index.html",
+                        WebRoutes.HELP,
                         "帮助"
                     )
                 )
