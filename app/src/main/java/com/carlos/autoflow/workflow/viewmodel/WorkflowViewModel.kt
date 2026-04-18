@@ -27,6 +27,7 @@ import okhttp3.*
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.text.SimpleDateFormat
+import com.carlos.autoflow.license.LicenseManager
 
 class WorkflowViewModel : ViewModel() {
     private val _workflow = MutableStateFlow(createEmptyWorkflow())
@@ -455,6 +456,10 @@ class WorkflowViewModel : ViewModel() {
     
     // 工作流执行引擎
     fun executeWorkflow(context: android.content.Context, onResult: (String) -> Unit) {
+        if (!LicenseManager(context).isPremium()) {
+            onResult("REQUIRE_PREMIUM")
+            return
+        }
         currentContext = context
         if (historyRepository == null) {
             historyRepository = ExecutionHistoryRepository(context)

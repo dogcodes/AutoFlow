@@ -97,6 +97,7 @@ fun WorkflowEditor(
     var importError by remember { mutableStateOf<String?>(null) }
     var configNode by remember { mutableStateOf<WorkflowNode?>(null) }
     var showJsonExamplesDialog by remember { mutableStateOf(false) } // 新增状态变量
+    var showPremiumDialog by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
         when (currentScreen) {
@@ -160,11 +161,14 @@ fun WorkflowEditor(
                     workflowViewModel = workflowViewModel,
                     canvasViewModel = canvasViewModel,
                     onShowImportDialog = { showImportDialog = true },
-                    onShowExportDialog = { showExportDialog = true },
+                    onShowExportDialog = {
+                        if (!featureManager.canUseAdvancedNodes()) showPremiumDialog = true
+                        else showExportDialog = true
+                    },
                     onShowExecuteDialog = {
-                        showExecuteDialog = true
                         workflowViewModel.executeWorkflow(context) { result ->
-                            executeResult = result
+                            if (result == "REQUIRE_PREMIUM") showPremiumDialog = true
+                            else { showExecuteDialog = true; executeResult = result }
                         }
                     },
                     onShowAccessibilityExamples = { showAccessibilityExamples = true },
@@ -268,6 +272,25 @@ fun WorkflowEditor(
     }
 
     // 对话框处理
+    if (showPremiumDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showPremiumDialog = false },
+            title = { androidx.compose.material3.Text("需要激活使用时长") },
+            text = { androidx.compose.material3.Text("执行工作流需要激活使用时长，请前往激活页面。") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    showPremiumDialog = false
+                    context.startActivity(android.content.Intent(context, LicenseActivity::class.java))
+                }) { androidx.compose.material3.Text("去激活") }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { showPremiumDialog = false }) {
+                    androidx.compose.material3.Text("取消")
+                }
+            }
+        )
+    }
+
     if (showImportDialog) {
         ImportDialog(
             onDismiss = { 

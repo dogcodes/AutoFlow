@@ -149,6 +149,7 @@ fun TasksScreen(
     val executingWorkflowId by workflowViewModel.executingWorkflowId.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+    var showPremiumDialog by remember { mutableStateOf(false) }
     var deleteTarget by remember { mutableStateOf<Workflow?>(null) }
     var scheduleTarget by remember { mutableStateOf<Workflow?>(null) }
     val checkInPrefs = remember { CheckInPrefs(context) }
@@ -268,7 +269,9 @@ fun TasksScreen(
                         isExecuting = isExecuting && executingWorkflowId == workflow.id,
                         onExecute = {
                             workflowViewModel.loadWorkflow(workflow)
-                            workflowViewModel.executeWorkflow(context) { }
+                            workflowViewModel.executeWorkflow(context) { result ->
+                                if (result == "REQUIRE_PREMIUM") showPremiumDialog = true
+                            }
                         },
                         onStop = {
                             workflowViewModel.stopWorkflowExecution()
@@ -280,6 +283,23 @@ fun TasksScreen(
                 }
             }
         }
+    }
+
+    if (showPremiumDialog) {
+        AlertDialog(
+            onDismissRequest = { showPremiumDialog = false },
+            title = { Text("需要激活使用时长") },
+            text = { Text("执行工作流需要激活使用时长，请前往激活页面。") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showPremiumDialog = false
+                    context.startActivity(android.content.Intent(context, com.carlos.autoflow.ui.screens.LicenseActivity::class.java))
+                }) { Text("去激活") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPremiumDialog = false }) { Text("取消") }
+            }
+        )
     }
 
     deleteTarget?.let { workflow ->
