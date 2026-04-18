@@ -6,7 +6,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -42,15 +46,36 @@ fun LicenseDialog(
     var showActivation by remember { mutableStateOf(false) }
     var showPayment by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
+    var isTimeAbnormal by remember { mutableStateOf(false) }
+
+    fun refreshState() {
+        licenseStatus = licenseManager.getLicenseStatus()
+        if (licenseManager.isSystemTimeAbnormal()) {
+            isTimeAbnormal = true
+            val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            message = "⚠️ 系统时间异常（$date），请在系统设置中校准后重试"
+        } else {
+            isTimeAbnormal = false
+            if (message.startsWith("⚠️ 系统时间异常")) message = ""
+        }
+    }
 
     // 进入页面时预取网络时间 + 检测时间异常
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
             TrustedTimeProvider.prefetch(licenseManager.getPrefs())
         }
-        if (licenseManager.isSystemTimeAbnormal()) {
-            message = "⚠️ 系统时间异常，请在系统设置中校准时间后重试"
+        refreshState()
+    }
+
+    // 从后台切回来时刷新状态
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) refreshState()
         }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     AlertDialog(
@@ -71,9 +96,10 @@ fun LicenseDialog(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = when (licenseStatus) {
-                            LicenseManager.STATUS_PREMIUM -> Color(0xFF4CAF50)
-                            LicenseManager.STATUS_EXPIRED -> Color(0xFFFF9800)
+                        containerColor = when {
+                            isTimeAbnormal -> Color(0xFFF44336)
+                            licenseStatus == LicenseManager.STATUS_PREMIUM -> Color(0xFF4CAF50)
+                            licenseStatus == LicenseManager.STATUS_EXPIRED -> Color(0xFFFF9800)
                             else -> Color(0xFF9E9E9E)
                         }
                     )
@@ -85,9 +111,10 @@ fun LicenseDialog(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
-                            imageVector = when (licenseStatus) {
-                                LicenseManager.STATUS_PREMIUM -> Icons.Default.CheckCircle
-                                LicenseManager.STATUS_EXPIRED -> Icons.Default.Warning
+                            imageVector = when {
+                                isTimeAbnormal -> Icons.Default.Warning
+                                licenseStatus == LicenseManager.STATUS_PREMIUM -> Icons.Default.CheckCircle
+                                licenseStatus == LicenseManager.STATUS_EXPIRED -> Icons.Default.Warning
                                 else -> Icons.Default.Info
                             },
                             contentDescription = null,
@@ -98,9 +125,10 @@ fun LicenseDialog(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = when (licenseStatus) {
-                                LicenseManager.STATUS_PREMIUM -> "已激活"
-                                LicenseManager.STATUS_EXPIRED -> "已过期"
+                            text = when {
+                                isTimeAbnormal -> "时间异常"
+                                licenseStatus == LicenseManager.STATUS_PREMIUM -> "已激活"
+                                licenseStatus == LicenseManager.STATUS_EXPIRED -> "已过期"
                                 else -> "未激活"
                             },
                             color = Color.White,
@@ -108,23 +136,16 @@ fun LicenseDialog(
                             fontWeight = FontWeight.Bold
                         )
 
-                        if (licenseStatus == LicenseManager.STATUS_PREMIUM) {
-                            val expiryTimestamp = licenseManager.getExpiryTimestamp()
+                        // 有激活记录时始终显示截止日期，时间异常时也显示方便用户核对
+                        val expiryTimestamp = licenseManager.getExpiryTimestamp()
+                        expiryTimestamp?.let {
+                            val formatter = SimpleDateFormat("yyyy年MM月dd日", Locale.getDefault())
                             Text(
-                                text = "剩余 ${licenseManager.getRemainingDays()} 天",
-                                color = Color.White,
+                                text = "截至 ${formatter.format(Date(it))}",
+                                color = if (isTimeAbnormal) Color(0xFFFFCDD2) else Color.White,
                                 fontSize = 12.sp
                             )
-                            expiryTimestamp?.let {
-                                val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                                Text(
-                                    text = "截至 ${formatter.format(Date(it))}",
-                                    color = Color(0xFFE0F2F1),
-                                    fontSize = 10.sp
-                                )
-                            }
-                        }
-                    }
+                        }                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
