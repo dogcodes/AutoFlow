@@ -5,7 +5,12 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.util.Log // Keep android.util.Log for now to replace it
 import com.carlos.autoflow.utils.AutoFlowLogger // Added
+import com.carlos.autoflow.utils.TrustedTimeProvider
 import com.carlos.autoflow.utils.logTag // Added
+import com.carlos.autoflow.license.LicenseManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 abstract class BaseAccessibilityService : AccessibilityService() {
     
@@ -16,6 +21,13 @@ abstract class BaseAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         AutoFlowLogger.d(TAG, "${javaClass.simpleName} 已连接")
+        // 重启后联网重新锚定可信时间，防止重启+调时间绕过
+        if (TrustedTimeProvider.hasRebootedSinceLastSync(LicenseManager(applicationContext).getPrefs())
+            && TrustedTimeProvider.isNetworkAvailable(applicationContext)) {
+            GlobalScope.launch(Dispatchers.IO) {
+                TrustedTimeProvider.forceSync(LicenseManager(applicationContext).getPrefs())
+            }
+        }
         onAccessibilityServiceConnected()
     }
 

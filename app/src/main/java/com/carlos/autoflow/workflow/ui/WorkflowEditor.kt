@@ -98,6 +98,7 @@ fun WorkflowEditor(
     var configNode by remember { mutableStateOf<WorkflowNode?>(null) }
     var showJsonExamplesDialog by remember { mutableStateOf(false) } // 新增状态变量
     var showPremiumDialog by remember { mutableStateOf(false) }
+    var showTimeAbnormalDialog by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
         when (currentScreen) {
@@ -167,8 +168,11 @@ fun WorkflowEditor(
                     },
                     onShowExecuteDialog = {
                         workflowViewModel.executeWorkflow(context) { result ->
-                            if (result == "REQUIRE_PREMIUM") showPremiumDialog = true
-                            else { showExecuteDialog = true; executeResult = result }
+                            when (result) {
+                                "REQUIRE_PREMIUM" -> showPremiumDialog = true
+                                "SYSTEM_TIME_INVALID" -> showTimeAbnormalDialog = true
+                                else -> { showExecuteDialog = true; executeResult = result }
+                            }
                         }
                     },
                     onShowAccessibilityExamples = { showAccessibilityExamples = true },
@@ -272,6 +276,19 @@ fun WorkflowEditor(
     }
 
     // 对话框处理
+    if (showTimeAbnormalDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showTimeAbnormalDialog = false },
+            title = { androidx.compose.material3.Text("系统时间异常") },
+            text = { androidx.compose.material3.Text("检测到系统时间异常，请在系统设置中校准时间后重试。") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { showTimeAbnormalDialog = false }) {
+                    androidx.compose.material3.Text("知道了")
+                }
+            }
+        )
+    }
+
     if (showPremiumDialog) {
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showPremiumDialog = false },

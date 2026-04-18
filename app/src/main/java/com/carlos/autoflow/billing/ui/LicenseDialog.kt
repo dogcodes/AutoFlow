@@ -6,8 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -22,6 +21,9 @@ import com.carlos.autoflow.billing.PaymentDialog
 import com.carlos.autoflow.license.ActivationResult
 import com.carlos.autoflow.license.FailureReason
 import com.carlos.autoflow.license.LicenseManager
+import com.carlos.autoflow.utils.TrustedTimeProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -40,6 +42,16 @@ fun LicenseDialog(
     var showActivation by remember { mutableStateOf(false) }
     var showPayment by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
+
+    // 进入页面时预取网络时间 + 检测时间异常
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            TrustedTimeProvider.prefetch(licenseManager.getPrefs())
+        }
+        if (licenseManager.isSystemTimeAbnormal()) {
+            message = "⚠️ 系统时间异常，请在系统设置中校准时间后重试"
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -307,6 +319,8 @@ private fun FailureReason.toMessage(): String {
         FailureReason.TYPE_MISMATCH -> "此激活码不适用于当前应用"
         FailureReason.ALREADY_USED -> "激活码已被使用"
         FailureReason.DEVICE_MISMATCH -> "设备与激活码不匹配"
+        FailureReason.SYSTEM_TIME_INVALID -> "系统日期异常，请在系统设置中校准后重试"
+        FailureReason.TIME_SYNC_FAILED -> "无法获取网络时间，请检查网络连接并确认系统时间正确后重试"
         FailureReason.UNKNOWN -> "激活码无效"
     }
 }

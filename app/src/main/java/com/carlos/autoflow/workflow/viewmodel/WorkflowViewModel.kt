@@ -456,7 +456,12 @@ class WorkflowViewModel : ViewModel() {
     
     // 工作流执行引擎
     fun executeWorkflow(context: android.content.Context, onResult: (String) -> Unit) {
-        if (!LicenseManager(context).isPremium()) {
+        val licenseManager = LicenseManager(context)
+        if (licenseManager.isSystemTimeAbnormal()) {
+            onResult("SYSTEM_TIME_INVALID")
+            return
+        }
+        if (!licenseManager.isPremium()) {
             onResult("REQUIRE_PREMIUM")
             return
         }

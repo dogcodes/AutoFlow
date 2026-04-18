@@ -150,6 +150,7 @@ fun TasksScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     var showPremiumDialog by remember { mutableStateOf(false) }
+    var showTimeAbnormalDialog by remember { mutableStateOf(false) }
     var deleteTarget by remember { mutableStateOf<Workflow?>(null) }
     var scheduleTarget by remember { mutableStateOf<Workflow?>(null) }
     val checkInPrefs = remember { CheckInPrefs(context) }
@@ -270,7 +271,10 @@ fun TasksScreen(
                         onExecute = {
                             workflowViewModel.loadWorkflow(workflow)
                             workflowViewModel.executeWorkflow(context) { result ->
-                                if (result == "REQUIRE_PREMIUM") showPremiumDialog = true
+                                when (result) {
+                                    "REQUIRE_PREMIUM" -> showPremiumDialog = true
+                                    "SYSTEM_TIME_INVALID" -> showTimeAbnormalDialog = true
+                                }
                             }
                         },
                         onStop = {
@@ -283,6 +287,17 @@ fun TasksScreen(
                 }
             }
         }
+    }
+
+    if (showTimeAbnormalDialog) {
+        AlertDialog(
+            onDismissRequest = { showTimeAbnormalDialog = false },
+            title = { Text("系统时间异常") },
+            text = { Text("检测到系统时间异常，请在系统设置中校准时间后重试。") },
+            confirmButton = {
+                TextButton(onClick = { showTimeAbnormalDialog = false }) { Text("知道了") }
+            }
+        )
     }
 
     if (showPremiumDialog) {
