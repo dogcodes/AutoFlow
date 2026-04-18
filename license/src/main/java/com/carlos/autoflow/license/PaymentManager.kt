@@ -83,6 +83,7 @@ class PaymentManager(private val context: Context) {
             PRODUCT_PREMIUM_YEAR,
             PRODUCT_PREMIUM_MONTH -> {
                 val licenseManager = LicenseManager(context, forcePremium)
+                if (licenseManager.isSystemTimeAbnormal()) return false
                 val days = if (productId == PRODUCT_PREMIUM_YEAR) 365 else 30
                 licenseManager.grantDays(days)
             }

@@ -219,19 +219,27 @@ fun TasksScreen(
         val onCheckIn = {
             if (eligibleForCheckIn && !isCheckInRunning && config != null) {
                 isCheckInRunning = true
-                val success = licenseManager.extendMinutes(rewardMinutes)
-                if (success) {
-                    checkInPrefs.markCheckedIn()
-                    lastCheckInAt = checkInPrefs.lastCheckInAt
+                if (licenseManager.isSystemTimeAbnormal()) {
+                    val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
                     coroutineScope.launch {
-                        snackbarHostState.showSnackbar("签到成功，获得${rewardMinutes}分钟会员")
+                        snackbarHostState.showSnackbar("系统日期异常（$date），请校准后重试")
                     }
+                    isCheckInRunning = false
                 } else {
-                    coroutineScope.launch {
-                        snackbarHostState.showSnackbar("签到失败，请稍后再试")
+                    val success = licenseManager.extendMinutes(rewardMinutes)
+                    if (success) {
+                        checkInPrefs.markCheckedIn()
+                        lastCheckInAt = checkInPrefs.lastCheckInAt
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar("签到成功，获得${rewardMinutes}分钟会员")
+                        }
+                    } else {
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar("签到失败，请稍后再试")
+                        }
                     }
+                    isCheckInRunning = false
                 }
-                isCheckInRunning = false
             }
         }
 
