@@ -5,6 +5,12 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
+    if (url.pathname === "/time") {
+      return new Response(JSON.stringify({ t: Date.now() }), {
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+      });
+    }
+
     if (url.pathname.startsWith("/checkin-config")) {
       if (request.method === "GET") {
         return respondWithCachedJson(request, env, () => getConfig(env));
