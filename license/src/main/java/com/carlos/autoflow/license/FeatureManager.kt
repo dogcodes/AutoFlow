@@ -49,6 +49,8 @@ class FeatureManager(
         return !licenseManager.isPremium()
     }
 
+    fun isSystemTimeAbnormal(): Boolean = licenseManager.isSystemTimeAbnormal()
+
     fun canUseAdvancedNodes(): Boolean {
         return licenseManager.isPremium()
     }

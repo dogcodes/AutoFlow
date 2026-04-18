@@ -3,6 +3,7 @@ package com.carlos.autoflow.workflow.ui
 import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.Canvas
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -34,6 +35,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.carlos.autoflow.ui.theme.Dimens
 import com.carlos.autoflow.workflow.ui.WorkflowStatusMessages
 import com.carlos.autoflow.workflow.ui.WorkflowControls
@@ -66,6 +70,9 @@ import com.carlos.autoflow.ui.screens.LicenseActivity
 import com.carlos.autoflow.demo.DemoAppScreen
 import com.carlos.autoflow.recorder.ui.RecordingControlPanel
 import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.math.floor
 import kotlin.math.pow
 
@@ -99,6 +106,17 @@ fun WorkflowEditor(
     var showJsonExamplesDialog by remember { mutableStateOf(false) } // 新增状态变量
     var showPremiumDialog by remember { mutableStateOf(false) }
     var showTimeAbnormalDialog by remember { mutableStateOf(false) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && showTimeAbnormalDialog) {
+                if (!featureManager.isSystemTimeAbnormal()) showTimeAbnormalDialog = false
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
         when (currentScreen) {
@@ -277,10 +295,11 @@ fun WorkflowEditor(
 
     // 对话框处理
     if (showTimeAbnormalDialog) {
+        val date = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showTimeAbnormalDialog = false },
             title = { androidx.compose.material3.Text("系统时间异常") },
-            text = { androidx.compose.material3.Text("检测到系统时间异常，请在系统设置中校准时间后重试。") },
+            text = { androidx.compose.material3.Text("系统日期异常（$date），请在系统设置中校准后重试。") },
             confirmButton = {
                 androidx.compose.material3.TextButton(onClick = { showTimeAbnormalDialog = false }) {
                     androidx.compose.material3.Text("知道了")

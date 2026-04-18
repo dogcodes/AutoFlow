@@ -69,6 +69,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.DisposableEffect
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.carlos.autoflow.workflow.models.ExecutionStatus
@@ -84,6 +85,12 @@ import com.carlos.autoflow.platform.task.config.DailyCheckInConfig
 import com.carlos.autoflow.platform.task.config.DailyCheckInConfigManager
 import com.carlos.autoflow.foundation.network.FoundationNetworkClient
 import com.carlos.autoflow.task.CheckInPrefs
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.math.max
 
 @Composable
@@ -151,6 +158,19 @@ fun TasksScreen(
     val coroutineScope = rememberCoroutineScope()
     var showPremiumDialog by remember { mutableStateOf(false) }
     var showTimeAbnormalDialog by remember { mutableStateOf(false) }
+    val licenseManager = remember { LicenseManager(context, BuildConfig.FORCE_PREMIUM) }
+
+    // 回到前台时重新检测，时间已校准则关闭弹框
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && showTimeAbnormalDialog) {
+                if (!licenseManager.isSystemTimeAbnormal()) showTimeAbnormalDialog = false
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     var deleteTarget by remember { mutableStateOf<Workflow?>(null) }
     var scheduleTarget by remember { mutableStateOf<Workflow?>(null) }
     val checkInPrefs = remember { CheckInPrefs(context) }
@@ -160,7 +180,6 @@ fun TasksScreen(
     var checkInConfig by remember { mutableStateOf(checkInConfigManager.loadCachedConfig()) }
     var lastCheckInAt by remember { mutableStateOf(checkInPrefs.lastCheckInAt) }
     var isCheckInRunning by remember { mutableStateOf(false) }
-    val licenseManager = remember { LicenseManager(context, BuildConfig.FORCE_PREMIUM) }
     LaunchedEffect(Unit) {
         checkInConfigManager.fetchRemoteConfig { config ->
             checkInConfig = config ?: checkInConfig
@@ -290,10 +309,11 @@ fun TasksScreen(
     }
 
     if (showTimeAbnormalDialog) {
+        val date = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
         AlertDialog(
             onDismissRequest = { showTimeAbnormalDialog = false },
             title = { Text("系统时间异常") },
-            text = { Text("检测到系统时间异常，请在系统设置中校准时间后重试。") },
+            text = { Text("系统日期异常（$date），请在系统设置中校准后重试。") },
             confirmButton = {
                 TextButton(onClick = { showTimeAbnormalDialog = false }) { Text("知道了") }
             }
