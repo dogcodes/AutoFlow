@@ -421,7 +421,7 @@ class WorkflowViewModel : ViewModel() {
     fun loadFromUrl(url: String, onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                println("开始从URL加载: $url")
+                AutoFlowLogger.d("WorkflowViewModel", "开始从URL加载: $url")
                 val request = Request.Builder()
                     .url(url)
                     .addHeader("User-Agent", "AutoFlow/1.0")
@@ -430,12 +430,12 @@ class WorkflowViewModel : ViewModel() {
                 
                 val response = httpClient.newCall(request).execute()
                 
-                println("响应状态码: ${response.code}")
+                AutoFlowLogger.d("WorkflowViewModel", "响应状态码: ${response.code}")
                 
                 if (response.isSuccessful) {
                     val json = response.body?.string() ?: ""
-                    println("响应内容长度: ${json.length}")
-                    println("响应内容预览: ${json.take(200)}")
+                    AutoFlowLogger.d("WorkflowViewModel", "响应内容长度: ${json.length}")
+                    AutoFlowLogger.d("WorkflowViewModel", "响应内容预览: ${json.take(200)}")
                     
                     if (json.isBlank()) {
                         withContext(Dispatchers.Main) {
@@ -450,14 +450,17 @@ class WorkflowViewModel : ViewModel() {
                     }
                 } else {
                     val errorBody = response.body?.string() ?: ""
-                    println("错误响应: $errorBody")
+                    AutoFlowLogger.w("WorkflowViewModel", "错误响应: $errorBody")
                     withContext(Dispatchers.Main) {
                         onResult(false, "HTTP ${response.code}: ${response.message}")
                     }
                 }
             } catch (e: Exception) {
-                println("URL加载异常: ${e.javaClass.simpleName} - ${e.message}")
-                e.printStackTrace()
+                AutoFlowLogger.e(
+                    "WorkflowViewModel",
+                    "URL加载异常: ${e.javaClass.simpleName} - ${e.message}",
+                    e
+                )
                 withContext(Dispatchers.Main) {
                     onResult(false, "${e.javaClass.simpleName}: ${e.message}")
                 }
@@ -793,7 +796,7 @@ class WorkflowViewModel : ViewModel() {
                 } catch (e: Exception) {
                     result.appendLine("   ❌ 请求异常: ${e.javaClass.simpleName}")
                     result.appendLine("   💬 错误信息: ${e.message}")
-                    e.printStackTrace()
+                    AutoFlowLogger.e("WorkflowViewModel", "HTTP_REQUEST 节点执行异常", e)
                 }
             }
             NodeType.END -> {
@@ -1300,7 +1303,7 @@ class WorkflowViewModel : ViewModel() {
                     
                 } catch (e: Exception) {
                     result.appendLine("   ❌ 启动Activity失败: ${e.javaClass.simpleName} - ${e.message}")
-                    e.printStackTrace()
+                    AutoFlowLogger.e("WorkflowViewModel", "LAUNCH_ACTIVITY 节点执行异常", e)
                 }
             }
             NodeType.SYSTEM_GLOBAL_ACTION -> {

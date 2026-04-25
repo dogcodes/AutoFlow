@@ -16,6 +16,7 @@ import android.content.Intent
 import com.carlos.autoflow.utils.PermissionUtils
 import androidx.compose.ui.unit.sp
 import com.carlos.autoflow.monitor.NodeMonitorAccessibilityService
+import com.carlos.autoflow.utils.AutoFlowLogger
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,7 +114,7 @@ fun NodeMonitorDemo() {
                                 }
                             } catch (e: Exception) {
                                 // 处理异常，避免崩溃
-                                e.printStackTrace()
+                                AutoFlowLogger.e("NodeMonitorDemo", "切换监控状态失败", e)
                             }
                         },
                         modifier = Modifier.fillMaxWidth()

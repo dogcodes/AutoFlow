@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
 import com.carlos.autoflow.monitor.NodeMonitorAccessibilityService
 import com.carlos.autoflow.ui.theme.AutoFlowTheme
+import com.carlos.autoflow.utils.AutoFlowLogger
 import com.carlos.autoflow.utils.PermissionUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -73,7 +74,7 @@ class NodeMonitorService : Service() {
             createFloatingButton()
             createOverlayView()
         } catch (e: Exception) {
-            e.printStackTrace()
+            AutoFlowLogger.e("NodeMonitorService", "NodeMonitorService 初始化失败", e)
             stopSelf()
         }
     }
@@ -121,7 +122,7 @@ class NodeMonitorService : Service() {
             
             windowManager?.addView(floatingView, params)
         } catch (e: Exception) {
-            e.printStackTrace()
+            AutoFlowLogger.e("NodeMonitorService", "创建监控浮窗失败", e)
         }
     }
     

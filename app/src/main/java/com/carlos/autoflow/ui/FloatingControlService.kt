@@ -15,6 +15,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import android.view.MotionEvent
+import com.carlos.autoflow.utils.AutoFlowLogger
 import kotlin.math.abs
 
 class FloatingControlService : Service() {
@@ -170,7 +171,7 @@ class FloatingControlService : Service() {
             floatingView = button
             windowManager?.addView(floatingView, params)
         } catch (e: Exception) {
-            e.printStackTrace()
+            AutoFlowLogger.e("FloatingControlService", "创建悬浮按钮失败", e)
             stopSelf()
         }
     }
@@ -193,7 +194,7 @@ class FloatingControlService : Service() {
                 floatingView = null
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            AutoFlowLogger.e("FloatingControlService", "隐藏悬浮按钮失败", e)
         }
     }
 }
