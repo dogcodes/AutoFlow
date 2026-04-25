@@ -11,10 +11,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -61,6 +64,8 @@ fun MainHomeScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     var currentTab by rememberSaveable { mutableStateOf(HomeTab.TASKS) }
+    var showSaveNameDialog by remember { mutableStateOf(false) }
+    var saveNameInput by remember(currentWorkflow.id) { mutableStateOf(currentWorkflow.name) }
     val rewardSlotId = AdSlots.REWARD
     val rewardAdRequest: () -> Unit = rewardAdRequest@{
         val activity = context as? Activity ?: return@rewardAdRequest
@@ -102,6 +107,11 @@ fun MainHomeScreen(
 
     if (ComplianceConfig.isComplianceMode && currentTab == HomeTab.RECORD) {
         currentTab = HomeTab.TASKS
+    }
+
+    fun requiresNamingBeforeSave(name: String): Boolean {
+        val trimmed = name.trim()
+        return trimmed.isBlank() || trimmed == "新建任务" || trimmed == "新建工作流"
     }
 
     Scaffold(
@@ -165,7 +175,13 @@ fun MainHomeScreen(
                         workflowViewModel = workflowViewModel,
                         showSideDrawerButton = false,
                         onSaveWorkflow = {
-                            workflowRepository.upsertWorkflow(workflowViewModel.workflow.value)
+                            val workflow = workflowViewModel.workflow.value
+                            if (requiresNamingBeforeSave(workflow.name)) {
+                                saveNameInput = workflow.name.takeIf { it.isNotBlank() } ?: "新建任务"
+                                showSaveNameDialog = true
+                            } else {
+                                workflowRepository.upsertWorkflow(workflow)
+                            }
                         }
                     )
                 }
@@ -197,5 +213,39 @@ fun MainHomeScreen(
                 )
             }
         }
+    }
+
+    if (showSaveNameDialog) {
+        AlertDialog(
+            onDismissRequest = { showSaveNameDialog = false },
+            title = { Text("保存当前任务") },
+            text = {
+                OutlinedTextField(
+                    value = saveNameInput,
+                    onValueChange = { saveNameInput = it },
+                    label = { Text("任务名称") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        workflowRepository.upsertWorkflow(
+                            workflowViewModel.workflow.value.copy(
+                                name = saveNameInput.trim().ifBlank { "新建任务" }
+                            )
+                        )
+                        showSaveNameDialog = false
+                    }
+                ) {
+                    Text("保存")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSaveNameDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
     }
 }
