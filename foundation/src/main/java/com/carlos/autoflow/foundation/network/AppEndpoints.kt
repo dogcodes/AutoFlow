@@ -2,11 +2,11 @@ package com.carlos.autoflow.foundation.network
 
 object AppHosts {
     const val API = "http://xbdcc.cn"
-    const val WEB = "http://autoflow.xbdcc.cn"
+    const val WEB = "https://autoflow.xbdcc.cn"
 }
 
 object ApiRoutes {
-    const val VERSION_INFO = "${AppHosts.API}/autoflow/version.json"
+    const val VERSION_INFO = "${AppHosts.WEB}/version"
     const val AD_CONFIG = "${AppHosts.API}/autoflow/ad-config.json"
     const val CHECKIN_CONFIG = "${AppHosts.WEB}/checkin-config.json"
 }

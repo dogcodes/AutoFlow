@@ -1,5 +1,6 @@
 import { cacheJsonResponse, respondWithCachedJson } from "./cache.js";
 import { getConfig, updateConfig } from "./checkinConfig.js";
+import { getVersionConfig } from "./versionConfig.js";
 
 export default {
   async fetch(request, env, ctx) {
@@ -9,6 +10,14 @@ export default {
       return new Response(JSON.stringify({ t: Date.now() }), {
         headers: { "Content-Type": "application/json; charset=utf-8" },
       });
+    }
+
+    if (url.pathname === "/version") {
+      if (request.method === "GET") {
+        return respondWithCachedJson(request, env, () => getVersionConfig(env));
+      }
+
+      return new Response("Method not allowed", { status: 405 });
     }
 
     if (url.pathname.startsWith("/checkin-config")) {
