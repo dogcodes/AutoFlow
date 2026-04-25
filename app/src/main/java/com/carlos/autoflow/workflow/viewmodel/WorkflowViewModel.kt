@@ -28,6 +28,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.text.SimpleDateFormat
 import com.carlos.autoflow.license.LicenseManager
+import com.carlos.autoflow.workflow.io.AfwCodec
 
 class WorkflowViewModel : ViewModel() {
     private val _workflow = MutableStateFlow(createEmptyWorkflow())
@@ -349,6 +350,7 @@ class WorkflowViewModel : ViewModel() {
     
     // 第二阶段新增功能：配置管理
     fun exportToJson(): String = gson.toJson(_workflow.value)
+    fun exportToAfw(): String = AfwCodec.encodeJsonToAfw(exportToJson())
     
     fun loadWorkflow(workflow: Workflow) {
         _workflow.value = workflow
@@ -361,6 +363,15 @@ class WorkflowViewModel : ViewModel() {
             true
         } catch (e: Exception) {
             android.util.Log.e("WorkflowViewModel", "JSON导入失败: ${e.message}", e)
+            false
+        }
+    }
+
+    fun importFromText(text: String): Boolean {
+        return try {
+            importFromJson(AfwCodec.normalizeToJson(text))
+        } catch (e: Exception) {
+            android.util.Log.e("WorkflowViewModel", "文本导入失败: ${e.message}", e)
             false
         }
     }
@@ -434,8 +445,8 @@ class WorkflowViewModel : ViewModel() {
                     }
                     
                     withContext(Dispatchers.Main) {
-                        val success = importFromJson(json)
-                        onResult(success, if (success) null else "JSON解析失败")
+                        val success = importFromText(json)
+                        onResult(success, if (success) null else "工作流解析失败")
                     }
                 } else {
                     val errorBody = response.body?.string() ?: ""

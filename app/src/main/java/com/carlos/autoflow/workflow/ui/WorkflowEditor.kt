@@ -329,12 +329,22 @@ fun WorkflowEditor(
 
     if (showImportDialog) {
         ImportDialog(
+            isDebug = BuildConfig.DEBUG,
             onDismiss = { 
                 showImportDialog = false
                 importError = null
             },
-            onImport = { json ->
-                val success = workflowViewModel.importFromJson(json)
+            onImportAfw = { afw ->
+                val success = workflowViewModel.importFromText(afw)
+                if (success) {
+                    showImportDialog = false
+                    importError = null
+                } else {
+                    importError = "AFW格式错误"
+                }
+            },
+            onImportJson = { json ->
+                val success = workflowViewModel.importFromText(json)
                 if (success) {
                     showImportDialog = false
                     importError = null
@@ -358,6 +368,8 @@ fun WorkflowEditor(
 
     if (showExportDialog) {
         ExportDialog(
+            isDebug = BuildConfig.DEBUG,
+            afw = workflowViewModel.exportToAfw(),
             json = workflowViewModel.exportToJson(),
             onDismiss = { showExportDialog = false }
         )
