@@ -139,7 +139,7 @@ fun LicenseDialog(
                         // 有激活记录时始终显示截止日期，时间异常时也显示方便用户核对
                         val expiryTimestamp = licenseManager.getExpiryTimestamp()
                         expiryTimestamp?.let {
-                            val formatter = SimpleDateFormat("yyyy年MM月dd日", Locale.getDefault())
+                            val formatter = SimpleDateFormat("yyyy年MM月dd日 HH:mm:ss", Locale.getDefault())
                             Text(
                                 text = "截至 ${formatter.format(Date(it))}",
                                 color = if (isTimeAbnormal) Color(0xFFFFCDD2) else Color.White,
