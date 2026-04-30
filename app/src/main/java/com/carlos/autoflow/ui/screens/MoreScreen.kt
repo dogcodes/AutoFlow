@@ -53,11 +53,11 @@ fun MoreScreen(
             }
         )
         if (!ComplianceConfig.isComplianceMode) {
-            add(
-                MoreMenuItemData("节点监控器", Icons.Default.Visibility) {
-                    context.startActivity(Intent(context, NodeMonitorActivity::class.java))
-                }
-            )
+//            add(
+//                MoreMenuItemData("节点监控器", Icons.Default.Visibility) {
+//                    context.startActivity(Intent(context, NodeMonitorActivity::class.java))
+//                }
+//            )
         }
         add(
             MoreMenuItemData("示例应用", Icons.Default.Apps) {
