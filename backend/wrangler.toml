@@ -10,7 +10,8 @@ binding = "CHECKIN_CONFIG"
 id = "545e0894435d4feca26189c836822732"
 
 [vars]
-CACHE_TTL = "3600"  # 缓存1小时
+CACHE_TTL = "60"  # 缓存1分钟
+#CACHE_TTL = "3600"  # 缓存1小时
 VERSION_CODE = "1"
 VERSION_NAME = "0.1.0"
 VERSION_DOWNLOAD_URL = ""
