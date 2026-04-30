@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AutoFlow 套餐与权益说明</title>
+    <style>
+      :root {
+        --bg: #f4f7fb;
+        --panel: #ffffff;
+        --text: #172033;
+        --muted: #5d6b82;
+        --line: #d8e2ef;
+        --primary: #126bff;
+        --accent: #0b1f44;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Inter", "Noto Sans SC", system-ui, sans-serif;
+        background: linear-gradient(180deg, #edf3ff 0%, var(--bg) 220px);
+        color: var(--text);
+      }
+      header {
+        padding: 48px 20px 28px;
+        text-align: center;
+      }
+      header h1 {
+        margin: 0;
+        font-size: clamp(2rem, 4vw, 3rem);
+      }
+      header p {
+        max-width: 760px;
+        margin: 14px auto 0;
+        line-height: 1.8;
+        color: var(--muted);
+      }
+      main {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 0 20px 48px;
+        display: grid;
+        gap: 18px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 18px;
+      }
+      .card, section {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 28px;
+        box-shadow: 0 14px 36px rgba(18, 34, 66, 0.06);
+      }
+      .card.featured {
+        border-color: rgba(18, 107, 255, 0.35);
+        box-shadow: 0 18px 48px rgba(18, 107, 255, 0.12);
+      }
+      .eyebrow {
+        display: inline-flex;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #eef4ff;
+        color: var(--primary);
+        font-size: 0.85rem;
+        font-weight: 700;
+      }
+      h2, h3 {
+        margin: 0 0 12px;
+      }
+      .price {
+        margin: 12px 0 14px;
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--accent);
+      }
+      p, li {
+        color: var(--muted);
+        line-height: 1.8;
+      }
+      ul {
+        margin: 0;
+        padding-left: 1.25rem;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 8px;
+      }
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0 18px;
+        border-radius: 999px;
+        text-decoration: none;
+        font-weight: 700;
+        background: var(--primary);
+        color: #fff;
+      }
+      .ghost {
+        background: transparent;
+        color: var(--primary);
+        border: 1px solid rgba(18, 107, 255, 0.25);
+      }
+      footer {
+        text-align: center;
+        padding: 0 20px 40px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>AutoFlow 套餐与权益说明</h1>
+      <p>本页用于对外说明免费体验、会员/激活码权益和套餐价格。价格已经明确时，单独放在这里比散落在帮助页或官网首页更清楚。</p>
+    </header>
+    <main>
+      <div class="grid">
+        <article class="card">
+          <span class="eyebrow">30天套餐</span>
+          <h3>轻量体验</h3>
+          <div class="price">¥6.66</div>
+          <ul>
+            <li>适合初次正式使用、轻量自动化任务和短周期体验。</li>
+            <li>购买后获得 30 天使用时长。</li>
+            <li>权益以应用内许可证管理页显示的截止时间为准。</li>
+          </ul>
+        </article>
+
+        <article class="card featured">
+          <span class="eyebrow">90天套餐</span>
+          <h3>进阶常用</h3>
+          <div class="price">¥18.88</div>
+          <ul>
+            <li>适合日常高频使用、持续运行和中周期场景。</li>
+            <li>购买后获得 90 天使用时长。</li>
+            <li>性价比高于短周期套餐，适合作为主力选择。</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <span class="eyebrow">365天套餐</span>
+          <h3>长期稳定</h3>
+          <div class="price">¥66.60</div>
+          <ul>
+            <li>适合长期自动化需求、稳定持续使用和重度用户。</li>
+            <li>购买后获得 365 天使用时长。</li>
+            <li>减少频繁续费操作，适合长期维护自己的任务体系。</li>
+          </ul>
+        </article>
+      </div>
+
+      <section>
+        <h2>免费体验方式</h2>
+        <ul>
+          <li>未付费用户仍可通过签到、激励广告等方式获得额外体验时长。</li>
+          <li>免费体验更适合短时测试与基础验证，不建议作为长期稳定方案。</li>
+          <li>若你已经形成固定使用习惯，直接选择周期套餐会更省事。</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>权益说明</h2>
+        <ul>
+          <li>免费体验时长、签到奖励、广告奖励属于体验权益，不等同于正式会员。</li>
+          <li>正式会员或激活码权益到账后，以许可证页显示的截止时间为准。</li>
+          <li>若系统时间异常或网络状态异常，部分时长展示可能延迟刷新。</li>
+          <li>套餐价格如后续有活动或渠道差异，以最新对外说明为准。</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>价格与咨询</h2>
+        <p>当前页面展示的是标准套餐价格。如果你是渠道合作、批量采购或需要特殊授权方式，建议直接联系运营确认。</p>
+        <p><strong>咨询微信：</strong>xbdcc1</p>
+        <div class="actions">
+          <a class="cta" href="/help.html">查看使用说明</a>
+          <a class="cta ghost" href="/">返回官网首页</a>
+        </div>
+      </section>
+    </main>
+    <footer>© 2026 AutoFlow</footer>
+  </body>
+</html>

@@ -14,5 +14,5 @@ object ApiRoutes {
 object WebRoutes {
     const val PRIVACY_POLICY = "https://autoflow.xbdcc.cn/AutoFlow-privacy-policy.html"
     const val USER_AGREEMENT = "https://autoflow.xbdcc.cn/AutoFlow-user-agreement.html"
-    const val HELP = "${AppHosts.WEB}/GrabRedEnvelope/index.html"
+    const val HELP = "${AppHosts.WEB}/help.html"
 }

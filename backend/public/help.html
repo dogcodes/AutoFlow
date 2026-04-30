@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AutoFlow 使用说明</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f7fb;
+        --panel: #ffffff;
+        --text: #18202d;
+        --muted: #5d6b82;
+        --line: #dbe3ef;
+        --primary: #0f6fff;
+        --primary-deep: #1247d6;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Inter", "Noto Sans SC", system-ui, sans-serif;
+        background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 220px);
+        color: var(--text);
+      }
+      header {
+        padding: 48px 20px 24px;
+        text-align: center;
+      }
+      header h1 {
+        margin: 0;
+        font-size: clamp(2rem, 4vw, 3rem);
+      }
+      header p {
+        max-width: 760px;
+        margin: 14px auto 0;
+        line-height: 1.8;
+        color: var(--muted);
+      }
+      main {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 0 20px 48px;
+        display: grid;
+        gap: 18px;
+      }
+      section {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 28px;
+        box-shadow: 0 14px 40px rgba(28, 53, 94, 0.06);
+      }
+      h2 {
+        margin: 0 0 14px;
+        font-size: 1.35rem;
+      }
+      p {
+        margin: 0 0 12px;
+        line-height: 1.8;
+        color: var(--muted);
+      }
+      ol, ul {
+        margin: 0;
+        padding-left: 1.35rem;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+      li + li {
+        margin-top: 6px;
+      }
+      .tips {
+        border-left: 4px solid var(--primary);
+        padding-left: 14px;
+      }
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0 18px;
+        border-radius: 999px;
+        background: var(--primary);
+        color: #fff;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .cta:hover {
+        background: var(--primary-deep);
+      }
+      footer {
+        text-align: center;
+        padding: 0 20px 40px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+      @media (max-width: 640px) {
+        section { padding: 22px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>AutoFlow 使用说明</h1>
+      <p>本页用于说明 AutoFlow 的基础使用方式、权限要求、体验权益和常见问题。官网首页继续承担产品介绍，对外帮助内容统一收敛到这里。</p>
+    </header>
+    <main>
+      <section>
+        <h2>1. 首次使用</h2>
+        <ol>
+          <li>安装后先进入 App，阅读并确认隐私政策与用户协议。</li>
+          <li>按提示开启无障碍服务、悬浮窗等必要权限。</li>
+          <li>进入工作流编辑器，新建或导入任务，保存后再执行。</li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>2. 运行任务前需要哪些权限</h2>
+        <ul>
+          <li>无障碍服务：用于识别界面节点和执行自动点击、输入、返回等操作。</li>
+          <li>悬浮窗权限：用于显示浮动控制球、状态面板等辅助入口。</li>
+          <li>后台运行相关权限：部分系统上需要允许自启动或后台保活，避免任务中断。</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>3. 基础使用流程</h2>
+        <ol>
+          <li>创建工作流：添加开始、条件、点击、等待、结束等节点。</li>
+          <li>配置节点：填写选择器、动作参数、等待条件或跳转信息。</li>
+          <li>保存任务：建议先命名，便于后续在任务列表中识别。</li>
+          <li>开始执行：从任务页或相关入口启动任务，观察运行反馈。</li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>4. 体验方式与权益说明</h2>
+        <ul>
+          <li>未付费用户可通过签到、激励广告等方式获得额外体验时长。</li>
+          <li>会员或激活码权益是否生效，以 App 内许可证管理页显示的截止时间为准。</li>
+          <li>若遇到时长未刷新，建议重新进入页面或检查系统时间是否异常。</li>
+        </ul>
+        <p class="tips">当前建议把价格与套餐说明留在咨询或后续独立页面中，这一页先聚焦使用和权益理解，不把官网首页变成操作文档。</p>
+      </section>
+
+      <section>
+        <h2>5. 常见问题</h2>
+        <ul>
+          <li>任务不执行：优先检查无障碍服务是否仍在开启状态。</li>
+          <li>找不到节点：确认目标页面结构是否变化，必要时重新录制或调整选择器。</li>
+          <li>检查更新慢或失败：通常与网络或缓存有关，可稍后重试。</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>6. 联系与反馈</h2>
+        <p>如需咨询会员、激活码、使用问题或合作接入，可联系运营或技术支持。</p>
+        <p><strong>微信：</strong>xbdcc1</p>
+        <p>
+          <a class="cta" href="/pricing.html">查看套餐说明</a>
+          <a class="cta" href="https://autoflow.xbdcc.cn" target="_blank" rel="noreferrer">返回官网首页</a>
+        </p>
+      </section>
+    </main>
+    <footer>© 2026 AutoFlow</footer>
+  </body>
+</html>
