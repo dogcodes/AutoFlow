@@ -34,8 +34,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import com.carlos.autoflow.compliance.ComplianceConfig
 import com.carlos.autoflow.demo.DemoAppActivity
+import com.carlos.autoflow.BuildConfig
+import com.carlos.autoflow.license.LicenseManager
 import com.carlos.autoflow.recorder.ui.RecordingControlPanel
 import com.carlos.autoflow.workflow.models.Workflow
 import com.carlos.autoflow.workflow.repository.ExecutionHistoryRepository
@@ -63,6 +68,7 @@ fun MainHomeScreen(
     val currentWorkflow by workflowViewModel.workflow.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+    val licenseManager = remember { LicenseManager(context, BuildConfig.FORCE_PREMIUM) }
     var currentTab by rememberSaveable { mutableStateOf(HomeTab.TASKS) }
     var showSaveNameDialog by remember { mutableStateOf(false) }
     var saveNameInput by remember(currentWorkflow.id) { mutableStateOf(currentWorkflow.name) }
@@ -87,7 +93,21 @@ fun MainHomeScreen(
 
             override fun onAdRewarded() {
                 coroutineScope.launch {
-                    snackbarHostState.showSnackbar("已延长 30 分钟体验时间")
+                    if (licenseManager.isSystemTimeAbnormal()) {
+                        val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                            .format(Date())
+                        snackbarHostState.showSnackbar("系统日期异常（$date），请校准后重试")
+                        return@launch
+                    }
+
+                    val success = licenseManager.extendMinutes(30)
+                    snackbarHostState.showSnackbar(
+                        if (success) {
+                            "已延长 30 分钟体验时间"
+                        } else {
+                            "奖励发放失败，请稍后再试"
+                        }
+                    )
                 }
             }
         })
