@@ -7,17 +7,21 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-  // 微信验证文件路径，替换成微信给你的文件名
-    if (url.pathname === "/3634cfe3e453958df2d7628eef4f06cb.txt") {
-      return new Response(
-        "a9ed4ec0c11bad9ebc7f80d9a359a4479a396ae0", // 替换成微信给你的内容
-        {
-          headers: {
-            "Content-Type": "text/plain; charset=utf-8",
-            "Cache-Control": "no-cache"
-          }
+ // 匹配下载路由
+    if (url.pathname === "/download/app.apk") {
+      // 从 R2 读取 APK
+      const file = await env.APK_STORE.get("app.apk");
+      if (!file) {
+        return new Response("文件不存在", { status: 404 });
+      }
+
+      return new Response(file.body, {
+        headers: {
+          "Content-Type": "application/vnd.android.package-archive",
+          "Content-Disposition": "attachment; filename=\"app.apk\"",
+          "Cache-Control": "public, max-age=86400"
         }
-      );
+      });
     }
 
     if (url.pathname === "/time") {

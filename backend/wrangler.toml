@@ -13,6 +13,10 @@ id = "545e0894435d4feca26189c836822732"
 binding = "AD_CONFIG"
 id = "34b17f96cc20467eb4638a5015ea4f4f"
 
+[[r2_buckets]]
+binding = "APK_STORE"
+bucket_name = "apk-store"
+
 [vars]
 CACHE_TTL = "60"  # 缓存1分钟
 #CACHE_TTL = "3600"  # 缓存1小时
