@@ -101,6 +101,7 @@ private fun RewardedAdPromo(
     remainingDailyCount: Int,
     cooldownRemainingSeconds: Int,
     enabled: Boolean,
+    adFailureCooldown: Int = 0,  // 新增：广告失败冷却时间
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -128,13 +129,16 @@ private fun RewardedAdPromo(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = if (cooldownRemainingSeconds > 0) {
-                    "请 ${cooldownRemainingSeconds} 秒后再试，今日还可领取 $remainingDailyCount 次"
-                } else {
-                    "今日还可领取 $remainingDailyCount 次"
+                text = when {
+                    adFailureCooldown > 0 -> "广告服务暂时不可用，请 ${adFailureCooldown} 秒后再试"
+                    cooldownRemainingSeconds > 0 -> "请 ${cooldownRemainingSeconds} 秒后再试，今日还可领取 $remainingDailyCount 次"
+                    else -> "今日还可领取 $remainingDailyCount 次"
                 },
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = if (adFailureCooldown > 0) 
+                    MaterialTheme.colorScheme.error 
+                else 
+                    MaterialTheme.colorScheme.onPrimaryContainer
             )
             Spacer(modifier = Modifier.height(12.dp))
             Row(
@@ -143,9 +147,9 @@ private fun RewardedAdPromo(
             ) {
                 Button(
                     onClick = onClick,
-                    enabled = enabled
+                    enabled = enabled && adFailureCooldown == 0  // 同时检查正常冷却和失败冷却
                 ) {
-                    Text("立即体验")
+                    Text(if (adFailureCooldown > 0) "稍后再试" else "立即体验")
                 }
             }
         }
@@ -165,6 +169,7 @@ fun TasksScreen(
     rewardAdRemainingDailyCount: Int,
     rewardAdCooldownRemainingSeconds: Int,
     rewardAdEnabled: Boolean,
+    rewardAdFailureCooldown: Int = 0,  // 新增：广告失败冷却时间
     hideRewardAd: Boolean,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
@@ -282,7 +287,8 @@ fun TasksScreen(
                             rewardedPolicy = rewardedPolicy,
                             remainingDailyCount = rewardAdRemainingDailyCount,
                             cooldownRemainingSeconds = rewardAdCooldownRemainingSeconds,
-                            enabled = rewardAdEnabled
+                            enabled = rewardAdEnabled,
+                            adFailureCooldown = rewardAdFailureCooldown  // 传递失败冷却时间
                         )
                     }
                 }
@@ -314,7 +320,8 @@ fun TasksScreen(
                             rewardedPolicy = rewardedPolicy,
                             remainingDailyCount = rewardAdRemainingDailyCount,
                             cooldownRemainingSeconds = rewardAdCooldownRemainingSeconds,
-                            enabled = rewardAdEnabled
+                            enabled = rewardAdEnabled,
+                            adFailureCooldown = rewardAdFailureCooldown  // 传递失败冷却时间
                         )
                     }
                 }

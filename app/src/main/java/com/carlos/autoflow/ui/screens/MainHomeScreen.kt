@@ -79,6 +79,12 @@ fun MainHomeScreen(
     var showSaveNameDialog by remember { mutableStateOf(false) }
     var saveNameInput by remember(currentWorkflow.id) { mutableStateOf(currentWorkflow.name) }
     var rewardAdRefreshTick by remember { mutableStateOf(0) }
+    // 广告失败后的冷却时间（秒），防止用户频繁点击失败广告
+    var adFailureCooldown by remember { mutableStateOf(0) }
+    // 连续失败次数，超过阈值后暂时隐藏广告
+    var consecutiveFailures by remember { mutableStateOf(0) }
+    // 是否应该隐藏广告卡片（连续失败过多时）
+    var shouldHideAdCard by remember { mutableStateOf(false) }
     val rewardedPolicy = remember(rewardAdRefreshTick) {
         AdConfigurationManager.DEFAULT_REWARDED_POLICY.let { default ->
             adConfigStore.loadConfig()?.rewardedPolicy ?: default
@@ -92,6 +98,14 @@ fun MainHomeScreen(
     }
     val rewardSlotId = AdSlots.REWARD
     val rewardAdRequest: () -> Unit = rewardAdRequest@{
+        // 如果处于失败冷却期，直接返回
+        if (adFailureCooldown > 0) {
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar("广告服务暂时不可用，请 ${adFailureCooldown} 秒后再试")
+            }
+            return@rewardAdRequest
+        }
+        
         val activity = context as? Activity ?: return@rewardAdRequest
         val eligibility = rewardAdPrefs.getEligibility(
             dailyLimit = rewardedPolicy.dailyLimit,
@@ -116,8 +130,39 @@ fun MainHomeScreen(
             }
 
             override fun onAdFailed(error: String?) {
+                // 记录失败次数
+                consecutiveFailures++
+                
+                // 设置失败冷却时间（指数退避：30s, 60s, 120s...）
+                val cooldownTime = minOf(30 * (1 shl (consecutiveFailures - 1)), 300) // 最多5分钟
+                adFailureCooldown = cooldownTime
+                
+                // 连续失败3次以上，暂时隐藏广告卡片
+                if (consecutiveFailures >= 3) {
+                    shouldHideAdCard = true
+                    // 5分钟后重新尝试显示
+                    coroutineScope.launch {
+                        delay(5 * 60 * 1000L)
+                        shouldHideAdCard = false
+                        consecutiveFailures = 0
+                        adFailureCooldown = 0
+                    }
+                }
+                
+                // 启动冷却倒计时
                 coroutineScope.launch {
-                    snackbarHostState.showSnackbar("激励广告加载失败：${error ?: "未知"}")
+                    while (adFailureCooldown > 0) {
+                        delay(1000)
+                        adFailureCooldown--
+                    }
+                }
+                
+                coroutineScope.launch {
+                    val errorMsg = when {
+                        consecutiveFailures >= 3 -> "广告服务暂时不可用，请稍后再试"
+                        else -> "广告加载失败（${error ?: "未知"}），${cooldownTime}秒后可重试"
+                    }
+                    snackbarHostState.showSnackbar(errorMsg)
                 }
             }
 
@@ -126,6 +171,10 @@ fun MainHomeScreen(
             override fun onAdClosed() {}
 
             override fun onAdRewarded() {
+                // 成功后重置失败计数
+                consecutiveFailures = 0
+                adFailureCooldown = 0
+                
                 coroutineScope.launch {
                     if (licenseManager.isSystemTimeAbnormal()) {
                         val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -221,8 +270,9 @@ fun MainHomeScreen(
                             rewardedPolicy = rewardedPolicy,
                             rewardAdRemainingDailyCount = rewardAdEligibility.remainingDailyCount,
                             rewardAdCooldownRemainingSeconds = rewardAdEligibility.cooldownRemainingSeconds,
-                            rewardAdEnabled = rewardAdEligibility.canClaim,
-                            hideRewardAd = ComplianceConfig.isComplianceMode,
+                            rewardAdEnabled = rewardAdEligibility.canClaim && !shouldHideAdCard,  // 连续失败时禁用
+                            rewardAdFailureCooldown = adFailureCooldown,  // 传递失败冷却时间
+                            hideRewardAd = ComplianceConfig.isComplianceMode || shouldHideAdCard,  // 连续失败时隐藏
                             contentPadding = innerPadding
                         )
                 }
