@@ -151,20 +151,20 @@ fun LicenseDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // 功能对比
-                Column {
-                    Text(
-                        text = "版本对比",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    FeatureRow("每日录制次数", "3次", "无限制")
-                    FeatureRow("广告显示", "有", "无")
-                    FeatureRow("高级节点", "部分", "全部")
-                    FeatureRow("技术支持", "社区", "优先")
-                }
+//                Column {
+//                    Text(
+//                        text = "版本对比",
+//                        fontSize = 14.sp,
+//                        fontWeight = FontWeight.Bold
+//                    )
+//
+//                    Spacer(modifier = Modifier.height(8.dp))
+//
+//                    FeatureRow("每日录制次数", "3次", "无限制")
+//                    FeatureRow("广告显示", "有", "无")
+//                    FeatureRow("高级节点", "部分", "全部")
+//                    FeatureRow("技术支持", "社区", "优先")
+//                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 

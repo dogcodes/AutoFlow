@@ -28,21 +28,32 @@ class PaymentManager(private val context: Context) {
                 id = PRODUCT_PREMIUM_YEAR,
                 name = "365天使用时长",
                 description = "365天内可使用全部功能",
-                price = "¥88",
-                originalPrice = "¥128"
+                price = "¥66.6",
+//                originalPrice = "¥128"
+            ),
+            Product(
+                id = PRODUCT_PREMIUM_MONTH,
+                name = "90天使用时长",
+                description = "90天内可使用全部功能",
+//                description = "无限录制 + 无广告 + 全功能",
+                price = "¥18.88",
+//                originalPrice = "¥33"
             ),
             Product(
                 id = PRODUCT_PREMIUM_MONTH,
                 name = "30天使用时长",
-                description = "无限录制 + 无广告 + 全功能",
-                price = "¥12"
+                description = "30天内可使用全部功能",
+//                description = "无限录制 + 无广告 + 全功能",
+                price = "¥6.66",
+//                originalPrice = "¥12"
+
             ),
-            Product(
-                id = PRODUCT_EXTRA_RECORDINGS,
-                name = "额外录制次数",
-                description = "10次额外录制机会",
-                price = "¥6"
-            )
+//            Product(
+//                id = PRODUCT_EXTRA_RECORDINGS,
+//                name = "额外录制次数",
+//                description = "10次额外录制机会",
+//                price = "¥6"
+//            )
         )
     }
 
