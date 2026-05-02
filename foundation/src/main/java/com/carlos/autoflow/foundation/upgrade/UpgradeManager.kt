@@ -25,7 +25,7 @@ class UpgradeManager(
     ) {
         networkClient.get(infoUrl) { result ->
             when (result) {
-                is NetworkResult.Success -> parsePayload(result.body, currentVersionCode, listener)
+                is NetworkResult.Success -> listener(parsePayload(result.body, currentVersionCode))
                 is NetworkResult.Error -> listener(UpgradeResult.Error(result.message))
             }
         }
@@ -85,20 +85,16 @@ class UpgradeManager(
         context.startActivity(intent)
     }
 
-    private fun parsePayload(
-        payload: String,
-        currentVersionCode: Int,
-        listener: (UpgradeResult) -> Unit
-    ) {
+    fun parsePayload(payload: String, currentVersionCode: Int): UpgradeResult {
         try {
             val info = gson.fromJson(payload, UpgradeInfo::class.java)
-            if (info.versionCode > currentVersionCode) {
-                listener(UpgradeResult.Available(info, info.downloadUrl))
+            return if (info.versionCode > currentVersionCode) {
+                UpgradeResult.Available(info, info.downloadUrl)
             } else {
-                listener(UpgradeResult.UpToDate)
+                UpgradeResult.UpToDate
             }
         } catch (e: Exception) {
-            listener(UpgradeResult.Error(e.message))
+            return UpgradeResult.Error(e.message)
         }
     }
 }
