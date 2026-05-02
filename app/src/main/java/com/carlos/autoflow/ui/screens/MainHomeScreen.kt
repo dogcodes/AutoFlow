@@ -58,7 +58,7 @@ import com.carlos.autoflow.task.RewardAdPrefs
 private enum class HomeTab(val title: String) {
     TASKS("任务"),
     ARRANGE("编排"),
-    RECORD("录制"),
+    // RECORD("录制"),  // 暂时隐藏，录制功能未实现
     MORE("更多")
 }
 
@@ -162,12 +162,9 @@ fun MainHomeScreen(
 
     val availableTabs = remember {
         HomeTab.values().filter {
-            it != HomeTab.RECORD || !ComplianceConfig.isComplianceMode
+            // 录制功能已隐藏
+            true
         }
-    }
-
-    if (ComplianceConfig.isComplianceMode && currentTab == HomeTab.RECORD) {
-        currentTab = HomeTab.TASKS
     }
 
     fun requiresNamingBeforeSave(name: String): Boolean {
@@ -188,7 +185,7 @@ fun MainHomeScreen(
                                 imageVector = when (tab) {
                                     HomeTab.TASKS -> Icons.Default.Apps
                                     HomeTab.ARRANGE -> Icons.Default.AccountTree
-                                    HomeTab.RECORD -> Icons.Default.FiberManualRecord
+                                    // HomeTab.RECORD -> Icons.Default.FiberManualRecord
                                     HomeTab.MORE -> Icons.Default.MoreHoriz
                                 },
                                 contentDescription = tab.title
@@ -252,22 +249,22 @@ fun MainHomeScreen(
                 }
             }
 
-            HomeTab.RECORD -> {
-                if (ComplianceConfig.isComplianceMode) return@Scaffold
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                ) {
-                    RecordingControlPanel(
-                        onWorkflowGenerated = { json ->
-                            workflowViewModel.importFromJson(json)
-                            currentTab = HomeTab.ARRANGE
-                        },
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-            }
+            // HomeTab.RECORD -> {
+            //     if (ComplianceConfig.isComplianceMode) return@Scaffold
+            //     Box(
+            //         modifier = Modifier
+            //             .fillMaxSize()
+            //             .padding(innerPadding)
+            //     ) {
+            //         RecordingControlPanel(
+            //             onWorkflowGenerated = { json ->
+            //                 workflowViewModel.importFromJson(json)
+            //                 currentTab = HomeTab.ARRANGE
+            //             },
+            //             modifier = Modifier.fillMaxSize()
+            //         )
+            //     }
+            // }
 
             HomeTab.MORE -> {
                 MoreScreen(
