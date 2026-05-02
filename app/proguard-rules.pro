@@ -24,6 +24,11 @@
 -keep class com.carlos.autoflow.** extends android.app.Service { *; }
 -keep class com.carlos.autoflow.** extends android.content.BroadcastReceiver { *; }
 -keep class com.carlos.autoflow.** extends android.accessibilityservice.AccessibilityService { *; }
+-keep class androidx.core.app.CoreComponentFactory { *; }
+-keep class androidx.core.content.FileProvider { *; }
+-keep class androidx.startup.InitializationProvider { *; }
+-keep class androidx.profileinstaller.ProfileInstallReceiver { *; }
+-keep class com.carlos.autoflow.AutoFlowApplication { *; }
 
 # Keep Compose runtime stability for app composables.
 -keep class androidx.compose.** { *; }
