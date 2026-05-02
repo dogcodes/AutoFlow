@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -50,6 +51,7 @@ import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
 import com.carlos.autoflow.platform.ad.AdCallback
 import com.carlos.autoflow.platform.ad.AdService
 import com.carlos.autoflow.platform.ad.AdSlots
+import com.carlos.autoflow.task.RewardAdPrefs
 
 private enum class HomeTab(val title: String) {
     TASKS("任务"),
@@ -69,12 +71,28 @@ fun MainHomeScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val licenseManager = remember { LicenseManager(context, BuildConfig.FORCE_PREMIUM) }
+    val rewardAdPrefs = remember { RewardAdPrefs(context) }
     var currentTab by rememberSaveable { mutableStateOf(HomeTab.TASKS) }
     var showSaveNameDialog by remember { mutableStateOf(false) }
     var saveNameInput by remember(currentWorkflow.id) { mutableStateOf(currentWorkflow.name) }
+    var rewardAdRefreshTick by remember { mutableStateOf(0) }
+    val rewardAdEligibility = remember(rewardAdRefreshTick) { rewardAdPrefs.getEligibility() }
     val rewardSlotId = AdSlots.REWARD
     val rewardAdRequest: () -> Unit = rewardAdRequest@{
         val activity = context as? Activity ?: return@rewardAdRequest
+        val eligibility = rewardAdPrefs.getEligibility()
+        if (!eligibility.canClaim) {
+            coroutineScope.launch {
+                val message = when {
+                    eligibility.remainingDailyCount <= 0 -> "今日奖励次数已用完，请明天再来"
+                    eligibility.cooldownRemainingSeconds > 0 -> "请 ${eligibility.cooldownRemainingSeconds} 秒后再试"
+                    else -> "当前不可领取奖励"
+                }
+                snackbarHostState.showSnackbar(message)
+            }
+            rewardAdRefreshTick++
+            return@rewardAdRequest
+        }
         val adManager = AdService.getAdManager()
         adManager.loadRewardedAd(activity, rewardSlotId, object : AdCallback {
             override fun onAdLoaded() {
@@ -100,14 +118,14 @@ fun MainHomeScreen(
                         return@launch
                     }
 
-                    val success = licenseManager.extendMinutes(30)
-                    snackbarHostState.showSnackbar(
-                        if (success) {
-                            "已延长 30 分钟体验时间"
-                        } else {
-                            "奖励发放失败，请稍后再试"
-                        }
-                    )
+                    val success = licenseManager.extendMinutes(RewardAdPrefs.REWARD_MINUTES)
+                    if (success) {
+                        rewardAdPrefs.markRewarded()
+                        rewardAdRefreshTick++
+                        snackbarHostState.showSnackbar("已延长 ${RewardAdPrefs.REWARD_MINUTES} 分钟体验时间")
+                    } else {
+                        snackbarHostState.showSnackbar("奖励发放失败，请稍后再试")
+                    }
                 }
             }
         })
@@ -116,6 +134,13 @@ fun MainHomeScreen(
     LaunchedEffect(Unit) {
         if (workflowRepository.workflows.value.isEmpty()) {
             workflowRepository.upsertWorkflow(currentWorkflow)
+        }
+    }
+
+    LaunchedEffect(rewardAdEligibility.cooldownRemainingSeconds) {
+        if (rewardAdEligibility.cooldownRemainingSeconds > 0) {
+            delay(1000)
+            rewardAdRefreshTick++
         }
     }
 
@@ -180,6 +205,9 @@ fun MainHomeScreen(
                             currentTab = HomeTab.ARRANGE
                         },
                             onRewardAdRequest = rewardAdRequest,
+                            rewardAdRemainingDailyCount = rewardAdEligibility.remainingDailyCount,
+                            rewardAdCooldownRemainingSeconds = rewardAdEligibility.cooldownRemainingSeconds,
+                            rewardAdEnabled = rewardAdEligibility.canClaim,
                             hideRewardAd = ComplianceConfig.isComplianceMode,
                             contentPadding = innerPadding
                         )

@@ -85,6 +85,7 @@ import com.carlos.autoflow.platform.task.config.DailyCheckInConfig
 import com.carlos.autoflow.platform.task.config.DailyCheckInConfigManager
 import com.carlos.autoflow.foundation.network.FoundationNetworkClient
 import com.carlos.autoflow.task.CheckInPrefs
+import com.carlos.autoflow.task.RewardAdPrefs
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -95,6 +96,9 @@ import java.util.Locale
 @Composable
 private fun RewardedAdPromo(
     onClick: () -> Unit,
+    remainingDailyCount: Int,
+    cooldownRemainingSeconds: Int,
+    enabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -115,10 +119,20 @@ private fun RewardedAdPromo(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "未付费用户观看广告即可获得 30 分钟额外体验时间，收益会立即生效。",
+                text = "观看一次激励广告可获得 ${RewardAdPrefs.REWARD_MINUTES} 分钟体验时间，每日最多 ${RewardAdPrefs.DAILY_LIMIT} 次。",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 textAlign = TextAlign.Start
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = if (cooldownRemainingSeconds > 0) {
+                    "请 ${cooldownRemainingSeconds} 秒后再试，今日还可领取 $remainingDailyCount 次"
+                } else {
+                    "今日还可领取 $remainingDailyCount 次"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
             )
             Spacer(modifier = Modifier.height(12.dp))
             Row(
@@ -126,7 +140,8 @@ private fun RewardedAdPromo(
                 horizontalArrangement = Arrangement.End
             ) {
                 Button(
-                    onClick = onClick
+                    onClick = onClick,
+                    enabled = enabled
                 ) {
                     Text("立即体验")
                 }
@@ -144,6 +159,9 @@ fun TasksScreen(
     onEditTask: (Workflow) -> Unit,
     onCreateTask: () -> Unit,
     onRewardAdRequest: () -> Unit,
+    rewardAdRemainingDailyCount: Int,
+    rewardAdCooldownRemainingSeconds: Int,
+    rewardAdEnabled: Boolean,
     hideRewardAd: Boolean,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
@@ -256,7 +274,12 @@ fun TasksScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     if (!hideRewardAd) {
-                        RewardedAdPromo(onClick = onRewardAdRequest)
+                        RewardedAdPromo(
+                            onClick = onRewardAdRequest,
+                            remainingDailyCount = rewardAdRemainingDailyCount,
+                            cooldownRemainingSeconds = rewardAdCooldownRemainingSeconds,
+                            enabled = rewardAdEnabled
+                        )
                     }
                 }
             }
@@ -283,7 +306,10 @@ fun TasksScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 8.dp),
-                            onClick = onRewardAdRequest
+                            onClick = onRewardAdRequest,
+                            remainingDailyCount = rewardAdRemainingDailyCount,
+                            cooldownRemainingSeconds = rewardAdCooldownRemainingSeconds,
+                            enabled = rewardAdEnabled
                         )
                     }
                 }
