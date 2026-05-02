@@ -3,12 +3,16 @@ package com.carlos.autoflow.platform.ad.config
 data class RemoteAdConfiguration(
     val version: Int,
     val timestamp: Long,
-    val globalEnabled: Boolean = true,
-    val requireOaid: Boolean = false,
-    val hotStartupCooldownMs: Long? = null,
+    val global: RemoteAdGlobalConfiguration = RemoteAdGlobalConfiguration(),
     val rewardedPolicy: RemoteRewardedAdPolicy = RemoteRewardedAdPolicy(),
-    val slots: Map<String, RemoteSlotConfiguration> = emptyMap(),
+    val placements: Map<String, RemotePlacementConfiguration> = emptyMap(),
     val platforms: List<RemotePlatformConfiguration> = emptyList()
+)
+
+data class RemoteAdGlobalConfiguration(
+    val enabled: Boolean = true,
+    val requireOaid: Boolean = false,
+    val hotStartupCooldownMs: Long? = null
 )
 
 data class RemoteRewardedAdPolicy(
@@ -17,7 +21,7 @@ data class RemoteRewardedAdPolicy(
     val cooldownSeconds: Int = 60
 )
 
-data class RemoteSlotConfiguration(
+data class RemotePlacementConfiguration(
     val enabled: Boolean = true,
     val slotId: String? = null,
     val cooldownMs: Long? = null,
@@ -26,6 +30,7 @@ data class RemoteSlotConfiguration(
 
 data class RemotePlatformConfiguration(
     val name: String,
+    val enabled: Boolean = true,
     val priority: Int = 0,
     val enabledTypes: List<String> = emptyList()
 )

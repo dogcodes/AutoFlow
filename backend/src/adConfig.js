@@ -1,29 +1,66 @@
 const DEFAULT_AD_CONFIG = {
   version: 1,
   timestamp: Date.now(),
-  globalEnabled: true,
-  requireOaid: false,
-  hotStartupCooldownMs: 10 * 60 * 1000,
+  global: {
+    enabled: true,
+    requireOaid: true,
+    hotStartupCooldownMs: 10 * 60 * 1000,
+  },
   rewardedPolicy: {
     rewardMinutes: 30,
     dailyLimit: 5,
     cooldownSeconds: 60,
   },
-  slots: {
+  placements: {
     splash: {
       enabled: true,
-      cooldownMs: 10 * 1000,
+      slotId: "100007398",
+      cooldownMs: 86400000,
       dailyLimit: 10,
     },
     rewarded: {
       enabled: true,
+      slotId: "100007403",
+      cooldownMs: 0,
+      dailyLimit: 0,
+    },
+    interstitial: {
+      enabled: true,
+      slotId: "100007402",
+      cooldownMs: 300000,
+      dailyLimit: 0,
+    },
+    floating: {
+      enabled: true,
+      slotId: "100007397",
+      cooldownMs: 0,
+      dailyLimit: 0,
+    },
+    floatingBall: {
+      enabled: false,
+      slotId: "100007405",
+      cooldownMs: 0,
+      dailyLimit: 0,
+    },
+    banner: {
+      enabled: true,
+      slotId: "100007404",
+      cooldownMs: 0,
+      dailyLimit: 0,
+    },
+    feed: {
+      enabled: true,
+      slotId: "100007396",
+      cooldownMs: 0,
+      dailyLimit: 0,
     },
   },
   platforms: [
     {
       name: "umeng",
+      enabled: true,
       priority: 0,
-      enabledTypes: ["splash", "rewarded", "interstitial", "banner", "floating", "floatingball", "feed"],
+      enabledTypes: ["splash", "rewarded", "interstitial", "floating", "floatingBall", "banner", "feed"],
     },
   ],
 };
@@ -62,15 +99,20 @@ async function updateConfig(env, overrides) {
     ...DEFAULT_AD_CONFIG,
     ...current,
     ...overrides,
+    global: {
+      ...DEFAULT_AD_CONFIG.global,
+      ...(current.global || {}),
+      ...(overrides.global || {}),
+    },
     rewardedPolicy: {
       ...DEFAULT_AD_CONFIG.rewardedPolicy,
       ...(current.rewardedPolicy || {}),
       ...(overrides.rewardedPolicy || {}),
     },
-    slots: {
-      ...DEFAULT_AD_CONFIG.slots,
-      ...(current.slots || {}),
-      ...(overrides.slots || {}),
+    placements: {
+      ...DEFAULT_AD_CONFIG.placements,
+      ...(current.placements || {}),
+      ...(overrides.placements || {}),
     },
   };
   merged.timestamp = Date.now();

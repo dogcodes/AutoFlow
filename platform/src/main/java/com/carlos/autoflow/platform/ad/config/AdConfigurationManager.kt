@@ -25,8 +25,8 @@ class AdConfigurationManager(
 
     fun shouldEnableAds(config: RemoteAdConfiguration?): Boolean {
         if (config == null) return true
-        if (!config.globalEnabled) return false
-        if (config.requireOaid && !DeviceIdentifiers.hasOaid(context)) return false
+        if (!config.global.enabled) return false
+        if (config.global.requireOaid && !DeviceIdentifiers.hasOaid(context)) return false
         return true
     }
 
@@ -35,14 +35,14 @@ class AdConfigurationManager(
     }
 
     fun applyConfig(config: RemoteAdConfiguration, preferenceStore: AdPreferenceStore) {
-        config.slots.forEach { (remoteName, slotConfig) ->
+        config.placements.forEach { (remoteName, placementConfig) ->
             remoteName.toAdType()?.let { type ->
-                preferenceStore.setEnabled(type, slotConfig.enabled)
-                slotConfig.cooldownMs?.let { preferenceStore.setCooldown(type, it) }
-                slotConfig.dailyLimit?.let { preferenceStore.setDailyLimit(type, it) }
+                preferenceStore.setEnabled(type, placementConfig.enabled)
+                placementConfig.cooldownMs?.let { preferenceStore.setCooldown(type, it) }
+                placementConfig.dailyLimit?.let { preferenceStore.setDailyLimit(type, it) }
             }
         }
-        config.hotStartupCooldownMs?.let { preferenceStore.setHotStartupCooldown(it) }
+        config.global.hotStartupCooldownMs?.let { preferenceStore.setHotStartupCooldown(it) }
         store.saveConfig(config)
     }
 
