@@ -91,7 +91,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import kotlin.math.max
 
 @Composable
 private fun RewardedAdPromo(
@@ -211,10 +210,8 @@ fun TasksScreen(
             bottom = innerPadding.calculateBottomPadding() + contentPadding.calculateBottomPadding() + 16.dp
         )
         val config = checkInConfig
-        val cooldownMillis = (config?.cooldownMinutes ?: 1440) * 60_000L
-        val elapsedSinceLast = System.currentTimeMillis() - lastCheckInAt
-        val eligibleForCheckIn = config?.enabled == true && elapsedSinceLast >= cooldownMillis
-        val remainingCooldownMinutes = max(0, ((cooldownMillis - elapsedSinceLast + 59_999L) / 60_000L).toInt())
+        val hasCheckedInToday = checkInPrefs.hasCheckedInToday()
+        val eligibleForCheckIn = config?.enabled == true && !hasCheckedInToday
         val rewardMinutes = config?.rewardMinutes ?: 0
         val onCheckIn = {
             if (eligibleForCheckIn && !isCheckInRunning && config != null) {
@@ -273,7 +270,7 @@ fun TasksScreen(
                     item {
                         CheckInBanner(
                             config = config,
-                            remainingCooldownMinutes = remainingCooldownMinutes,
+                            hasCheckedInToday = hasCheckedInToday,
                             isEligible = eligibleForCheckIn,
                             isLoading = isCheckInRunning,
                             onCheckIn = onCheckIn
@@ -816,7 +813,7 @@ private fun WorkflowScheduleConfig.toSummary(): String {
 @Composable
 private fun CheckInBanner(
     config: DailyCheckInConfig,
-    remainingCooldownMinutes: Int,
+    hasCheckedInToday: Boolean,
     isEligible: Boolean,
     isLoading: Boolean,
     onCheckIn: () -> Unit,
@@ -874,7 +871,7 @@ private fun CheckInBanner(
             if (!isEligible) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = if (remainingCooldownMinutes <= 0) "已签到" else "下次签到还有 $remainingCooldownMinutes 分钟",
+                    text = if (hasCheckedInToday) "今日已签到，明天再来" else "当前不可签到",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
