@@ -230,6 +230,14 @@
 -keep class com.carlos.autoflow.platform.analytics.** { *; }
 -keep class com.carlos.autoflow.platform.push.** { *; }
 
+# Keep DailyCheckInConfig for Gson deserialization
+-keep class com.carlos.autoflow.platform.task.config.DailyCheckInConfig {
+    <fields>;
+}
+-keepclassmembers class com.carlos.autoflow.platform.task.config.DailyCheckInConfig {
+    <init>(...);
+}
+
 # ---------- Foundation Module ----------
 -keep class com.carlos.autoflow.foundation.** { *; }
 
