@@ -147,79 +147,79 @@ fun BannerAdView(
     modifier: Modifier = Modifier,
     adUnitId: String = "demo_banner_ad"
 ) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val adManager = remember { AdManager(context) }
-    var isAdLoaded by remember { mutableStateOf(false) }
-    var adError by remember { mutableStateOf<String?>(null) }
-    
-    LaunchedEffect(Unit) {
-        adManager.initialize()
-        adManager.loadBannerAd(
-            adUnitId = adUnitId,
-            onAdLoaded = { isAdLoaded = true },
-            onAdFailed = { error -> adError = error }
-        )
-    }
-    
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(60.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            when {
-                isAdLoaded -> {
-                    // 这里应该显示真实的广告视图
-                    // AndroidView(factory = { context -> 真实广告视图 })
-                    
-                    // 模拟广告内容
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(Color(0xFF2196F3)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("AD", color = Color.White, fontSize = 12.sp)
-                        }
-                        Column {
-                            Text(
-                                "AutoFlow Pro - 专业版",
-                                fontSize = 12.sp,
-                                color = Color.Black
-                            )
-                            Text(
-                                "无限录制，无广告干扰",
-                                fontSize = 10.sp,
-                                color = Color.Gray
-                            )
-                        }
-                    }
-                }
-                adError != null -> {
-                    Text(
-                        "广告加载失败",
-                        fontSize = 10.sp,
-                        color = Color.Gray,
-                        textAlign = TextAlign.Center
-                    )
-                }
-                else -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp
-                    )
-                }
-            }
-        }
-    }
+//    val context = androidx.compose.ui.platform.LocalContext.current
+//    val adManager = remember { AdManager(context) }
+//    var isAdLoaded by remember { mutableStateOf(false) }
+//    var adError by remember { mutableStateOf<String?>(null) }
+//
+//    LaunchedEffect(Unit) {
+//        adManager.initialize()
+//        adManager.loadBannerAd(
+//            adUnitId = adUnitId,
+//            onAdLoaded = { isAdLoaded = true },
+//            onAdFailed = { error -> adError = error }
+//        )
+//    }
+//
+//    Card(
+//        modifier = modifier
+//            .fillMaxWidth()
+//            .height(60.dp),
+//        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
+//    ) {
+//        Box(
+//            modifier = Modifier.fillMaxSize(),
+//            contentAlignment = Alignment.Center
+//        ) {
+//            when {
+//                isAdLoaded -> {
+//                    // 这里应该显示真实的广告视图
+//                    // AndroidView(factory = { context -> 真实广告视图 })
+//
+//                    // 模拟广告内容
+//                    Row(
+//                        verticalAlignment = Alignment.CenterVertically,
+//                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+//                    ) {
+//                        Box(
+//                            modifier = Modifier
+//                                .size(40.dp)
+//                                .background(Color(0xFF2196F3)),
+//                            contentAlignment = Alignment.Center
+//                        ) {
+//                            Text("AD", color = Color.White, fontSize = 12.sp)
+//                        }
+//                        Column {
+//                            Text(
+//                                "AutoFlow Pro - 专业版",
+//                                fontSize = 12.sp,
+//                                color = Color.Black
+//                            )
+//                            Text(
+//                                "无限录制，无广告干扰",
+//                                fontSize = 10.sp,
+//                                color = Color.Gray
+//                            )
+//                        }
+//                    }
+//                }
+//                adError != null -> {
+//                    Text(
+//                        "广告加载失败",
+//                        fontSize = 10.sp,
+//                        color = Color.Gray,
+//                        textAlign = TextAlign.Center
+//                    )
+//                }
+//                else -> {
+//                    CircularProgressIndicator(
+//                        modifier = Modifier.size(20.dp),
+//                        strokeWidth = 2.dp
+//                    )
+//                }
+//            }
+//        }
+//    }
 }
 
 /**
