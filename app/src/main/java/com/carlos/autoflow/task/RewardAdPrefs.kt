@@ -19,15 +19,21 @@ data class RewardAdEligibility(
 
 class RewardAdPrefs(context: Context) {
     companion object {
-        const val REWARD_MINUTES = 30
-        const val DAILY_LIMIT = 5
-        const val COOLDOWN_SECONDS = 60
-        private const val COOLDOWN_MILLIS = COOLDOWN_SECONDS * 1000L
+        const val DEFAULT_REWARD_MINUTES = 30
+        const val DEFAULT_DAILY_LIMIT = 5
+        const val DEFAULT_COOLDOWN_SECONDS = 60
     }
 
     private val prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    fun getEligibility(now: Long = System.currentTimeMillis()): RewardAdEligibility {
+    fun getEligibility(
+        dailyLimit: Int = DEFAULT_DAILY_LIMIT,
+        cooldownSeconds: Int = DEFAULT_COOLDOWN_SECONDS,
+        now: Long = System.currentTimeMillis()
+    ): RewardAdEligibility {
+        val normalizedDailyLimit = dailyLimit.coerceAtLeast(0)
+        val normalizedCooldownSeconds = cooldownSeconds.coerceAtLeast(0)
+        val cooldownMillis = normalizedCooldownSeconds * 1000L
         val today = toLocalDate(now).toString()
         val recordedDate = prefs.getString(KEY_DAILY_DATE, today) ?: today
         val recordedCount = if (recordedDate == today) {
@@ -35,9 +41,9 @@ class RewardAdPrefs(context: Context) {
         } else {
             0
         }
-        val remainingDailyCount = max(0, DAILY_LIMIT - recordedCount)
+        val remainingDailyCount = max(0, normalizedDailyLimit - recordedCount)
         val lastRewardedAt = prefs.getLong(KEY_LAST_REWARDED_AT, 0L)
-        val cooldownRemainingMillis = max(0L, COOLDOWN_MILLIS - (now - lastRewardedAt))
+        val cooldownRemainingMillis = max(0L, cooldownMillis - (now - lastRewardedAt))
         val cooldownRemainingSeconds = ((cooldownRemainingMillis + 999L) / 1000L).toInt()
         val canClaim = remainingDailyCount > 0 && cooldownRemainingSeconds <= 0
         return RewardAdEligibility(

@@ -17,6 +17,9 @@ class AdConfigurationManager(
     private val store: AdConfigStore = AdConfigStore(context),
     private val gson: Gson = Gson()
 ) {
+    companion object {
+        val DEFAULT_REWARDED_POLICY = RemoteRewardedAdPolicy()
+    }
 
     fun loadCachedConfig(): RemoteAdConfiguration? = store.loadConfig()
 
@@ -25,6 +28,10 @@ class AdConfigurationManager(
         if (!config.globalEnabled) return false
         if (config.requireOaid && !DeviceIdentifiers.hasOaid(context)) return false
         return true
+    }
+
+    fun getRewardedPolicy(config: RemoteAdConfiguration?): RemoteRewardedAdPolicy {
+        return config?.rewardedPolicy ?: DEFAULT_REWARDED_POLICY
     }
 
     fun applyConfig(config: RemoteAdConfiguration, preferenceStore: AdPreferenceStore) {

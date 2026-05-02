@@ -6,8 +6,15 @@ data class RemoteAdConfiguration(
     val globalEnabled: Boolean = true,
     val requireOaid: Boolean = false,
     val hotStartupCooldownMs: Long? = null,
+    val rewardedPolicy: RemoteRewardedAdPolicy = RemoteRewardedAdPolicy(),
     val slots: Map<String, RemoteSlotConfiguration> = emptyMap(),
     val platforms: List<RemotePlatformConfiguration> = emptyList()
+)
+
+data class RemoteRewardedAdPolicy(
+    val rewardMinutes: Int = 30,
+    val dailyLimit: Int = 5,
+    val cooldownSeconds: Int = 60
 )
 
 data class RemoteSlotConfiguration(

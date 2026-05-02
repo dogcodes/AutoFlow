@@ -1,4 +1,5 @@
 import { cacheJsonResponse, respondWithCachedJson } from "./cache.js";
+import { getConfig as getAdConfig, updateConfig as updateAdConfig } from "./adConfig.js";
 import { getConfig, updateConfig } from "./checkinConfig.js";
 import { getVersionConfig } from "./versionConfig.js";
 
@@ -15,6 +16,27 @@ export default {
     if (url.pathname === "/version") {
       if (request.method === "GET") {
         return respondWithCachedJson(request, env, () => getVersionConfig(env));
+      }
+
+      return new Response("Method not allowed", { status: 405 });
+    }
+
+    if (url.pathname.startsWith("/ad-config")) {
+      if (request.method === "GET") {
+        return respondWithCachedJson(request, env, () => getAdConfig(env));
+      }
+
+      if (request.method === "POST") {
+        try {
+          const body = await request.json();
+          const merged = await updateAdConfig(env, body);
+          return cacheJsonResponse(request, env, merged);
+        } catch (error) {
+          return new Response(JSON.stringify({ error: "Invalid payload" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json; charset=utf-8" },
+          });
+        }
       }
 
       return new Response("Method not allowed", { status: 405 });

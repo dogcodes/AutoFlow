@@ -7,7 +7,7 @@ object AppHosts {
 
 object ApiRoutes {
     const val VERSION_INFO = "${AppHosts.WEB}/version"
-    const val AD_CONFIG = "${AppHosts.API}/autoflow/ad-config.json"
+    const val AD_CONFIG = "${AppHosts.WEB}/ad-config"
     const val CHECKIN_CONFIG = "${AppHosts.WEB}/checkin-config.json"
 }
 

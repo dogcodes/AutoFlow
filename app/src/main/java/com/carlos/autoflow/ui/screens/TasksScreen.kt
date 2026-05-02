@@ -84,6 +84,7 @@ import com.carlos.autoflow.license.LicenseManager
 import com.carlos.autoflow.platform.task.config.DailyCheckInConfig
 import com.carlos.autoflow.platform.task.config.DailyCheckInConfigManager
 import com.carlos.autoflow.foundation.network.FoundationNetworkClient
+import com.carlos.autoflow.platform.ad.config.RemoteRewardedAdPolicy
 import com.carlos.autoflow.task.CheckInPrefs
 import com.carlos.autoflow.task.RewardAdPrefs
 import androidx.lifecycle.Lifecycle
@@ -96,6 +97,7 @@ import java.util.Locale
 @Composable
 private fun RewardedAdPromo(
     onClick: () -> Unit,
+    rewardedPolicy: RemoteRewardedAdPolicy,
     remainingDailyCount: Int,
     cooldownRemainingSeconds: Int,
     enabled: Boolean,
@@ -119,7 +121,7 @@ private fun RewardedAdPromo(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "观看一次激励广告可获得 ${RewardAdPrefs.REWARD_MINUTES} 分钟体验时间，每日最多 ${RewardAdPrefs.DAILY_LIMIT} 次。",
+                text = "观看一次激励广告可获得 ${rewardedPolicy.rewardMinutes} 分钟体验时间，每日最多 ${rewardedPolicy.dailyLimit} 次。",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 textAlign = TextAlign.Start
@@ -159,6 +161,7 @@ fun TasksScreen(
     onEditTask: (Workflow) -> Unit,
     onCreateTask: () -> Unit,
     onRewardAdRequest: () -> Unit,
+    rewardedPolicy: RemoteRewardedAdPolicy,
     rewardAdRemainingDailyCount: Int,
     rewardAdCooldownRemainingSeconds: Int,
     rewardAdEnabled: Boolean,
@@ -276,6 +279,7 @@ fun TasksScreen(
                     if (!hideRewardAd) {
                         RewardedAdPromo(
                             onClick = onRewardAdRequest,
+                            rewardedPolicy = rewardedPolicy,
                             remainingDailyCount = rewardAdRemainingDailyCount,
                             cooldownRemainingSeconds = rewardAdCooldownRemainingSeconds,
                             enabled = rewardAdEnabled
@@ -307,6 +311,7 @@ fun TasksScreen(
                                 .fillMaxWidth()
                                 .padding(vertical = 8.dp),
                             onClick = onRewardAdRequest,
+                            rewardedPolicy = rewardedPolicy,
                             remainingDailyCount = rewardAdRemainingDailyCount,
                             cooldownRemainingSeconds = rewardAdCooldownRemainingSeconds,
                             enabled = rewardAdEnabled

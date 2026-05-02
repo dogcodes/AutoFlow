@@ -51,6 +51,8 @@ import com.carlos.autoflow.workflow.viewmodel.WorkflowViewModel
 import com.carlos.autoflow.platform.ad.AdCallback
 import com.carlos.autoflow.platform.ad.AdService
 import com.carlos.autoflow.platform.ad.AdSlots
+import com.carlos.autoflow.platform.ad.config.AdConfigStore
+import com.carlos.autoflow.platform.ad.config.AdConfigurationManager
 import com.carlos.autoflow.task.RewardAdPrefs
 
 private enum class HomeTab(val title: String) {
@@ -72,15 +74,29 @@ fun MainHomeScreen(
     val coroutineScope = rememberCoroutineScope()
     val licenseManager = remember { LicenseManager(context, BuildConfig.FORCE_PREMIUM) }
     val rewardAdPrefs = remember { RewardAdPrefs(context) }
+    val adConfigStore = remember { AdConfigStore(context) }
     var currentTab by rememberSaveable { mutableStateOf(HomeTab.TASKS) }
     var showSaveNameDialog by remember { mutableStateOf(false) }
     var saveNameInput by remember(currentWorkflow.id) { mutableStateOf(currentWorkflow.name) }
     var rewardAdRefreshTick by remember { mutableStateOf(0) }
-    val rewardAdEligibility = remember(rewardAdRefreshTick) { rewardAdPrefs.getEligibility() }
+    val rewardedPolicy = remember(rewardAdRefreshTick) {
+        AdConfigurationManager.DEFAULT_REWARDED_POLICY.let { default ->
+            adConfigStore.loadConfig()?.rewardedPolicy ?: default
+        }
+    }
+    val rewardAdEligibility = remember(rewardAdRefreshTick, rewardedPolicy) {
+        rewardAdPrefs.getEligibility(
+            dailyLimit = rewardedPolicy.dailyLimit,
+            cooldownSeconds = rewardedPolicy.cooldownSeconds
+        )
+    }
     val rewardSlotId = AdSlots.REWARD
     val rewardAdRequest: () -> Unit = rewardAdRequest@{
         val activity = context as? Activity ?: return@rewardAdRequest
-        val eligibility = rewardAdPrefs.getEligibility()
+        val eligibility = rewardAdPrefs.getEligibility(
+            dailyLimit = rewardedPolicy.dailyLimit,
+            cooldownSeconds = rewardedPolicy.cooldownSeconds
+        )
         if (!eligibility.canClaim) {
             coroutineScope.launch {
                 val message = when {
@@ -118,11 +134,11 @@ fun MainHomeScreen(
                         return@launch
                     }
 
-                    val success = licenseManager.extendMinutes(RewardAdPrefs.REWARD_MINUTES)
+                    val success = licenseManager.extendMinutes(rewardedPolicy.rewardMinutes)
                     if (success) {
                         rewardAdPrefs.markRewarded()
                         rewardAdRefreshTick++
-                        snackbarHostState.showSnackbar("已延长 ${RewardAdPrefs.REWARD_MINUTES} 分钟体验时间")
+                        snackbarHostState.showSnackbar("已延长 ${rewardedPolicy.rewardMinutes} 分钟体验时间")
                     } else {
                         snackbarHostState.showSnackbar("奖励发放失败，请稍后再试")
                     }
@@ -205,6 +221,7 @@ fun MainHomeScreen(
                             currentTab = HomeTab.ARRANGE
                         },
                             onRewardAdRequest = rewardAdRequest,
+                            rewardedPolicy = rewardedPolicy,
                             rewardAdRemainingDailyCount = rewardAdEligibility.remainingDailyCount,
                             rewardAdCooldownRemainingSeconds = rewardAdEligibility.cooldownRemainingSeconds,
                             rewardAdEnabled = rewardAdEligibility.canClaim,
