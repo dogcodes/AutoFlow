@@ -9,6 +9,10 @@ directory = "public"  # 指向你的静态资源文件夹
 binding = "CHECKIN_CONFIG"
 id = "545e0894435d4feca26189c836822732"
 
+[[kv_namespaces]]
+binding = "AD_CONFIG"
+id = "34b17f96cc20467eb4638a5015ea4f4f"
+
 [vars]
 CACHE_TTL = "60"  # 缓存1分钟
 #CACHE_TTL = "3600"  # 缓存1小时
