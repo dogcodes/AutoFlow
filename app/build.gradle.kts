@@ -31,8 +31,8 @@ android {
         applicationId = "com.carlos.autoflow"
         minSdk = 21
         targetSdk = 36
-        versionCode = 3
-        versionName = "0.3.0"
+        versionCode = 5
+        versionName = "0.5.0"
         multiDexKeepProguard = file("multidex-keep.pro")
         manifestPlaceholders["JPUSH_APPKEY"] = "8875cd8a215618b05a8e9640"
         manifestPlaceholders["JPUSH_CHANNEL"] = "developer-default"
@@ -110,11 +110,12 @@ android {
                 signingConfig = signingConfigs.getByName("release")
             }
             buildConfigField("boolean", "FORCE_PREMIUM", "false")
-            isMinifyEnabled = true
+            isMinifyEnabled = false //加固不混淆，以免崩溃，不加固则开启
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
         }
     }
     compileOptions {
