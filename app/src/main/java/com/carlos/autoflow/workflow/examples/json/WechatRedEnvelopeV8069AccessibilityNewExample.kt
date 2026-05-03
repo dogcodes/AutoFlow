@@ -4,10 +4,10 @@ object WechatRedEnvelopeV8069AccessibilityNewExample {
     const val WECHAT_V8069_ACCESSIBILITY_NEW_JSON = """
 {
   "id": "workflow-wechat-v8069-accessibility-new",
-  "name": "微信红包 8.0.69 无障碍还原示例 (新版)",
+  "name": "微信红包 8.0.69 无障碍",
   "version": "1.0",
   "targetPackage": "com.tencent.mm",
-  "description": "基于《微信红包_8.0.69_还原逻辑指南》生成。包含主页入口监控、对话气泡双重过滤、弹窗开/关决策、金额读取与详情页返回。",
+  "description": "包含主页入口监控、对话气泡双重过滤、弹窗开/关决策、金额读取与详情页返回。",
   "createdAt": 1772553600000,
   "updatedAt": 1772553600000,
   "nodes": [
