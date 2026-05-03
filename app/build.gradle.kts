@@ -31,8 +31,8 @@ android {
         applicationId = "com.carlos.autoflow"
         minSdk = 21
         targetSdk = 36
-        versionCode = 5
-        versionName = "0.5.0"
+        versionCode = 6
+        versionName = "0.6.0"
         multiDexKeepProguard = file("multidex-keep.pro")
         manifestPlaceholders["JPUSH_APPKEY"] = "8875cd8a215618b05a8e9640"
         manifestPlaceholders["JPUSH_CHANNEL"] = "developer-default"
