@@ -108,6 +108,17 @@
 -keep public class * extends android.content.BroadcastReceiver
 -keep public class * extends android.app.Service
 
+# 【加固专用】保持友盟所有类和成员不被混淆
+-keep class com.umeng.common.** { *; }
+-keep class com.umeng.analytics.pro.** { *; }
+-keepclassmembers class * {
+   public <init> (org.json.JSONObject);
+}
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
 # ---------- JPush SDK ----------
 # Keep JPush core classes
 -dontoptimize
@@ -292,3 +303,68 @@
 # Uncomment below to keep line numbers for debugging
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
+
+# ==================== 加固专用保护规则 ====================
+
+# 保持所有注解
+-keepattributes *Annotation*
+
+# 保持内部类
+-keepattributes InnerClasses
+
+# 保持签名（泛型）
+-keepattributes Signature
+
+# 保持行号信息（便于崩溃定位）
+-keepattributes SourceFile,LineNumberTable
+
+# 保持枚举
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
+# 保持 Parcelable 实现
+-keep class * implements android.os.Parcelable {
+  public static final android.os.Parcelable$Creator *;
+}
+
+# 保持 Serializable 实现
+-keepclassmembers class * implements java.io.Serializable {
+    static final long serialVersionUID;
+    private static final java.io.ObjectStreamField[] serialPersistentFields;
+    private void writeObject(java.io.ObjectOutputStream);
+    private void readObject(java.io.ObjectInputStream);
+    java.lang.Object writeReplace();
+    java.lang.Object readResolve();
+}
+
+# 保持 JNI 方法
+-keepclasseswithmembernames,includedescriptorclasses class * {
+    native <methods>;
+}
+
+# 保持反射调用的类和方法
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+
+# 保持 WebView JavaScript 接口
+-keepclassmembers class fqcn.of.javascript.interface.for.webview {
+   public *;
+}
+
+# 保持自定义 View
+-keep public class * extends android.view.View {
+    public <init>(android.content.Context);
+    public <init>(android.content.Context, android.util.AttributeSet);
+    public <init>(android.content.Context, android.util.AttributeSet, int);
+    public void set*(...);
+}
+
+# 保持 Fragment
+-keep class * extends androidx.fragment.app.Fragment { *; }
+
+# 保持 Activity
+-keep class * extends androidx.appcompat.app.AppCompatActivity { *; }
+-keep class * extends androidx.activity.ComponentActivity { *; }
