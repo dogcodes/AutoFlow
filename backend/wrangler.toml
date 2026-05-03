@@ -22,6 +22,6 @@ CACHE_TTL = "60"  # 缓存1分钟
 #CACHE_TTL = "3600"  # 缓存1小时
 VERSION_CODE = "3"
 VERSION_NAME = "0.3.0"
-VERSION_DOWNLOAD_URL = "http://autoflow.xbdc.cn/download/app.apk"
+VERSION_DOWNLOAD_URL = "http://autoflow.xbdcc.cn/download/app.apk"
 VERSION_RELEASE_NOTES = "修复若干问题，提升稳定性。"
 VERSION_FORCE_UPDATE = "false"
