@@ -17,10 +17,10 @@ import androidx.core.view.setPadding
 import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.size.Size
-import coil.transform.RoundedCornersTransformation
 import com.carlos.autoflow.platform.ad.AdCallback
 import com.carlos.autoflow.platform.ad.AdManager
 import com.carlos.autoflow.platform.ad.SplashAdActivity
+import com.carlos.autoflow.platform.analytics.AnalyticsTracker
 import com.umeng.union.UMFloatingIconAD
 import com.umeng.union.UMNativeAD
 import com.umeng.union.UMRewardAD
@@ -32,8 +32,10 @@ import com.umeng.union.widget.UMNativeLayout
 import java.util.UUID
 import android.os.Handler
 import android.os.Looper
+import coil.transform.RoundedCornersTransformation
+import com.carlos.autoflow.utils.AutoFlowLogger
 
-class UmengAdManager(private val application: Application) : AdManager {
+class UmengAdManager(private val application: Application, private val analyticsTracker: AnalyticsTracker? = null) : AdManager {
     private var splashAd: UMSplashAD? = null
     private var splashCallback: AdCallback? = null
     private val handler = Handler(Looper.getMainLooper())
@@ -76,12 +78,14 @@ class UmengAdManager(private val application: Application) : AdManager {
                     loadTimeout?.let { handler.removeCallbacks(it) }
                     splashAd = display
                     callback.onAdLoaded()
+                    trackAdEvent("ad_load", "splash", adId, "success")
                 }
 
                 override fun onFailure(type: UMUnionApi.AdType, error: String?) {
                     loadTimeout?.let { handler.removeCallbacks(it) }
                     callback.onAdFailed(error ?: "Splash ad load failed")
                     splashAd = null
+                    trackAdEvent("ad_load", "splash", adId, "failure", error)
                 }
             },
             SPLASH_TIMEOUT_MS.toInt()
@@ -121,11 +125,13 @@ class UmengAdManager(private val application: Application) : AdManager {
                         })
                     }
                     callback.onAdLoaded()
+                    trackAdEvent("ad_load", "rewarded", adId, "success")
                 }
 
                 override fun onFailure(type: UMUnionApi.AdType, error: String?) {
                     callback.onAdFailed(error ?: "Reward ad load failed")
                     clearRewardAd()
+                    trackAdEvent("ad_load", "rewarded", adId, "failure", error)
                 }
             }
         )
@@ -149,10 +155,12 @@ class UmengAdManager(private val application: Application) : AdManager {
                         })
                     }
                     callback.onAdLoaded()
+                    trackAdEvent("ad_load", "interstitial", adId, "success")
                 }
 
                 override fun onFailure(type: UMUnionApi.AdType, error: String?) {
                     callback.onAdFailed(error ?: "Reward ad load failed")
+                    trackAdEvent("ad_load", "interstitial", adId, "failure", error)
                 }
             }
         )
@@ -190,10 +198,12 @@ class UmengAdManager(private val application: Application) : AdManager {
                 override fun onSuccess(type: UMUnionApi.AdType, ad: UMNativeAD) {
                     bannerAd = ad
                     callback.onAdLoaded()
+                    trackAdEvent("ad_load", "banner", adId, "success")
                 }
 
                 override fun onFailure(type: UMUnionApi.AdType, error: String?) {
                     callback.onAdFailed(error ?: "Banner ad load failed")
+                    trackAdEvent("ad_load", "banner", adId, "failure", error)
                 }
             }
         )
@@ -224,10 +234,12 @@ class UmengAdManager(private val application: Application) : AdManager {
                         })
                     }
                     callback.onAdLoaded()
+                    trackAdEvent("ad_load", "floating", adId, "success")
                 }
 
                 override fun onFailure(type: UMUnionApi.AdType, error: String?) {
                     callback.onAdFailed(error ?: "Banner ad load failed")
+                    trackAdEvent("ad_load", "floating", adId, "failure", error)
                 }
             }
         )
@@ -253,10 +265,12 @@ class UmengAdManager(private val application: Application) : AdManager {
                         })
                     }
                     callback.onAdLoaded()
+                    trackAdEvent("ad_load", "floating_ball", adId, "success")
                 }
 
                 override fun onFailure(type: UMUnionApi.AdType, error: String?) {
                     callback.onAdFailed(error ?: "Floating ad load failed")
+                    trackAdEvent("ad_load", "floating_ball", adId, "failure", error)
                 }
             }
         )
@@ -274,10 +288,12 @@ class UmengAdManager(private val application: Application) : AdManager {
                 override fun onSuccess(type: UMUnionApi.AdType, ad: UMNativeAD) {
                     feedAd = ad
                     callback.onAdLoaded()
+                    trackAdEvent("ad_load", "feed", adId, "success")
                 }
 
                 override fun onFailure(type: UMUnionApi.AdType, error: String?) {
                     callback.onAdFailed(error ?: "Feed ad load failed")
+                    trackAdEvent("ad_load", "feed", adId, "failure", error)
                 }
             }
         )
@@ -420,5 +436,16 @@ class UmengAdManager(private val application: Application) : AdManager {
 
     private fun clearRewardAd() {
         rewardAd = null
+    }
+
+    private fun trackAdEvent(eventName: String, adType: String, slotId: String, result: String, errorMessage: String? = null) {
+        AutoFlowLogger.d(TAG, "Tracking ad event: $eventName, type: $adType, slot: $slotId, result: $result, error: $errorMessage")
+        analyticsTracker?.trackEvent(eventName, mapOf(
+            "ad_type" to adType,
+            "slot_id" to slotId,
+            "result" to result
+        ).apply {
+            errorMessage?.let { plus("error_message" to it) }
+        })
     }
 }

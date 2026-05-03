@@ -38,7 +38,7 @@ object PlatformInitializer {
 
         analyticsTracker.initialize(application)
         pushService.initialize(application)
-        AdService.initialize(application)
+        AdService.initialize(application, analyticsTracker)
 
         adConfigurationManager.fetchRemoteConfig { remote ->
             remote?.let {

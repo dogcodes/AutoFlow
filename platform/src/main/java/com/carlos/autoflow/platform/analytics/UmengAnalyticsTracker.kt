@@ -2,13 +2,17 @@ package com.carlos.autoflow.platform.analytics
 
 import android.app.Application
 import com.carlos.autoflow.platform.BuildConfig
+import com.carlos.autoflow.utils.AutoFlowLogger
 import com.umeng.analytics.MobclickAgent
 import com.umeng.commonsdk.UMConfigure
 
 class UmengAnalyticsTracker : AnalyticsTracker {
+    private var context: Application? = null
+
     override fun initialize(application: Application) {
         if (BuildConfig.UMENG_APP_KEY.isBlank()) return
 
+        this.context = application
         UMConfigure.setLogEnabled(BuildConfig.ENABLE_PLATFORM_LOGGING)
         val effectiveChannel = "auto"
         UMConfigure.preInit(application, BuildConfig.UMENG_APP_KEY, effectiveChannel)
@@ -27,6 +31,8 @@ class UmengAnalyticsTracker : AnalyticsTracker {
     }
 
     override fun trackEvent(name: String, properties: Map<String, String>) {
-        MobclickAgent.onEventObject(null, name, properties)
+        AutoFlowLogger.d("abcc", "conext" + context)
+        val ctx = context ?: return
+        MobclickAgent.onEventObject(ctx, name, properties)
     }
 }

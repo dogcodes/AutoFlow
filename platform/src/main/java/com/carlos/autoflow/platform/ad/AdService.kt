@@ -2,15 +2,18 @@ package com.carlos.autoflow.platform.ad
 
 import android.app.Application
 import com.carlos.autoflow.platform.ad.umeng.UmengAdManager
+import com.carlos.autoflow.platform.analytics.AnalyticsTracker
 
 object AdService {
     private var adManager: AdManager? = null
     private var globalAdsEnabled = true
+    private var analyticsTracker: AnalyticsTracker? = null
 
-    fun initialize(application: Application) {
+    fun initialize(application: Application, analyticsTracker: AnalyticsTracker? = null) {
         if (adManager == null) {
+            this.analyticsTracker = analyticsTracker
             val preferenceStore = AdPreferenceStore(application)
-            val umengManager = UmengAdManager(application)
+            val umengManager = UmengAdManager(application, analyticsTracker)
             adManager = AdRouter(
                 listOf(
                     AdPlatformConfig(
