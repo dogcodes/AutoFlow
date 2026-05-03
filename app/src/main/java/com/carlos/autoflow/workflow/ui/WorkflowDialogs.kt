@@ -85,7 +85,7 @@ fun ImportDialog(
                             value = urlText,
                             onValueChange = { urlText = it },
                             label = { Text("配置文件URL") },
-                            placeholder = { Text("https://example.com/workflow.json") },
+                            placeholder = { Text("https://example.com/test.afw") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
                         )
