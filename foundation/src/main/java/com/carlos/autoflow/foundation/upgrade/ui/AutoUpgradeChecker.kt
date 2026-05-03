@@ -21,6 +21,10 @@ fun AutoUpgradeChecker(
     val forcedUpgradeStore = remember { ForcedUpgradeStore(context) }
     val checkInbox = remember { mutableStateOf<UpgradeResult.Available?>(null) }
 
+    LaunchedEffect(Unit) {
+        upgradeManager.setForcedUpgradeStore(forcedUpgradeStore)
+    }
+
     LaunchedEffect(infoUrl, versionCode) {
         checkInbox.value = forcedUpgradeStore.load(versionCode)
 
@@ -49,10 +53,7 @@ fun AutoUpgradeChecker(
         UpgradeDialog(
             result = result,
             forceUpdate = result.info.forceUpdate,
-            onConfirm = {
-                upgradeManager.downloadAndInstall(context, result.downloadUrl)
-                checkInbox.value = null
-            },
+            upgradeManager = upgradeManager,
             onDismiss = {
                 checkInbox.value = null
             }

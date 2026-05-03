@@ -12,6 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.carlos.autoflow.BuildConfig
 import com.carlos.autoflow.foundation.network.FoundationNetworkClient
+import com.carlos.autoflow.foundation.upgrade.ForcedUpgradeStore
 import com.carlos.autoflow.foundation.upgrade.UpgradeConfig
 import com.carlos.autoflow.foundation.upgrade.UpgradeManager
 import com.carlos.autoflow.foundation.upgrade.UpgradeResult
@@ -21,17 +22,19 @@ import com.carlos.autoflow.foundation.upgrade.ui.UpgradeDialog
 fun AboutScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var checkState by remember { mutableStateOf<CheckState>(CheckState.Idle) }
+    val upgradeManager = remember { UpgradeManager(FoundationNetworkClient()) }
+    val forcedUpgradeStore = remember { ForcedUpgradeStore(context) }
+
+    LaunchedEffect(Unit) {
+        upgradeManager.setForcedUpgradeStore(forcedUpgradeStore)
+    }
 
     if (checkState is CheckState.Available) {
         val result = (checkState as CheckState.Available).result
         UpgradeDialog(
             result = result,
             forceUpdate = result.info.forceUpdate,
-            onConfirm = {
-                val upgradeManager = UpgradeManager(FoundationNetworkClient())
-                upgradeManager.downloadAndInstall(context, result.downloadUrl)
-                checkState = CheckState.Idle
-            },
+            upgradeManager = upgradeManager,
             onDismiss = { checkState = CheckState.Idle }
         )
     }
@@ -59,7 +62,6 @@ fun AboutScreen(modifier: Modifier = Modifier) {
         Button(
             onClick = {
                 checkState = CheckState.Checking
-                val upgradeManager = UpgradeManager(FoundationNetworkClient())
                 upgradeManager.checkForUpdate(BuildConfig.VERSION_CODE, UpgradeConfig.DEFAULT_VERSION_INFO_URL) { result ->
                     checkState = when (result) {
                         is UpgradeResult.Available -> CheckState.Available(result)

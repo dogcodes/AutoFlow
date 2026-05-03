@@ -10,6 +10,7 @@ class ForcedUpgradeStore(
     companion object {
         private const val PREFS_NAME = "forced_upgrade"
         private const val KEY_UPGRADE_INFO_JSON = "upgrade_info_json"
+        private const val KEY_DOWNLOAD_STATE_JSON = "download_state_json"
     }
 
     private val prefs =
@@ -41,7 +42,34 @@ class ForcedUpgradeStore(
             .apply()
     }
 
+    fun saveDownloadState(state: DownloadState) {
+        prefs.edit()
+            .putString(KEY_DOWNLOAD_STATE_JSON, gson.toJson(state))
+            .apply()
+    }
+
+    fun loadDownloadState(): DownloadState? {
+        val json = prefs.getString(KEY_DOWNLOAD_STATE_JSON, null) ?: return null
+        return try {
+            gson.fromJson(json, DownloadState::class.java)
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    fun clearDownloadState() {
+        prefs.edit().remove(KEY_DOWNLOAD_STATE_JSON).apply()
+    }
+
     fun clear() {
-        prefs.edit().remove(KEY_UPGRADE_INFO_JSON).apply()
+        prefs.edit()
+            .remove(KEY_UPGRADE_INFO_JSON)
+            .remove(KEY_DOWNLOAD_STATE_JSON)
+            .apply()
     }
 }
+
+data class DownloadState(
+    val downloadUrl: String,
+    val downloadId: Long
+)
